@@ -1,4 +1,5 @@
 boolean[] keys = new boolean[256];
+float plyBaseHealth = 50;
 
 void keyPressed() {
   keys[keyCode] = true;
@@ -9,23 +10,39 @@ void keyReleased() {
 };
 
 class Player {
-  private PVector position, velocity = new PVector(), acceleration = new PVector();
+  private PVector position, centerPos, velocity = new PVector(), acceleration = new PVector();
   private float rotation = 0;
   
   private float maxVelocity = 5;
   private float accelerationRate = 0.03;
   private float deccelerationRate = 0.01;
   private float rotationRate = 0.02;
+  
+  private float maxHealth = plyBaseHealth;
+  private float health = maxHealth;
 
   private Weapon weapon;
 
   Player(PVector _position) {
     position = _position.copy();
-    velocity = new PVector(0, 0);
+    centerPos = _position.copy();
+    centerPos.y += 40;
+  }
+  
+  void takeDamage(float damage) {
+    health -= damage;
+    println(health);
+    if (health <= 0) {
+       endGame();
+    }
   }
 
   void setWeapon(Weapon _weapon) {
     weapon = _weapon;
+  }
+  
+  PVector getPosition() {
+    return centerPos; 
   }
 
   void run() {
@@ -54,16 +71,13 @@ class Player {
     }
     
     if (keys[32]) { // SPACE
-      PVector startPos = position.copy();
       PVector endPos = position.copy();
       
-      startPos.y += 40;
       endPos.y += 40;
-
       endPos.x += 40 * cos(rotation - 1.571);
       endPos.y += 40 * sin(rotation - 1.571);
 
-      weapon.fire(startPos, endPos, velocity.copy());
+      weapon.fire(centerPos, endPos, velocity.copy());
     }
     
   }
@@ -98,6 +112,9 @@ class Player {
     
     position.add(velocity);
     velocity.mult(1 - deccelerationRate);
+    
+    centerPos = position.copy();
+    centerPos.y += 40;
   }
   
   void drawPlayer() {

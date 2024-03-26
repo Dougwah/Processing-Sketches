@@ -6,8 +6,6 @@ class Weapon {
   
   private int lastFired;
   
-  private ArrayList<Projectile> Bullets = new ArrayList<Projectile>(); 
-  
   Weapon(int _damage, int _fireRate, PVector _bulletSize, float _bulletSpeed) {
     damage = _damage;
     fireRate = _fireRate;
@@ -21,22 +19,15 @@ class Weapon {
     if (millis() < lastFired + (1000 / fireRate)) {
       return;
     }
-
-    pushMatrix();
-      fill(0, 255, 0);
-      PShape shape = createShape(RECT, 0, 0, bulletSize.x, bulletSize.y);
-    popMatrix();
-
+    
     startPos.x -= (bulletSize.x / 2);
     endPos.x -= (bulletSize.x / 2);
 
-    PVector velocity = new PVector();
-    PVector.sub(endPos, startPos, velocity);
+    PVector velocity = PVector.sub(endPos, startPos);
     
     velocity.mult(bulletSpeed).add(initialVelocity);
     
-    new Projectile(shape, startPos, velocity, 2);
+    new Bullet(startPos, velocity, bulletSize, 2, damage);
     lastFired = millis();
-
   }
 }
