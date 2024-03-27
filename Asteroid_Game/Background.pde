@@ -11,9 +11,9 @@ color[] starColors = {
 };
 
 class Background {
-  ArrayList<PVector> gPositions = new ArrayList<PVector>();
-  color[] gColors = new color[starCount];
-  float[] gSizes = new float[starCount];
+  private ArrayList<PVector> gPositions = new ArrayList<PVector>();
+  private color[] gColors = new color[starCount];
+  private float[] gSizes = new float[starCount];
 
   Background() {
     for (int i = 0; i < starCount - 1; i++) {

@@ -27,7 +27,7 @@ void setup() {
     ArrayList<SoundFile> soundList = new ArrayList<SoundFile>();
     
     for (int i2 = 0; i2 < soundCount[i]; i2++) {
-      soundList.add(new SoundFile(this, "sounds/" + soundTypes[i] + "/" + (i2 + 1) + ".ogg"));
+      soundList.add(new SoundFile(this, "data/sounds/" + soundTypes[i] + "/" + (i2 + 1) + ".ogg"));
     }
     
    sounds.add(soundList);
@@ -54,6 +54,7 @@ float NormalizeFrames(float x) {
 }
 
 // add main menu allowing difficulty selection
+// each difficulty will have the applied game values stored and displayed to the player
 
 // add pickups that increase weapon stats
 // save scores to file and have leaderboard
@@ -63,8 +64,6 @@ float NormalizeFrames(float x) {
 // add sprite damage states to asteroids
 
 // add a game over screen
-
-// add parameter to asteroid destroy function to determine whether points should be awarded (no points when asteroid is destroyed from bumping into player)
 
 // add object arrays to class and have a static get function to retrieve
 // add a function that loops through the objects and removes them to be called when a new round is made

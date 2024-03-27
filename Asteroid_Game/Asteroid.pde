@@ -14,15 +14,18 @@ class Asteroid {
   private int lastCollided = 0;
   private color drawColor = color(100, 100, 100);
   
-  //Asteroid() {
-  //  round.asteroids.add(this);
-  //}
+  void run() {
+    spawn();
+    checkCollision();
+    move();
+    drawShape();
+  }
   
-  void takeDamage(float damage) {
+  void takeDamage(float damage, boolean playerDamage) {
     health -= damage;
     drawColor = color(0, 255, 0);
     if (health <= 0) {
-       destroy();
+       destroy(playerDamage);
     }
   }
   
@@ -31,12 +34,13 @@ class Asteroid {
     velocity.set(direction.mult(velocity.mag()));
   }
   
-  void destroy() {
+  void destroy(boolean awardScore) {
     timeDestroyed = millis();
 
-    new DamageEffect(position, 5, radius / 2, color(100, 100, 100));
-
-    round.addScore(asteroidBaseScore * level);
+    new DamageEffect(position, 10, radius / 2, color(100, 100, 100));
+    if (awardScore) {
+      round.addScore(asteroidBaseScore * level);
+    }
     playSound(4);
     spawned = false;
     velocity = new PVector(0,0);
@@ -64,13 +68,6 @@ class Asteroid {
     spawned = true;
   }
   
-  void run() {
-    spawn();
-    checkCollision();
-    move();
-    drawShape();
-  }
-  
   void checkCollision() {
     int collisionTime = millis();
     if (position.x > width || position.x < 0) {
@@ -83,10 +80,10 @@ class Asteroid {
     
     float distance = PVector.sub(round.ply.getPosition(), position).mag();
     float minDistance = 20 + radius;
-      
+    
     if ((distance < minDistance) && collisionTime > lastCollided + 200){
       round.ply.takeDamage(damage);
-      takeDamage(damage);
+      takeDamage(damage, false);
       rebound(round.ply.getPosition());
       lastCollided = collisionTime;
     }

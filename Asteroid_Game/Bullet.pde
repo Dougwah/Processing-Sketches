@@ -44,7 +44,7 @@ class Bullet {
       
       if (distance < minDistance) {
         destroyed = true;
-        a.takeDamage(damage);
+        a.takeDamage(damage, true);
       }
     }
   }

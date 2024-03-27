@@ -1,12 +1,12 @@
 class DamageEffect {
   private ArrayList<PVector> positions = new ArrayList<PVector>();
   private ArrayList<PVector> velocities = new ArrayList<PVector>();
-  PVector startPosition;
-  int particleCount;
-  float particleRadius;
-  color particleColor;
-  float sizeLerpRate= 0.95;
-  boolean completed = false;
+  private PVector startPosition;
+  private int particleCount;
+  private float particleRadius;
+  private color particleColor;
+  private float sizeLerpRate= 0.95;
+  private boolean completed = false;
 
   DamageEffect(PVector _startPosition, int _particleCount, float _particleRadius, color _particleColor) {
     particleCount = _particleCount;
