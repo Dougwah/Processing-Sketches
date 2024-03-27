@@ -15,6 +15,7 @@ class Bullet {
     lifeSpan = _lifeSpan;
 
     spawnTime = millis();
+    round.bullets.add(this);
   }
   
   void run() {
@@ -42,7 +43,6 @@ class Bullet {
       float minDistance = (size.x / 2) + (a.radius);
       
       if (distance < minDistance) {
-        //velocity.mult(-1);
         destroyed = true;
         a.takeDamage(damage);
       }

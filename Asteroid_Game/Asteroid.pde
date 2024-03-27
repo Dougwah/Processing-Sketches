@@ -1,3 +1,5 @@
+int damageParticleCount = 5;
+
 class Asteroid {
   private PVector position, velocity;
   
@@ -10,11 +12,15 @@ class Asteroid {
   private boolean spawned = false;
   private int timeDestroyed = -10000;
   private int lastCollided = 0;
+  private color drawColor = color(100, 100, 100);
   
-  Asteroid() {}
+  //Asteroid() {
+  //  round.asteroids.add(this);
+  //}
   
   void takeDamage(float damage) {
     health -= damage;
+    drawColor = color(0, 255, 0);
     if (health <= 0) {
        destroy();
     }
@@ -27,6 +33,9 @@ class Asteroid {
   
   void destroy() {
     timeDestroyed = millis();
+
+    new DamageEffect(position, 5, radius / 2, color(100, 100, 100));
+
     round.addScore(asteroidBaseScore * level);
     playSound(4);
     spawned = false;
@@ -38,14 +47,13 @@ class Asteroid {
   void spawn() {
     if (spawned) { return; }
     if (millis() < timeDestroyed + (1000 * (asteroidSpawnInterval + random(-asteroidSpawnIntervalVariance, asteroidSpawnIntervalVariance)))) { return; }
-
+    
     level = random(asteroidMinLevel * round.difficultyScale, asteroidMaxLevel * round.difficultyScale);
     maxHealth = level * asteroidBaseHealth;
     health = maxHealth;
     damage = level * asteroidBaseDamage;
-    radius = (asteroidBaseRadius + (min((level / 5) * asteroidBaseRadius, 50) ) * random(0.7, 2));
-    println(radius);
-    
+    radius = (asteroidBaseRadius + (min((level / 5) * asteroidBaseRadius, 50)) * random(0.7, 2));
+
     if (round(random(0, 1)) == 1) {
       position = new PVector(random(0, width), height * round(random(0, 1)));
     } else {
@@ -81,7 +89,6 @@ class Asteroid {
       takeDamage(damage);
       rebound(round.ply.getPosition());
       lastCollided = collisionTime;
-      //destroy();
     }
     
   }
@@ -92,7 +99,7 @@ class Asteroid {
   
   void drawShape(){
     pushMatrix();
-      fill(100, 100, 100);
+      fill(drawColor);
       circle(position.x, position.y, radius * 2);
       fill(255, 255, 255);
       textFont(willowFont);
@@ -100,5 +107,7 @@ class Asteroid {
       textAlign(CENTER, CENTER);
       text(ceil(health), position.x, position.y);
     popMatrix();
+    
+    drawColor = lerpColor(drawColor, color(100, 100, 100), 0.2);
   }
 }

@@ -19,6 +19,7 @@ class Player {
   
   private float maxHealth;
   private float health;
+  private color drawColor = color(255, 255, 255);
   private boolean destroyed = false;
 
   private Weapon weapon;
@@ -39,6 +40,7 @@ class Player {
   void takeDamage(float damage) {
     health -= damage;
     playSound(3);
+    drawColor = color(200, 0 ,0);
 
     if (health <= 0) {
       kill();
@@ -147,7 +149,7 @@ class Player {
       rect(0, 50, 50 * (health / maxHealth), 5);
       rotate(rotation);
       translate(0, -45);
-      fill(255, 255, 255);
+      fill(drawColor);
       beginShape();
         vertex(0, 0);
         vertex(30, 70);
@@ -155,6 +157,7 @@ class Player {
         vertex(-30, 70);
       endShape(CLOSE);
     popMatrix();
+    drawColor = lerpColor(drawColor, color(255, 255, 255), 0.1);
   }
   
 }

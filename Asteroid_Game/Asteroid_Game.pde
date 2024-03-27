@@ -24,8 +24,6 @@ void setup() {
   
   Sound.volume(0.1);
   for (int i = 0; i < soundTypes.length; i++) {
-    println(i);
-    println(soundTypes[i]);
     ArrayList<SoundFile> soundList = new ArrayList<SoundFile>();
     
     for (int i2 = 0; i2 < soundCount[i]; i2++) {
@@ -45,7 +43,6 @@ void draw() {
   round.run();
 }
 
-
 void playSound(int soundType) {
   ArrayList<SoundFile> _sounds = sounds.get(soundType - 1);
   SoundFile sound = _sounds.get(floor(random(0, _sounds.size())));
@@ -57,7 +54,18 @@ float NormalizeFrames(float x) {
 }
 
 // add main menu allowing difficulty selection
+
 // add pickups that increase weapon stats
 // save scores to file and have leaderboard
-// add effect for asteroids breaking
+
 // add option to toggle wrap around edges
+
+// add sprite damage states to asteroids
+
+// add a game over screen
+
+// add parameter to asteroid destroy function to determine whether points should be awarded (no points when asteroid is destroyed from bumping into player)
+
+// add object arrays to class and have a static get function to retrieve
+// add a function that loops through the objects and removes them to be called when a new round is made
+// pass coordinates to the class for collision to avoid requiring a reference to the player?

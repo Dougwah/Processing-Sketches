@@ -20,98 +20,120 @@ float asteroidMinSpeed = 4;
 float asteroidMaxSpeed = 12;
 float asteroidMinLevel = 1;
 float asteroidMaxLevel = 3;
-int asteroidMaxAmount = 10;
+int asteroidMaxAmount = 15;
 int asteroidSpawnInterval = 2;
 int asteroidSpawnIntervalVariance = 1;
 
 class Round {
- int score = 0;
- boolean over = false;
- float difficultyScaleRate;
- float difficultyScale = 1;
- float lastTick;
- 
- Player ply;
- ArrayList<Bullet> bullets = new ArrayList<Bullet>();
- ArrayList<Asteroid> asteroids = new ArrayList<Asteroid>();
- 
- Round(float _difficultyScaleRate) {
-   difficultyScaleRate = _difficultyScaleRate;
-   lastTick = millis();
+  int score;
+  boolean over;
+  float difficultyScaleRate;
+  float difficultyScale;
+  float lastTick;
    
-   ply = new Player(
-     new PVector(width / 2, height / 2), 
-     plyMaxVelocity,
-     plyAccelerationRate, 
-     plyDeccelerationRate, 
-     plyRotationRate, 
-     plyMaxHealth
-     );
-     
-   ply.setWeapon(new Weapon(
-     WeaponDamage, 
-     WeaponFireRate, 
-     BulletSize, 
-     BulletSpeed
-     ));
+  Player ply;
+  Background bg;
+  ArrayList<Bullet> bullets;
+  ArrayList<Asteroid> asteroids;
+  ArrayList<DamageEffect> damageEffects;
    
-  for (int i = 0; i < asteroidMaxAmount; i++) {
-    asteroids.add(new Asteroid());
+  Round(float _difficultyScaleRate) {
+
+    difficultyScaleRate = _difficultyScaleRate;
+    init();
   }
-   
- }
- 
- void run() {
-  if (ply.getDestroyed()) { 
-      endGame();
-      return; 
-   }
-   
-   drawRoundInfo();
-   ply.run();
-   
-   if (millis() > lastTick + 1000) {
-     difficultyScale += difficultyScale * difficultyScaleRate;
-     lastTick = millis();
-   }
-   
-   // RUN ASTEROIDS
-   for (int i = asteroids.size() - 1; i >= 0; i--) {
-     Asteroid a = asteroids.get(i);
-     a.run();
-   }
-   
-   // RUN BULLETS
-  for (int i = bullets.size() - 1; i >= 0; i--) {
-    Bullet b = bullets.get(i);
+  
+  void init() {
+    score = 0;
+    over = false;
+    bullets = new ArrayList<Bullet>();
+    asteroids = new ArrayList<Asteroid>();
+    damageEffects = new ArrayList<DamageEffect>();
+    difficultyScale = 1;
+    lastTick = millis();
     
-    if (b.destroyed == true) {
-      bullets.remove(b);
-      continue;
+    bg = new Background();
+     
+    ply = new Player(
+      new PVector(width / 2, height / 2), 
+      plyMaxVelocity,
+      plyAccelerationRate, 
+      plyDeccelerationRate, 
+      plyRotationRate, 
+      plyMaxHealth
+    );
+     
+    ply.setWeapon(new Weapon(
+      WeaponDamage, 
+      WeaponFireRate, 
+      BulletSize, 
+      BulletSpeed
+    ));
+
+    for (int i = 0; i < asteroidMaxAmount; i++) {
+      asteroids.add(new Asteroid());
+    }  
+  }
+
+  void run() {
+    if (ply.getDestroyed()) { 
+       endGame();
+       return;
     }
-    b.run();
+     
+    bg.run();
+    ply.run();  
+     
+    if (millis() > lastTick + 1000) {
+      difficultyScale += difficultyScale * difficultyScaleRate;
+      lastTick = millis();
+    }
+     
+    // RUN ASTEROIDS
+    for (int i = asteroids.size() - 1; i >= 0; i--) {
+      Asteroid a = asteroids.get(i);
+      a.run();
+    }
+     
+    // RUN DAMAGE EFFECTS
+    for (int i = damageEffects.size() - 1; i >= 0; i--) {
+      DamageEffect de = damageEffects.get(i);        
+       if (de.completed == true) {
+         damageEffects.remove(de);
+         continue;
+       }        
+      de.run();
+    }
+     
+    // RUN BULLETS
+    for (int i = bullets.size() - 1; i >= 0; i--) {
+      Bullet b = bullets.get(i);    
+      if (b.destroyed == true) {
+        bullets.remove(b);
+        continue;
+      }
+      b.run();
+    }
+    
+   drawRoundInfo();
+  }
+ 
+  void endGame() {
+    init();
+  }
+ 
+  void addScore(float _score) {
+    score += _score;
+    score = round(score);
   }
   
- }
- 
- void endGame() {
-  rectMode(CORNER);
-  fill(0, 0, 255);
-  rect(0, 0, width, height);
-}
- 
- void addScore(float _score) {
-  score += _score;
-  score = round(score);
-}
-  
- void drawRoundInfo() {
-   pushMatrix();
-     fill(0, 255, 0);
-     textFont(marineFont);
-     textSize(50);
-     textAlign(CENTER, CENTER);
-     text("Score:\n\n" + score, width / 2, 100);
-   popMatrix();
- }
+  void drawRoundInfo() {
+     pushMatrix();
+       fill(0, 255, 0);
+       textFont(marineFont);
+       textSize(50);
+       textAlign(CENTER, CENTER);
+       text("Score:\n\n" + score, width / 2, 100);
+     popMatrix();
+  }
 }
