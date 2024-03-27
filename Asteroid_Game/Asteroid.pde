@@ -3,11 +3,11 @@ ArrayList<Asteroid> asteroids = new ArrayList<Asteroid>();
 float asteroidBaseHealth = 5;
 float asteroidBaseDamage = 1;
 float asteroidBaseRadius = 15;
-float asteroidMinSpeed = 2;
-float asteroidMaxSpeed = 4;
+float asteroidMinSpeed = 4;
+float asteroidMaxSpeed = 12;
 float asteroidMaxLevel = 7;
 
-int maxAsteroids = 10;
+int maxAsteroids = 15;
 int spawnInterval = 2;
 int spawnIntervalVariance = 1;
 
@@ -26,16 +26,17 @@ void runAsteroids() {
 }
 
 class Asteroid {
-  PVector position, velocity;
+  private PVector position, velocity;
   
-  float maxHealth;
-  float health;
-  float damage;
-  float radius;
-  float level;
+  private float maxHealth;
+  private float health;
+  private float damage;
+  private float radius;
+  private float level;
   
-  boolean spawned = false;
-  int timeDestroyed = -10000;
+  private boolean spawned = false;
+  private int timeDestroyed = -10000;
+  private int lastCollided = 0;
   
   Asteroid() {
     asteroids.add(this);
@@ -48,8 +49,15 @@ class Asteroid {
     }
   }
   
+  void rebound(PVector fromPosition) {
+    //PVector direction = PVector.sub(fromPositon, position);
+    velocity.mult(-1);
+    
+  }
+  
   void destroy() {
     timeDestroyed = millis();
+    asteroidSounds.get(floor(random(0, 3))).play();
     spawned = false;
     velocity = new PVector(0,0);
     position = new PVector(width * 2, height * 2);
@@ -84,6 +92,7 @@ class Asteroid {
   }
   
   void checkCollision() {
+    int collisionTime = millis();
     if (position.x > width || position.x < 0) {
       velocity.x *= -1;
     }
@@ -95,9 +104,12 @@ class Asteroid {
     float distance = PVector.sub(ply.getPosition(), position).mag();
     float minDistance = 20 + radius;
       
-    if (distance < minDistance) {
+    if ((distance < minDistance) && collisionTime > lastCollided + 100){
       ply.takeDamage(damage);
-      destroy();
+      takeDamage(damage);
+      rebound(ply.getPosition());
+      lastCollided = collisionTime;
+      //destroy();
     }
     
   }
@@ -110,6 +122,10 @@ class Asteroid {
     pushMatrix();
       fill(100, 100, 100);
       circle(position.x, position.y, radius * 2);
+      fill(255, 255, 255);
+      textSize(20);
+      textAlign(CENTER, CENTER);
+      text(ceil(health), position.x, position.y);
     popMatrix();
   }
 }

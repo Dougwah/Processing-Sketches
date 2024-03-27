@@ -14,6 +14,7 @@ void runBullets() {
 
 class Bullet {
   private PVector position, size, velocity = new PVector();
+  private float rotation;
   private float damage;
   private int lifeSpan;
   private int spawnTime;
@@ -57,6 +58,7 @@ class Bullet {
       float minDistance = (size.x / 2) + (a.radius);
       
       if (distance < minDistance) {
+        //velocity.mult(-1);
         destroyed = true;
         a.takeDamage(damage);
       }
@@ -65,12 +67,16 @@ class Bullet {
   
   void move() {
     position.add(velocity);
+    rotation = -atan2(velocity.x, velocity.y);
   }
   
   void drawShape() {
     pushMatrix();
       fill(0, 255, 0);
-      rect(position.x, position.y, size.x, size. y);
+      rectMode(CENTER);
+      translate(position.x, position.y);
+      rotate(rotation);
+      rect(0, 0, size.x, size. y);
     popMatrix();
   }
 }

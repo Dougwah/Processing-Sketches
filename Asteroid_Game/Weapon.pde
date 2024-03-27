@@ -19,9 +19,8 @@ class Weapon {
     if (millis() < lastFired + (1000 / fireRate)) {
       return;
     }
-    
-    startPos.x -= (bulletSize.x / 2);
-    endPos.x -= (bulletSize.x / 2);
+
+    weaponSounds.get(floor(random(0, 3))).play();
 
     PVector velocity = PVector.sub(endPos, startPos);
     
