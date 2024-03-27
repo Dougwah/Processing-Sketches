@@ -1,30 +1,3 @@
-ArrayList<Asteroid> asteroids = new ArrayList<Asteroid>();
-
-float asteroidBaseHealth = 5;
-float asteroidBaseDamage = 1;
-float asteroidBaseRadius = 15;
-float asteroidMinSpeed = 4;
-float asteroidMaxSpeed = 12;
-float asteroidMaxLevel = 7;
-
-int maxAsteroids = 15;
-int spawnInterval = 2;
-int spawnIntervalVariance = 1;
-
-
-void initAsteroids() {
-  for (int i = 0; i < maxAsteroids; i++) {
-    new Asteroid();
-  }
-}
-
-void runAsteroids() {
-  for (int i = asteroids.size() - 1; i >= 0; i--) {
-    Asteroid a = asteroids.get(i);
-    a.run();
-  }
-}
-
 class Asteroid {
   private PVector position, velocity;
   
@@ -38,9 +11,7 @@ class Asteroid {
   private int timeDestroyed = -10000;
   private int lastCollided = 0;
   
-  Asteroid() {
-    asteroids.add(this);
-  }
+  Asteroid() {}
   
   void takeDamage(float damage) {
     health -= damage;
@@ -50,14 +21,14 @@ class Asteroid {
   }
   
   void rebound(PVector fromPosition) {
-    //PVector direction = PVector.sub(fromPositon, position);
-    velocity.mult(-1);
-    
+    PVector direction = PVector.sub(position, fromPosition).normalize();
+    velocity.set(direction.mult(velocity.mag()));
   }
   
   void destroy() {
     timeDestroyed = millis();
-    asteroidSounds.get(floor(random(0, 3))).play();
+    round.addScore(asteroidBaseScore * level);
+    playSound(4);
     spawned = false;
     velocity = new PVector(0,0);
     position = new PVector(width * 2, height * 2);
@@ -66,13 +37,14 @@ class Asteroid {
   
   void spawn() {
     if (spawned) { return; }
-    if (millis() < timeDestroyed + (1000 * (spawnInterval + random(-spawnIntervalVariance, spawnIntervalVariance)))) { return; }
+    if (millis() < timeDestroyed + (1000 * (asteroidSpawnInterval + random(-asteroidSpawnIntervalVariance, asteroidSpawnIntervalVariance)))) { return; }
 
-    level = random(1, asteroidMaxLevel);
+    level = random(asteroidMinLevel * round.difficultyScale, asteroidMaxLevel * round.difficultyScale);
     maxHealth = level * asteroidBaseHealth;
     health = maxHealth;
     damage = level * asteroidBaseDamage;
-    radius = level * asteroidBaseRadius;
+    radius = (asteroidBaseRadius + (min((level / 5) * asteroidBaseRadius, 50) ) * random(0.7, 2));
+    println(radius);
     
     if (round(random(0, 1)) == 1) {
       position = new PVector(random(0, width), height * round(random(0, 1)));
@@ -80,7 +52,7 @@ class Asteroid {
       position = new PVector(width * round(random(0, 1)), random(0, height));
     }
 
-    velocity = PVector.sub(ply.getPosition(), position).setMag(random(asteroidMinSpeed, asteroidMaxSpeed));
+    velocity = PVector.sub(round.ply.getPosition(), position).setMag(random(asteroidMinSpeed, asteroidMaxSpeed));
     spawned = true;
   }
   
@@ -101,13 +73,13 @@ class Asteroid {
       velocity.y *= -1;
     }
     
-    float distance = PVector.sub(ply.getPosition(), position).mag();
+    float distance = PVector.sub(round.ply.getPosition(), position).mag();
     float minDistance = 20 + radius;
       
-    if ((distance < minDistance) && collisionTime > lastCollided + 100){
-      ply.takeDamage(damage);
+    if ((distance < minDistance) && collisionTime > lastCollided + 200){
+      round.ply.takeDamage(damage);
       takeDamage(damage);
-      rebound(ply.getPosition());
+      rebound(round.ply.getPosition());
       lastCollided = collisionTime;
       //destroy();
     }
@@ -123,6 +95,7 @@ class Asteroid {
       fill(100, 100, 100);
       circle(position.x, position.y, radius * 2);
       fill(255, 255, 255);
+      textFont(willowFont);
       textSize(20);
       textAlign(CENTER, CENTER);
       text(ceil(health), position.x, position.y);

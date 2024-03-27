@@ -1,5 +1,4 @@
 boolean[] keys = new boolean[256];
-float plyBaseHealth = 1150;
 
 void keyPressed() {
   keys[keyCode] = true;
@@ -13,30 +12,46 @@ class Player {
   private PVector position, centerPos, velocity = new PVector(), acceleration = new PVector();
   private float rotation = 0;
   
-  private float maxVelocity = 50;
-  private float accelerationRate = 0.4;
-  private float deccelerationRate = 0.05;
-  private float rotationRate = 0.04;
+  private float maxVelocity;
+  private float accelerationRate;
+  private float deccelerationRate;
+  private float rotationRate;
   
-  private float maxHealth = plyBaseHealth;
-  private float health = maxHealth;
+  private float maxHealth;
+  private float health;
+  private boolean destroyed = false;
 
   private Weapon weapon;
 
-  Player(PVector _position) {
+  Player(PVector _position, float _maxVelocity, float _accelerationRate, float _deccelerationRate, float _rotationRate, int _maxHealth) {
     position = _position.copy();
+    maxVelocity = _maxVelocity;
+    accelerationRate = _accelerationRate;
+    deccelerationRate = _deccelerationRate;
+    rotationRate = _rotationRate;
+    maxHealth = _maxHealth;
+    health = maxHealth;
+    
     centerPos = _position.copy();
     centerPos.y += 40;
   }
   
   void takeDamage(float damage) {
     health -= damage;
-    shipDamageSounds.get(floor(random(0, 3))).play();
+    playSound(3);
 
     if (health <= 0) {
-      shipDeathSounds.get(floor(random(0, 3))).play();
-      endGame();
+      kill();
     }
+  }
+  
+  boolean getDestroyed() {
+   return destroyed; 
+  }
+  
+  void kill() {
+    playSound(2);
+    destroyed = true; 
   }
 
   void setWeapon(Weapon _weapon) {

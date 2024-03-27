@@ -1,17 +1,3 @@
-ArrayList<Bullet> bullets = new ArrayList<Bullet>();
-
-void runBullets() {
-  for (int i = bullets.size() - 1; i >= 0; i--) {
-    Bullet b = bullets.get(i);
-    
-    if (b.destroyed == true) {
-      bullets.remove(b);
-      continue;
-    }
-    b.run();
-  }
-}
-
 class Bullet {
   private PVector position, size, velocity = new PVector();
   private float rotation;
@@ -29,8 +15,6 @@ class Bullet {
     lifeSpan = _lifeSpan;
 
     spawnTime = millis();
-    
-    bullets.add(this);
   }
   
   void run() {
@@ -51,8 +35,8 @@ class Bullet {
       velocity.y *= -1;
     }
     
-    for (int i = asteroids.size() - 1; i >= 0; i--) {
-      Asteroid a = asteroids.get(i);
+    for (int i = round.asteroids.size() - 1; i >= 0; i--) {
+      Asteroid a = round.asteroids.get(i);
       
       float distance = PVector.sub(a.position, position).mag();
       float minDistance = (size.x / 2) + (a.radius);

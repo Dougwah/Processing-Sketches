@@ -1,57 +1,63 @@
 import processing.sound.*;
 
-boolean gameOver = false;
-ArrayList<SoundFile> weaponSounds = new ArrayList<SoundFile>();
-ArrayList<SoundFile> shipDeathSounds = new ArrayList<SoundFile>();
-ArrayList<SoundFile> shipDamageSounds = new ArrayList<SoundFile>();
-ArrayList<SoundFile> asteroidSounds = new ArrayList<SoundFile>();
+int WEAPONFIRE = 1;
+int SHIPDEATH = 2;
+int SHIPDAMAGE = 3;
+int ASTEROIDDEATH = 4;
 
+String[] soundTypes = new String[]{"weaponFire", "shipDeath", "shipDamage", "asteroidDeath"};
+int[] soundCount = new int[]{1, 3, 3, 3};
+ArrayList<ArrayList> sounds = new ArrayList<ArrayList>();
 
-Player ply;
-Weapon plyWep;
+PFont willowFont;
+PFont marineFont;
+
+Round round;
 
 void setup() {
+  //fullScreen();
   size(1920, 1080);
   frameRate(60);
 
-  ply = new Player(new PVector(width / 2, height / 2));
-  plyWep = new Weapon(5, 30, new PVector(10, 40), 0.6);
-  ply.setWeapon(plyWep);
+  willowFont = createFont("WillowBody.ttf", 128);
+  marineFont = createFont("SpaceMarine.ttf", 128);
   
   Sound.volume(0.1);
-  for (int i = 0; i < 3; i++) {
-    weaponSounds.add(new SoundFile(this, "sounds/weapon/"+ (i + 1) + ".ogg"));
-    shipDeathSounds.add(new SoundFile(this, "sounds/shipDeath/"+ (i + 1) + ".ogg"));
-    shipDamageSounds.add(new SoundFile(this, "sounds/shipDamage/"+ (i + 1) + ".ogg"));
-    asteroidSounds.add(new SoundFile(this, "sounds/asteroid/"+ (i + 1) + ".ogg"));
+  for (int i = 0; i < soundTypes.length; i++) {
+    println(i);
+    println(soundTypes[i]);
+    ArrayList<SoundFile> soundList = new ArrayList<SoundFile>();
+    
+    for (int i2 = 0; i2 < soundCount[i]; i2++) {
+      soundList.add(new SoundFile(this, "sounds/" + soundTypes[i] + "/" + (i2 + 1) + ".ogg"));
+    }
+    
+   sounds.add(soundList);
+   
   }
 
-  initAsteroids();
+  round = new Round(difficultyScaleRate);
 }
 
 void draw() {
-  if (gameOver == true) { 
-    rectMode(CORNER);
-    fill(0, 0, 255);
-    rect(0, 0, width, height);
-    return; 
-  }
-  
-
-  
   background(0);
   noStroke();
-  ply.run();
-  
-  runAsteroids();
-  runBullets();
+  round.run();
 }
 
 
-void endGame() {
-  gameOver = true;
+void playSound(int soundType) {
+  ArrayList<SoundFile> _sounds = sounds.get(soundType - 1);
+  SoundFile sound = _sounds.get(floor(random(0, _sounds.size())));
+  sound.play();
 }
 
 float NormalizeFrames(float x) {
   return x * (238 / frameRate);
 }
+
+// add main menu allowing difficulty selection
+// add pickups that increase weapon stats
+// save scores to file and have leaderboard
+// add effect for asteroids breaking
+// add option to toggle wrap around edges

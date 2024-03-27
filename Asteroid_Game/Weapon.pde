@@ -20,13 +20,14 @@ class Weapon {
       return;
     }
 
-    weaponSounds.get(floor(random(0, 3))).play();
+    //weaponSounds.get(floor(random(0, 3))).play();
+    playSound(1);
 
     PVector velocity = PVector.sub(endPos, startPos);
     
     velocity.mult(bulletSpeed).add(initialVelocity);
     
-    new Bullet(startPos, velocity, bulletSize, 2, damage);
+    round.bullets.add(new Bullet(startPos, velocity, bulletSize, 2, damage));
     lastFired = millis();
   }
 }
