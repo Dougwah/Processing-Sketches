@@ -24,7 +24,6 @@ boolean gameStarted = false;
 void setup() {
   fullScreen();
   size(displayWidth, displayHeight);
-  size(1920, 1080);
   frameRate(60);
   
   bg = new Background();
