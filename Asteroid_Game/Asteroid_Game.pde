@@ -26,6 +26,8 @@ void setup() {
   size(displayWidth, displayHeight);
   frameRate(60);
   
+  bg = new Background();
+  
   willowFont = createFont("WillowBody.ttf", 128);
   marineFont = createFont("SpaceMarine.ttf", 128);
   
@@ -40,12 +42,11 @@ void setup() {
   }
   
   playSound(6);
-  bg = new Background();
+
   round = new Round(difficultyScaleRate);
 }
 
 void keyPressed() {
-  println(keyCode);
   keys[keyCode] = true;
 };
 

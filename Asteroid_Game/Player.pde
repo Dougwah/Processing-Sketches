@@ -126,11 +126,11 @@ class Player {
       position.y += height;
     }
     
-    if (keys[37]) { // LEFT
+    if (keys[37] || keys[78]) { // LEFT || n
       rotation -= rotationRate;
     }
 
-    if (keys[39]) { // RIGHT
+    if (keys[39] || keys[77]) { // RIGHT || m
       rotation += rotationRate;
     }
     

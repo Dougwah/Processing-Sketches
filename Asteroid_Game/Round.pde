@@ -9,7 +9,7 @@ float plyMaxVelocity = 10;
 float plyAccelerationRate = 0.2;
 float plyDeccelerationRate = 0.05;
 float plyRotationRate = 0.04;
-int plyMaxHealth = 50;
+int plyMaxHealth = 5;
 // WEAPON VALUES
 int weaponDamage = 1;
 int weaponFireRate = 2;

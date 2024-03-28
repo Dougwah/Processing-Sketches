@@ -62,7 +62,7 @@ class Asteroid {
     level = random(asteroidMinLevel * round.difficultyScale, asteroidMaxLevel * round.difficultyScale);
     maxHealth = level * asteroidBaseHealth;
     health = maxHealth;
-    damage = level * asteroidBaseDamage;
+    damage = 1; //damage = level * asteroidBaseDamage;
     radius = asteroidBaseRadius * random(1, 2) + round.difficultyScale;
  
     if (round(random(1)) == 1) {
@@ -71,7 +71,7 @@ class Asteroid {
       position = new PVector(width * round(random(1)), random(height));
     }
 
-    velocity = PVector.sub(round.ply.getPosition(), position).setMag(random(asteroidMinSpeed, asteroidMaxSpeed + (round.difficultyScale / 3)));
+    velocity = PVector.sub(round.ply.getPosition(), position).setMag(random(asteroidMinSpeed, min(asteroidMaxSpeed + (round.difficultyScale / 4), 15)));
     spawned = true;
   }
   
