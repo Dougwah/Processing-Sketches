@@ -104,9 +104,6 @@ class Round {
   
   void spawnPowerups() {
     if (millis() > scoreLastAdded + 10000) { return; }
-    println(scoreLastAdded);
-    println(millis());
-
     new ShipSpeedPowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 0.05, 0.4);
     new BulletSpeedPowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 0.05, 0.5);
     new FireRatePowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 1, 0.75);
