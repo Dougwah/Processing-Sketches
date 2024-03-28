@@ -24,6 +24,7 @@ boolean gameStarted = false;
 void setup() {
   fullScreen();
   size(displayWidth, displayHeight);
+  size(1920, 1080);
   frameRate(60);
   
   bg = new Background();
@@ -78,6 +79,9 @@ void draw() {
       textFont(willowFont);
       textSize(50);
       text("Start? [Y/N]", width / 2, height / 1.5);
+      textSize(25);
+      textAlign(LEFT, CENTER);
+      text("Move: W, A, S, D\nRotate: < > / N, M\nShoot: SPACE\nQuit: ESC", width * 0.05, height * 0.9);
     popMatrix();
     return;
   }

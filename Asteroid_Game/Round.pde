@@ -35,6 +35,7 @@ class Round {
   float difficultyScaleRate;
   float difficultyScale;
   float lastTick;
+  float scoreLastAdded;
    
   Player ply;
 
@@ -48,6 +49,7 @@ class Round {
     over = false;
     difficultyScale = 1;
     lastTick = millis();
+    scoreLastAdded = millis();
     
     ply = new Player(
       new PVector(width / 2, height / 2), 
@@ -100,6 +102,10 @@ class Round {
   }
   
   void spawnPowerups() {
+    if (millis() > scoreLastAdded + 10000) { return; }
+    println(scoreLastAdded);
+    println(millis());
+
     new ShipSpeedPowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 0.05, 0.4);
     new BulletSpeedPowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 0.05, 0.5);
     new FireRatePowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 1, 0.75);
@@ -130,6 +136,7 @@ class Round {
   void addScore(float _score) {
     score += _score;
     score = round(score);
+    scoreLastAdded = millis();
   }
   
   void drawRoundInfo() {
