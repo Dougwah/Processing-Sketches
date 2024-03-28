@@ -1,13 +1,3 @@
-boolean[] keys = new boolean[256];
-
-void keyPressed() {
-  keys[keyCode] = true;
-};
-
-void keyReleased() {
-  keys[keyCode] = false;
-};
-
 class Player {
    PVector position, centerPos, velocity = new PVector(), acceleration = new PVector();
   private float rotation = 0;
@@ -16,8 +6,6 @@ class Player {
   private float accelerationRate;
   private float deccelerationRate;
   private float rotationRate;
-  //private float sWidth = 20;
-  //private float sHeight = 44;
   private PVector size = new PVector(20, 44);
   
   private float maxHealth;

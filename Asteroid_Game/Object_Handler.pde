@@ -2,18 +2,16 @@ class ObjectHandler {
   ArrayList<Bullet> bullets;
   ArrayList<Asteroid> asteroids;
   ArrayList<DamageEffect> damageEffects;
-  
-  //ArrayList<DamagePowerup> damagePowerups;
-  //ArrayList<FireRatePowerup> fireRatePowerups;
   ArrayList<Powerup> powerups;
   
   ObjectHandler() {
+    createArrays();
+  }
+  
+  void createArrays() {
     bullets = new ArrayList<Bullet>();
     asteroids = new ArrayList<Asteroid>();
     damageEffects = new ArrayList<DamageEffect>();
-    //damagePowerups = new ArrayList<DamagePowerup>();
-    //fireRatePowerups = new ArrayList<FireRatePowerup>();
-    
     powerups = new ArrayList<Powerup>();
   }
   
@@ -53,27 +51,5 @@ class ObjectHandler {
       }
       p.run();
     }
-      
-      
-  //}
-    
-    //// RUN POWERUPS
-    //for (int i = damagePowerups.size() - 1; i >= 0; i--) {
-    //  DamagePowerup dP = damagePowerups.get(i);    
-    //  if (dP.expired == true) {
-    //    damagePowerups.remove(dP);
-    //    continue;
-    //  }
-    //  dP.run();
-    //}
-    
-    //for (int i = fireRatePowerups.size() - 1; i >= 0; i--) {
-    //  FireRatePowerup fRP = fireRatePowerups.get(i);    
-    //  if (fRP.expired == true) {
-    //    fireRatePowerups.remove(fRP);
-    //    continue;
-    //  }
-    //  fRP.run();
-    //}
   }
 }

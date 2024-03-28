@@ -1,7 +1,7 @@
 // GAME VALUES
 float difficultyScaleRate = 0.03;
 // POWERUP VALUES
-float powerupSpawnChance = 0.2;
+float powerupSpawnChance = 10;
 float powerupScale = 1;
 float powerupLifeTime = 10;
 // PLAYER VALUES
@@ -11,10 +11,11 @@ float plyDeccelerationRate = 0.05;
 float plyRotationRate = 0.04;
 int plyMaxHealth = 50;
 // WEAPON VALUES
-int WeaponDamage = 1;
-int WeaponFireRate = 2;
-PVector BulletSize = new PVector(10, 30);
-float BulletSpeed = 0.1;
+int weaponDamage = 1;
+int weaponFireRate = 2;
+PVector bulletSize = new PVector(10, 30);
+float bulletSpeed = 0.1;
+int bulletMaxBounces = 1;
 // ASTEROID VALUES
 float asteroidBaseHealth = 2;
 float asteroidBaseDamage = 1;
@@ -36,13 +37,8 @@ class Round {
   float lastTick;
    
   Player ply;
-  Background bg;
-  ArrayList<Bullet> bullets;
-  ArrayList<Asteroid> asteroids;
-  ArrayList<DamageEffect> damageEffects;
-   
-  Round(float _difficultyScaleRate) {
 
+  Round(float _difficultyScaleRate) {
     difficultyScaleRate = _difficultyScaleRate;
     init();
   }
@@ -50,14 +46,9 @@ class Round {
   void init() {
     score = 0;
     over = false;
-    bullets = new ArrayList<Bullet>();
-    asteroids = new ArrayList<Asteroid>();
-    damageEffects = new ArrayList<DamageEffect>();
     difficultyScale = 1;
     lastTick = millis();
     
-    bg = new Background();
-     
     ply = new Player(
       new PVector(width / 2, height / 2), 
       plyMaxVelocity,
@@ -68,10 +59,11 @@ class Round {
     );
      
     ply.setWeapon(new Weapon(
-      WeaponDamage, 
-      WeaponFireRate, 
-      BulletSize, 
-      BulletSpeed
+      weaponDamage, 
+      weaponFireRate, 
+      bulletSize, 
+      bulletSpeed,
+      bulletMaxBounces
     ));
 
     objHandler = new ObjectHandler();
@@ -79,17 +71,22 @@ class Round {
     for (int i = 0; i < asteroidMaxAmount; i++) {
       new Asteroid();
     }
-    
-
   }
 
   void run() {
     if (ply.getDestroyed()) { 
        endGame();
+
+       if (keys[89]) {
+         init();
+       }
+       
+       if (keys[78]) {
+         exit(); 
+       }
        return;
     }
-     
-    bg.run();
+    
     ply.run();
     objHandler.run();
      
@@ -103,17 +100,31 @@ class Round {
   }
   
   void spawnPowerups() {
-    float decider = ceil(random(101));
-    if (decider <= powerupSpawnChance * 100) {
-      new DamagePowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 1);
-      new FireRatePowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 1);
-      new BulletSpeedPowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 0.1);
-      new ShipSpeedPowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 0.05);
-    }
+    new ShipSpeedPowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 0.05, 0.4);
+    new BulletSpeedPowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 0.05, 0.5);
+    new FireRatePowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 1, 0.75);
+    new DamagePowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 1, 0.8);
+    new AutoAimPowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 10, 0.15);
+    new ExtraBulletBouncesPowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 10, 0.15);
   }
  
   void endGame() {
-    init();
+    objHandler.createArrays();
+    pushMatrix();
+      fill(0, 255, 0);
+      textFont(marineFont);
+      textAlign(CENTER, CENTER);
+      textSize(50);
+      text("Score: " + score, width / 2, height / 2);
+      textSize(128);
+      text("YOU DIED", width / 2, height / 2.5);
+      textFont(willowFont);
+      textSize(50);
+      text("Continue? [Y/N]", width / 2, height / 1.5);
+      //rect(0, 0, width, height);
+      
+    popMatrix();
+
   }
  
   void addScore(float _score) {

@@ -5,9 +5,10 @@ int SHIPDEATH = 2;
 int SHIPDAMAGE = 3;
 int ASTEROIDDEATH = 4;
 int PICKUP = 5;
+int MUSIC = 6;
 
-String[] soundTypes = new String[]{"weaponFire", "shipDeath", "shipDamage", "asteroidDeath", "pickup"};
-int[] soundCount = new int[]{1, 3, 3, 3, 1};
+String[] soundTypes = new String[]{"weaponFire", "shipDeath", "shipDamage", "asteroidDeath", "pickup", "music"};
+int[] soundCount = new int[]{1, 3, 3, 3, 1, 1};
 ArrayList<ArrayList> sounds = new ArrayList<ArrayList>();
 
 PFont willowFont;
@@ -15,12 +16,16 @@ PFont marineFont;
 
 ObjectHandler objHandler;
 Round round;
+Background bg;
+
+boolean[] keys = new boolean[256];
+boolean gameStarted = false;
 
 void setup() {
-  //fullScreen();
-  size(2560, 1440);
+  fullScreen();
+  size(displayWidth, displayHeight);
   frameRate(60);
-
+  
   willowFont = createFont("WillowBody.ttf", 128);
   marineFont = createFont("SpaceMarine.ttf", 128);
   
@@ -31,17 +36,50 @@ void setup() {
     for (int i2 = 0; i2 < soundCount[i]; i2++) {
       soundList.add(new SoundFile(this, "data/sounds/" + soundTypes[i] + "/" + (i2 + 1) + ".ogg"));
     }
-    
    sounds.add(soundList);
-   
   }
-
+  
+  playSound(6);
+  bg = new Background();
   round = new Round(difficultyScaleRate);
 }
+
+void keyPressed() {
+  println(keyCode);
+  keys[keyCode] = true;
+};
+
+void keyReleased() {
+  keys[keyCode] = false;
+};
 
 void draw() {
   background(0);
   noStroke();
+  bg.run();
+  if (gameStarted == false) {
+    
+     if (keys[89]) {
+       gameStarted = true;
+     }
+     
+     if (keys[78]) {
+       exit();
+     }
+    
+    pushMatrix();
+      fill(0, 255, 0);
+      textFont(marineFont);
+      textAlign(CENTER, CENTER);
+      textSize(50);
+      textSize(128);
+      text("ASTEROID GAME", width / 2, height / 2.5);
+      textFont(willowFont);
+      textSize(50);
+      text("Start? [Y/N]", width / 2, height / 1.5);
+    popMatrix();
+    return;
+  }
   round.run();
 }
 
@@ -57,12 +95,5 @@ float NormalizeFrames(float x) {
 
 // add main menu allowing difficulty selection
 // each difficulty will have the applied game values stored and displayed to the player
-
-// add pickups that increase weapon stats
 // save scores to file and have leaderboard
-
-// add option to toggle wrap around edges
-
 // add sprite damage states to asteroids
-
-// add a game over screen

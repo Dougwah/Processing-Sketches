@@ -2,12 +2,13 @@ class Bullet {
   private PVector position, size, velocity = new PVector(), additionalVelocity;
   private float rotation;
   private float damage;
-  private int lifeSpan;
+  private int bounces;
+  private int lifeSpan = 10;
   private int spawnTime;
   
   private boolean destroyed = false;
 
-  Bullet(PVector _position, PVector _velocity, PVector _additionalVelocity, PVector _size, int _lifeSpan, float _damage) {
+  Bullet(PVector _position, PVector _velocity, PVector _additionalVelocity, PVector _size, int _maxBounces, float _damage) {
     position = _position;
 
     additionalVelocity = _additionalVelocity.copy();
@@ -15,28 +16,49 @@ class Bullet {
     
     size = _size.copy();
     damage = _damage;
-    lifeSpan = _lifeSpan;
+    bounces = _maxBounces;
 
     spawnTime = millis();
     objHandler.bullets.add(this);
+  }
+  
+  void incrementBounces(int count) {
+    bounces += count;
+    if (bounces <= 0) {
+      destroyed = true; 
+    }
+  }
+  
+  void rebound(PVector fromPosition) {
+    PVector direction = PVector.sub(position, fromPosition).normalize();
+    velocity.set(direction.mult(velocity.mag()));
   }
   
   void run() {
     if (millis() - spawnTime > lifeSpan * 1000) {
       destroyed = true;
     }
-    checkCollision();
+    
     move();
+    checkCollision();
     drawShape();
   }
   
   void checkCollision() {
-    if (position.x > width || position.x < 0) {
-      velocity.x *= -1;
+    if (position.x > width) {
+      position.x -= width;
     }
-    
-    if (position.y > height || position.y < 0) {
-      velocity.y *= -1;
+
+    if (position.x < 0) {
+      position.x += width;
+    }
+
+    if (position.y > height) {
+      position.y -= height;
+    }
+
+    if (position.y < 0) {
+      position.y += height;
     }
     
     for (int i = objHandler.asteroids.size() - 1; i >= 0; i--) {
@@ -46,8 +68,9 @@ class Bullet {
       float minDistance = (size.x / 2) + (a.radius);
       
       if (distance < minDistance) {
-        destroyed = true;
         a.takeDamage(damage, true);
+        incrementBounces(-1);
+        rebound(a.position);
       }
     }
   }

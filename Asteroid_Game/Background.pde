@@ -7,7 +7,6 @@ color[] starColors = {
   color(250, 167, 65),
   color(252, 123, 58),
   color(252, 81, 58),
-  //color(134, 77, 247)
 };
 
 class Background {
@@ -32,5 +31,4 @@ class Background {
       popMatrix();
     }
   }
-
 }
