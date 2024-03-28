@@ -4,19 +4,21 @@ int WEAPONFIRE = 1;
 int SHIPDEATH = 2;
 int SHIPDAMAGE = 3;
 int ASTEROIDDEATH = 4;
+int PICKUP = 5;
 
-String[] soundTypes = new String[]{"weaponFire", "shipDeath", "shipDamage", "asteroidDeath"};
-int[] soundCount = new int[]{1, 3, 3, 3};
+String[] soundTypes = new String[]{"weaponFire", "shipDeath", "shipDamage", "asteroidDeath", "pickup"};
+int[] soundCount = new int[]{1, 3, 3, 3, 1};
 ArrayList<ArrayList> sounds = new ArrayList<ArrayList>();
 
 PFont willowFont;
 PFont marineFont;
 
+ObjectHandler objHandler;
 Round round;
 
 void setup() {
   //fullScreen();
-  size(1920, 1080);
+  size(2560, 1440);
   frameRate(60);
 
   willowFont = createFont("WillowBody.ttf", 128);
@@ -44,8 +46,8 @@ void draw() {
 }
 
 void playSound(int soundType) {
-  ArrayList<SoundFile> _sounds = sounds.get(soundType - 1);
-  SoundFile sound = _sounds.get(floor(random(0, _sounds.size())));
+  ArrayList<SoundFile> soundList = sounds.get(soundType - 1);
+  SoundFile sound = soundList.get(floor(random(soundList.size())));
   sound.play();
 }
 
@@ -64,7 +66,3 @@ float NormalizeFrames(float x) {
 // add sprite damage states to asteroids
 
 // add a game over screen
-
-// add object arrays to class and have a static get function to retrieve
-// add a function that loops through the objects and removes them to be called when a new round is made
-// pass coordinates to the class for collision to avoid requiring a reference to the player?

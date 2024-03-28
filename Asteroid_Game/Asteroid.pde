@@ -14,11 +14,17 @@ class Asteroid {
   private int lastCollided = 0;
   private color drawColor = color(100, 100, 100);
   
+  Asteroid () {
+    objHandler.asteroids.add(this); 
+  }
+  
   void run() {
     spawn();
-    checkCollision();
-    move();
-    drawShape();
+    if (spawned) {
+      checkCollision();
+      move();
+      drawShape();
+    }
   }
   
   void takeDamage(float damage, boolean playerDamage) {
@@ -52,34 +58,52 @@ class Asteroid {
     if (spawned) { return; }
     if (millis() < timeDestroyed + (1000 * (asteroidSpawnInterval + random(-asteroidSpawnIntervalVariance, asteroidSpawnIntervalVariance)))) { return; }
     
+    drawColor = color(100, 100, 100);
     level = random(asteroidMinLevel * round.difficultyScale, asteroidMaxLevel * round.difficultyScale);
     maxHealth = level * asteroidBaseHealth;
     health = maxHealth;
     damage = level * asteroidBaseDamage;
-    radius = (asteroidBaseRadius + (min((level / 5) * asteroidBaseRadius, 50)) * random(0.7, 2));
-
-    if (round(random(0, 1)) == 1) {
-      position = new PVector(random(0, width), height * round(random(0, 1)));
+    radius = asteroidBaseRadius * random(1, 2) + round.difficultyScale;
+ 
+    if (round(random(1)) == 1) {
+      position = new PVector(random(0, width), height * round(random(1)));
     } else {
-      position = new PVector(width * round(random(0, 1)), random(0, height));
+      position = new PVector(width * round(random(1)), random(height));
     }
 
-    velocity = PVector.sub(round.ply.getPosition(), position).setMag(random(asteroidMinSpeed, asteroidMaxSpeed));
+    velocity = PVector.sub(round.ply.getPosition(), position).setMag(random(asteroidMinSpeed, asteroidMaxSpeed + (round.difficultyScale / 3)));
     spawned = true;
   }
   
   void checkCollision() {
     int collisionTime = millis();
-    if (position.x > width || position.x < 0) {
-      velocity.x *= -1;
-    }
     
-    if (position.y > height || position.y < 0) {
-      velocity.y *= -1;
+    //if (position.x > width || position.x < 0) {
+    //  velocity.x *= -1;
+    //}
+    
+    //if (position.y > height || position.y < 0) {
+    //  velocity.y *= -1;
+    //}
+    
+    if (position.x > width) {
+      position.x -= width;
+    }
+
+    if (position.x < 0) {
+      position.x += width;
+    }
+
+    if (position.y > height) {
+      position.y -= height;
+    }
+
+    if (position.y < 0) {
+      position.y += height;
     }
     
     float distance = PVector.sub(round.ply.getPosition(), position).mag();
-    float minDistance = 20 + radius;
+    float minDistance = (round.ply.getSize().y / 2) + radius;
     
     if ((distance < minDistance) && collisionTime > lastCollided + 200){
       round.ply.takeDamage(damage);
@@ -87,6 +111,16 @@ class Asteroid {
       rebound(round.ply.getPosition());
       lastCollided = collisionTime;
     }
+    
+    //for (Asteroid a : objHandler.asteroids) {
+    //  if (a.position == null || a.position == position) { continue; }
+    //  distance = PVector.sub(a.position, position).mag();
+    //  minDistance = a.radius + radius;
+      
+    //  if (distance < minDistance) {
+    //    rebound(a.position); 
+    //  }
+    //}
     
   }
   

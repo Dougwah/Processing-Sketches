@@ -1,4 +1,4 @@
-int starCount = 300;
+int starCount = 400;
 color[] starColors = {
   color(255, 255, 255),
   color(217, 243, 255),
@@ -7,7 +7,7 @@ color[] starColors = {
   color(250, 167, 65),
   color(252, 123, 58),
   color(252, 81, 58),
-  color(134, 77, 247)
+  //color(134, 77, 247)
 };
 
 class Background {
@@ -19,7 +19,7 @@ class Background {
     for (int i = 0; i < starCount - 1; i++) {
       PVector gPosition = new PVector(random(0, width), random(0, height));
       gPositions.add(gPosition);
-      gColors[i] = starColors[floor(random(0, starColors.length - 1))];
+      gColors[i] = starColors[floor(random(starColors.length))];
       gSizes[i] = random(1, 4);
     }
   }

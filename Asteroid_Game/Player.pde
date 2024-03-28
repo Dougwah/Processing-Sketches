@@ -9,13 +9,16 @@ void keyReleased() {
 };
 
 class Player {
-  private PVector position, centerPos, velocity = new PVector(), acceleration = new PVector();
+   PVector position, centerPos, velocity = new PVector(), acceleration = new PVector();
   private float rotation = 0;
   
   private float maxVelocity;
   private float accelerationRate;
   private float deccelerationRate;
   private float rotationRate;
+  //private float sWidth = 20;
+  //private float sHeight = 44;
+  private PVector size = new PVector(20, 44);
   
   private float maxHealth;
   private float health;
@@ -35,6 +38,12 @@ class Player {
     
     centerPos = _position.copy();
     centerPos.y += 40;
+  }
+  
+  void addShipSpeed(float shipSpeed) {
+    accelerationRate += shipSpeed;
+    maxVelocity += shipSpeed * 10;
+    rotationRate += shipSpeed * 0.1;
   }
   
   void takeDamage(float damage) {
@@ -62,6 +71,10 @@ class Player {
   
   PVector getPosition() {
     return centerPos; 
+  }
+  
+  PVector getSize() {
+    return size;
   }
   
   float getRotation() {
@@ -95,10 +108,10 @@ class Player {
     
     if (keys[32]) { // SPACE
       PVector endPos = position.copy();
-      
-      endPos.y += 45;
-      endPos.x += 45 * cos(rotation - 1.571);
-      endPos.y += 45 * sin(rotation - 1.571);
+      float offset = size.y / 2;
+      endPos.y += offset;
+      endPos.x += (100) * cos(rotation - 1.571);
+      endPos.y += (100) * sin(rotation - 1.571);
       
       weapon.fire(centerPos.copy(), endPos, velocity.copy());
     }
@@ -137,27 +150,28 @@ class Player {
     velocity.mult(1 - deccelerationRate);
     
     centerPos = position.copy();
-    centerPos.y += 45;
+    centerPos.y += size.y / 2;
   }
   
   void drawPlayer() {
 
     pushMatrix();
-      translate(position.x, position.y + 45);
+      translate(position.x, position.y + (size.y / 2));
       rectMode(CENTER);
       fill(0, 255, 0);
-      rect(0, 50, 50 * (health / maxHealth), 5);
+      rect(0, size.y * 0.8, size.x * (health / maxHealth) * 2, 5);
       rotate(rotation);
-      translate(0, -45);
+      translate(0, -size.y / 2);
       fill(drawColor);
       beginShape();
         vertex(0, 0);
-        vertex(30, 70);
-        vertex(0, 60);
-        vertex(-30, 70);
+        vertex(size.x, size.y);
+        vertex(0, size.y * 0.85);
+        vertex(-size.x, size.y);
       endShape(CLOSE);
     popMatrix();
     drawColor = lerpColor(drawColor, color(255, 255, 255), 0.1);
+    
   }
   
 }

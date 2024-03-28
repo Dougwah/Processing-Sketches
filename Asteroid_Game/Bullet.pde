@@ -1,5 +1,5 @@
 class Bullet {
-  private PVector position, size, velocity = new PVector();
+  private PVector position, size, velocity = new PVector(), additionalVelocity;
   private float rotation;
   private float damage;
   private int lifeSpan;
@@ -7,15 +7,18 @@ class Bullet {
   
   private boolean destroyed = false;
 
-  Bullet(PVector _position, PVector _velocity, PVector _size, int _lifeSpan, float _damage) {
+  Bullet(PVector _position, PVector _velocity, PVector _additionalVelocity, PVector _size, int _lifeSpan, float _damage) {
     position = _position;
-    velocity = _velocity;
-    size = _size;
+
+    additionalVelocity = _additionalVelocity.copy();
+    velocity = PVector.add(_velocity, additionalVelocity);
+    
+    size = _size.copy();
     damage = _damage;
     lifeSpan = _lifeSpan;
 
     spawnTime = millis();
-    round.bullets.add(this);
+    objHandler.bullets.add(this);
   }
   
   void run() {
@@ -36,8 +39,8 @@ class Bullet {
       velocity.y *= -1;
     }
     
-    for (int i = round.asteroids.size() - 1; i >= 0; i--) {
-      Asteroid a = round.asteroids.get(i);
+    for (int i = objHandler.asteroids.size() - 1; i >= 0; i--) {
+      Asteroid a = objHandler.asteroids.get(i);
       
       float distance = PVector.sub(a.position, position).mag();
       float minDistance = (size.x / 2) + (a.radius);
@@ -51,7 +54,9 @@ class Bullet {
   
   void move() {
     position.add(velocity);
-    rotation = -atan2(velocity.x, velocity.y);
+    
+    PVector baseVelocity = PVector.sub(velocity, additionalVelocity);
+    rotation = -atan2(baseVelocity.x, baseVelocity.y);
   }
   
   void drawShape() {
@@ -62,5 +67,7 @@ class Bullet {
       rotate(rotation);
       rect(0, 0, size.x, size. y);
     popMatrix();
+    //size.mult(0.99);
   }
+  
 }

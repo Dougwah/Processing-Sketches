@@ -16,14 +16,14 @@ class DamageEffect {
     
     for (int i = 0; i < particleCount; i++) {
       PVector position = _startPosition.copy();
-      float angle = random(0, 360);
+      float angle = random(360);
       position.x += 10 * cos(angle);
       position.y += 10 * sin(angle);
       positions.add(position);
       velocities.add(PVector.sub(startPosition, position));
     }
     
-    round.damageEffects.add(this);
+    objHandler.damageEffects.add(this);
   }
   
   void run() {

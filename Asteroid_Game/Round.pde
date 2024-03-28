@@ -1,23 +1,27 @@
 // GAME VALUES
-float difficultyScaleRate = 0.03;                  // How fast the asteroid level increases
+float difficultyScaleRate = 0.03;
+// POWERUP VALUES
+float powerupSpawnChance = 0.2;
+float powerupScale = 1;
+float powerupLifeTime = 10;
 // PLAYER VALUES
-float plyMaxVelocity = 50;
-float plyAccelerationRate = 0.6;
+float plyMaxVelocity = 10;
+float plyAccelerationRate = 0.2;
 float plyDeccelerationRate = 0.05;
 float plyRotationRate = 0.04;
 int plyMaxHealth = 50;
 // WEAPON VALUES
 int WeaponDamage = 1;
 int WeaponFireRate = 2;
-PVector BulletSize = new PVector(10, 40);
-float BulletSpeed = 0.8;
+PVector BulletSize = new PVector(10, 30);
+float BulletSpeed = 0.1;
 // ASTEROID VALUES
 float asteroidBaseHealth = 2;
 float asteroidBaseDamage = 1;
 float asteroidBaseRadius = 30;
 float asteroidBaseScore = 10;
-float asteroidMinSpeed = 4;
-float asteroidMaxSpeed = 12;
+float asteroidMinSpeed = 2;
+float asteroidMaxSpeed = 6;
 float asteroidMinLevel = 1;
 float asteroidMaxLevel = 3;
 int asteroidMaxAmount = 15;
@@ -70,9 +74,13 @@ class Round {
       BulletSpeed
     ));
 
+    objHandler = new ObjectHandler();
+    
     for (int i = 0; i < asteroidMaxAmount; i++) {
-      asteroids.add(new Asteroid());
-    }  
+      new Asteroid();
+    }
+    
+
   }
 
   void run() {
@@ -82,40 +90,26 @@ class Round {
     }
      
     bg.run();
-    ply.run();  
+    ply.run();
+    objHandler.run();
      
     if (millis() > lastTick + 1000) {
       difficultyScale += difficultyScale * difficultyScaleRate;
+      spawnPowerups();
       lastTick = millis();
     }
-     
-    // RUN ASTEROIDS
-    for (int i = asteroids.size() - 1; i >= 0; i--) {
-      Asteroid a = asteroids.get(i);
-      a.run();
-    }
-     
-    // RUN DAMAGE EFFECTS
-    for (int i = damageEffects.size() - 1; i >= 0; i--) {
-      DamageEffect de = damageEffects.get(i);        
-       if (de.completed == true) {
-         damageEffects.remove(de);
-         continue;
-       }        
-      de.run();
-    }
-     
-    // RUN BULLETS
-    for (int i = bullets.size() - 1; i >= 0; i--) {
-      Bullet b = bullets.get(i);    
-      if (b.destroyed == true) {
-        bullets.remove(b);
-        continue;
-      }
-      b.run();
-    }
-    
+
    drawRoundInfo();
+  }
+  
+  void spawnPowerups() {
+    float decider = ceil(random(101));
+    if (decider <= powerupSpawnChance * 100) {
+      new DamagePowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 1);
+      new FireRatePowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 1);
+      new BulletSpeedPowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 0.1);
+      new ShipSpeedPowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 0.05);
+    }
   }
  
   void endGame() {
