@@ -81,6 +81,7 @@ class Round {
 
        if (keys[89]) {
          init();
+         return;
        }
        
        if (keys[78]) {
@@ -126,11 +127,8 @@ class Round {
       text("YOU DIED", width / 2, height / 2.5);
       textFont(willowFont);
       textSize(50);
-      text("Continue? [Y/N]", width / 2, height / 1.5);
-      //rect(0, 0, width, height);
-      
+      text("Continue? [Y/N]", width / 2, height / 1.5);      
     popMatrix();
-
   }
  
   void addScore(float _score) {
