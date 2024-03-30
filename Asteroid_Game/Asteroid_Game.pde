@@ -117,7 +117,7 @@ PVector nVector(PVector vector) {
 
 String formatMillis(int millis) {
   int seconds = millis / 1000;
-  return nf(floor(seconds / 60), 2, 0) + " : " + nf((seconds % 60), 2, 0) + " : " + nf((millis / 10) % 100, 2, 0); 
+  return nf(floor(seconds / 60), 2, 0) + " : " + nf((seconds % 60), 2, 0) + " : " + nf((millis) % 1000, 3, 0); 
 }
 
 // add main menu allowing difficulty selection
