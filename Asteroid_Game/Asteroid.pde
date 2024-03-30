@@ -35,9 +35,9 @@ class Asteroid {
     }
   }
   
-  void rebound(PVector fromPosition) {
+  void rebound(PVector fromPosition, PVector additionalVelocity) {
     PVector direction = PVector.sub(position, fromPosition).normalize();
-    velocity.set(direction.mult(velocity.mag()));
+    velocity.set(direction.mult(additionalVelocity.mag() + velocity.mag()));
   }
   
   void destroy(boolean awardScore) {
@@ -62,7 +62,7 @@ class Asteroid {
     level = random(asteroidMinLevel * round.difficultyScale, asteroidMaxLevel * round.difficultyScale);
     maxHealth = level * asteroidBaseHealth;
     health = maxHealth;
-    damage = 1; //damage = level * asteroidBaseDamage;
+    damage = asteroidBaseDamage;
     radius = nX(min(asteroidBaseRadius * random(1, 2) + round.difficultyScale, asteroidMaxRadius));
  
     if (round(random(1)) == 1) {
@@ -71,7 +71,7 @@ class Asteroid {
       position = new PVector(width * round(random(1)), random(height));
     }
 
-    velocity = nVector(PVector.sub(round.ply.getPosition(), position).normalize().setMag(random(asteroidMinSpeed, min(asteroidMaxSpeed + (round.difficultyScale / 4), 15))));
+    velocity = PVector.sub(round.ply.getPosition(), position).normalize().setMag(random(asteroidMinSpeed, min(asteroidMaxSpeed + (round.difficultyScale / 4), 15)));
     spawned = true;
   }
   
@@ -105,10 +105,10 @@ class Asteroid {
     float distance = PVector.sub(round.ply.getPosition(), position).mag();
     float minDistance = (round.ply.getSize().y / 2) + radius;
     
-    if ((distance < minDistance) && collisionTime > lastCollided + 200){
+    if ((distance < minDistance) && collisionTime > lastCollided + 350){
       round.ply.takeDamage(damage);
       takeDamage(damage, false);
-      rebound(round.ply.getPosition());
+      rebound(round.ply.getPosition(), round.ply.getVelocity());
       lastCollided = collisionTime;
     }
     
@@ -125,7 +125,7 @@ class Asteroid {
   }
   
   void move() {
-    position.add(velocity);
+    position.add(nVector(velocity));
   }
   
   void drawShape(){

@@ -29,7 +29,7 @@ abstract class Powerup {
     float minDistance = 25 + (round.ply.getSize().y /2);
     
     if (distance < minDistance) {
-       pickup(); 
+       pickup();
     }
   }
   
@@ -58,7 +58,7 @@ void createPowerupShape(PVector position, color drawColor, PImage image, String 
 class DamagePowerup extends Powerup {
   int damageIncrease;
   color drawColor = color(200, 0, 0);
-  PImage image = loadImage("/textures/damageUp.png");
+  PImage image = damageUpImage;
   
   DamagePowerup(int _damageIncrease, float _spawnChance) {
     super(_spawnChance);
@@ -71,14 +71,14 @@ class DamagePowerup extends Powerup {
   }
   
   void drawShape() {
-    createPowerupShape(position, drawColor, image, str(damageIncrease));
+    createPowerupShape(position, drawColor, image, str(damageIncrease) + " Dmg");
   }
 }
 
 class FireRatePowerup extends Powerup {
   float fireRateIncrease;
   color drawColor = color(0, 0, 200);
-  PImage image = loadImage("/textures/fireRateUp.png");
+  PImage image = fireRateUpImage;
   
   FireRatePowerup(float _fireRateIncrease, float _spawnChance) {
     super(_spawnChance);
@@ -91,14 +91,14 @@ class FireRatePowerup extends Powerup {
   }
   
   void drawShape() {
-    createPowerupShape(position, drawColor, image, nf(round(fireRateIncrease * 10) * 0.1));
+    createPowerupShape(position, drawColor, image, nf(round(fireRateIncrease * 10) * 0.1) + " Fire Rate");
   }
 }
 
 class BulletSpeedPowerup extends Powerup {
   float bulletSpeedIncrease;
   color drawColor = color(0, 200, 0);
-  PImage image = loadImage("/textures/bulletSpeedUp.png");
+  PImage image = bulletSpeedUpImage;
   
   BulletSpeedPowerup(float _bulletSpeedIncrease, float _spawnChance) {
     super(_spawnChance);
@@ -111,14 +111,14 @@ class BulletSpeedPowerup extends Powerup {
   }
   
   void drawShape() {
-    createPowerupShape(position, drawColor, image, nf(round(bulletSpeedIncrease * 100) * 0.1));
+    createPowerupShape(position, drawColor, image, nf(round(bulletSpeedIncrease * 100) * 0.1) + " Bullet Spd");
   }
 }
 
 class ShipSpeedPowerup extends Powerup {
   float shipSpeedIncrease;
   color drawColor = color(255, 255, 255);
-  PImage image = loadImage("/textures/shipSpeedUp.png");
+  PImage image = shipSpeedUpImage;
   
   ShipSpeedPowerup(float _shipSpeedIncrease, float _spawnChance) {
     super(_spawnChance);
@@ -131,14 +131,14 @@ class ShipSpeedPowerup extends Powerup {
   }
   
   void drawShape() {
-    createPowerupShape(position, drawColor, image, nf(round(shipSpeedIncrease * 1000) * 0.1));
+    createPowerupShape(position, drawColor, image, nf(round(shipSpeedIncrease * 1000) * 0.1) + " Ship Spd");
   }
 }
 
 class AutoAimPowerup extends Powerup {
   float duration;
   color drawColor = color(255, 0, 200);
-  PImage image = loadImage("/textures/autoAim.png");
+  PImage image = autoAimImage;
   
   AutoAimPowerup(float _duration, float _spawnChance) {
     super(_spawnChance);
@@ -158,7 +158,7 @@ class AutoAimPowerup extends Powerup {
 class ExtraBulletBouncesPowerup extends Powerup {
   float duration;
   color drawColor = color(255, 0, 200);
-  PImage image = loadImage("/textures/bouncyBullets.png");
+  PImage image = bouncyBulletsImage;
   
   ExtraBulletBouncesPowerup(float _duration, float _spawnChance) {
     super(_spawnChance);
@@ -178,7 +178,7 @@ class ExtraBulletBouncesPowerup extends Powerup {
 class ShipHealPowerup extends Powerup {
   float healthIncrease;
   color drawColor = color(255, 255, 255);
-  PImage image = loadImage("/textures/shipHeal.png");
+  PImage image = shipHealImage;
   
   ShipHealPowerup(float _healthIncrease, float _spawnChance) {
     super(_spawnChance);
@@ -198,7 +198,7 @@ class ShipHealPowerup extends Powerup {
 class ShipInvinciblePowerup extends Powerup {
   float duration;
   color drawColor = color(250, 190, 0);
-  PImage image = loadImage("/textures/shipInvincible.png");
+  PImage image = shipInvincibleImage;
   
   ShipInvinciblePowerup(float _duration, float _spawnChance) {
     super(_spawnChance);

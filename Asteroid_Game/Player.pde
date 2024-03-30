@@ -18,18 +18,18 @@ class Player {
 
   Player(PVector _position, float _maxVelocity, float _accelerationRate, float _deccelerationRate, float _rotationRate, int _maxHealth) {
     position = _position.copy();
-    maxVelocity = nX(_maxVelocity);
-    accelerationRate = nX(_accelerationRate);
-    deccelerationRate = nX(_deccelerationRate);
-    rotationRate = nX(_rotationRate);
+    maxVelocity = _maxVelocity;
+    accelerationRate = _accelerationRate;
+    deccelerationRate = _deccelerationRate;
+    rotationRate = _rotationRate;
     maxHealth = _maxHealth;
     health = maxHealth;
   }
   
   void addShipSpeed(float shipSpeed) {
-    accelerationRate += nX(shipSpeed);
-    maxVelocity += nX(shipSpeed * 10);
-    rotationRate += nX(shipSpeed * 0.1);
+    accelerationRate += shipSpeed;
+    maxVelocity += shipSpeed * 10;
+    rotationRate += shipSpeed * 0.1;
   }
   
   void takeDamage(float damage) {
@@ -78,6 +78,10 @@ class Player {
   
   PVector getPosition() {
     return centerPos; 
+  }
+  
+  PVector getVelocity () {
+    return velocity; 
   }
   
   PVector getSize() {
@@ -161,7 +165,7 @@ class Player {
       rotation += rotationRate;
     }
     
-    position.add(velocity);
+    position.add(nVector(velocity));
     velocity.mult(1 - deccelerationRate);
     
     centerPos = position.copy();

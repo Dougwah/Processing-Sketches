@@ -10,6 +10,15 @@ int SHIPHEAL = 6;
 int SHIPHEALTHFULL = 7;
 int SHIPBLOCKDAMAGE = 8;
 
+PImage damageUpImage;
+PImage fireRateUpImage;
+PImage bulletSpeedUpImage;
+PImage shipSpeedUpImage;
+PImage autoAimImage;
+PImage bouncyBulletsImage ;
+PImage shipHealImage;
+PImage shipInvincibleImage;
+
 String[] soundTypes = new String[]{"weaponFire", "shipDeath", "shipDamage", "asteroidDeath", "pickup", "music", "shipHeal", "shipHealthFull", "shipBlockDamage"};
 int[] soundCount = new int[]{1, 3, 3, 3, 1, 1, 1, 1, 1};
 ArrayList<ArrayList> sounds = new ArrayList<ArrayList>();
@@ -44,6 +53,16 @@ void setup() {
     
    sounds.add(soundList);
   }
+  
+  damageUpImage = loadImage("/textures/damageUp.png");
+  fireRateUpImage = loadImage("/textures/fireRateUp.png");
+  bulletSpeedUpImage = loadImage("/textures/bulletSpeedUp.png");
+  shipSpeedUpImage = loadImage("/textures/shipSpeedUp.png");
+  autoAimImage = loadImage("/textures/autoAim.png");
+  bouncyBulletsImage = loadImage("/textures/bouncyBullets.png");
+  shipHealImage = loadImage("/textures/shipHeal.png");
+  shipInvincibleImage = loadImage("/textures/shipInvincible.png");
+    
   
   playSound(MUSIC);
   round = new Round(difficultyScaleRate);

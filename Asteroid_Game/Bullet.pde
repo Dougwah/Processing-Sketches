@@ -13,7 +13,7 @@ class Bullet {
     position = _position;
 
     additionalVelocity = _additionalVelocity.copy();
-    velocity = PVector.add(nVector(_velocity), additionalVelocity);
+    velocity = PVector.add(_velocity, additionalVelocity);
     
     size = nVector(_size.copy());
     damage = _damage;
@@ -78,7 +78,7 @@ class Bullet {
   }
   
   void move() {
-    position.add(velocity);
+    position.add(nVector(velocity));
     
     PVector baseVelocity = PVector.sub(velocity, additionalVelocity);
     rotation = -atan2(baseVelocity.x, baseVelocity.y);

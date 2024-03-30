@@ -120,7 +120,7 @@ class Round {
     new AutoAimPowerup(15, 3);
     new ExtraBulletBouncesPowerup(15, 2);
     new ShipHealPowerup(1, 9);
-    new ShipInvinciblePowerup(5, 2);
+    new ShipInvinciblePowerup(10, 2);
   }
  
   void endGame() {
