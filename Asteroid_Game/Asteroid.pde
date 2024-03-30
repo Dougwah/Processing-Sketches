@@ -134,7 +134,7 @@ class Asteroid {
       circle(position.x, position.y, radius * 2);
       fill(255, 255, 255);
       textFont(willowFont);
-      textSize(20);
+      textSize(nX(20));
       textAlign(CENTER, CENTER);
       text(ceil(health), position.x, position.y);
     popMatrix();
