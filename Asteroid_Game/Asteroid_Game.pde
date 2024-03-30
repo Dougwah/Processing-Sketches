@@ -101,18 +101,18 @@ float nFrames(float x) {
 }
 
 float nX(float x) {
-  return (displayWidth / 2560) * x;
+  float dWidth = displayWidth;
+  return (dWidth / 2560) * x;
 }
 
 float nY(float y) {
-  return (displayHeight / 1440) * y; 
+  float dHeight = displayHeight;
+  return (dHeight / 1440) * y;
 }
 
 PVector nVector(PVector vector) {
-  vector.x = nX(vector.x);
-  vector.y = nY(vector.y);
-  println(vector.x, vector.y);
-  return vector;
+  PVector a = new PVector(nX(vector.x), nY(vector.y));
+  return a;
 }
 
 String formatMillis(int millis) {

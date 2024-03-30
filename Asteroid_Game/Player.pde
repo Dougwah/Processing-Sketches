@@ -6,7 +6,7 @@ class Player {
   private float accelerationRate;
   private float deccelerationRate;
   private float rotationRate;
-  private PVector size = new PVector(20, 44);
+  private PVector size = nVector(new PVector(20, 44));
   
   private float maxHealth;
   private float health;
@@ -18,21 +18,18 @@ class Player {
 
   Player(PVector _position, float _maxVelocity, float _accelerationRate, float _deccelerationRate, float _rotationRate, int _maxHealth) {
     position = _position.copy();
-    maxVelocity = _maxVelocity;
-    accelerationRate = _accelerationRate;
-    deccelerationRate = _deccelerationRate;
-    rotationRate = _rotationRate;
+    maxVelocity = nX(_maxVelocity);
+    accelerationRate = nX(_accelerationRate);
+    deccelerationRate = nX(_deccelerationRate);
+    rotationRate = nX(_rotationRate);
     maxHealth = _maxHealth;
     health = maxHealth;
-    
-    centerPos = _position.copy();
-    centerPos.y += 40;
   }
   
   void addShipSpeed(float shipSpeed) {
-    accelerationRate += shipSpeed;
-    maxVelocity += shipSpeed * 10;
-    rotationRate += shipSpeed * 0.1;
+    accelerationRate += nX(shipSpeed);
+    maxVelocity += nX(shipSpeed * 10);
+    rotationRate += nX(shipSpeed * 0.1);
   }
   
   void takeDamage(float damage) {
@@ -128,8 +125,8 @@ class Player {
       PVector endPos = position.copy();
       float offset = size.y / 2;
       endPos.y += offset;
-      endPos.x += (100) * cos(rotation - 1.571);
-      endPos.y += (100) * sin(rotation - 1.571);
+      endPos.x += (100) * cos(rotation - radians(90));
+      endPos.y += (100) * sin(rotation - radians(90));
       
       weapon.fire(centerPos.copy(), endPos, velocity.copy());
     }

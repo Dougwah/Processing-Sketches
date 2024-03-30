@@ -45,13 +45,13 @@ abstract class Powerup {
 void createPowerupShape(PVector position, color drawColor, PImage image, String text) {
     pushMatrix();   
       textFont(willowFont);
-      textSize(30);
+      textSize(nX(30));
       textAlign(CENTER, CENTER);
       translate(position.x, position.y);
       fill(drawColor);
       tint(drawColor);
-      image(image, -25, -25, 50, 50);
-      text(text, 0, -50);
+      image(image, nX(-25), nY(-25), nX(50), nY(50));
+      text(text, 0, -nY(50));
     popMatrix();
 }
 
@@ -182,7 +182,7 @@ class ShipHealPowerup extends Powerup {
   
   ShipHealPowerup(float _healthIncrease, float _spawnChance) {
     super(_spawnChance);
-    healthIncrease = _healthIncrease;
+    healthIncrease = floor(_healthIncrease * powerupScale);
   }
   
   void pickup () {

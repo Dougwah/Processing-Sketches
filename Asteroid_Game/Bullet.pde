@@ -13,9 +13,9 @@ class Bullet {
     position = _position;
 
     additionalVelocity = _additionalVelocity.copy();
-    velocity = PVector.add(_velocity, additionalVelocity);
+    velocity = PVector.add(nVector(_velocity), additionalVelocity);
     
-    size = _size.copy();
+    size = nVector(_size.copy());
     damage = _damage;
     drawColor = _color;
     bounces = _maxBounces;

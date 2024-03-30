@@ -129,14 +129,14 @@ class Round {
       fill(0, 255, 0);
       textFont(marineFont);
       textAlign(CENTER, CENTER);
-      textSize(50);
+      textSize(nX(50));
       text("Score: " + score, width / 2, height / 2);
       text("Time: " + formatMillis(timePassed), width / 2, height / 1.8);
       text("Powerups: " + powerupsCollected, width / 2, height / 1.6);
-      textSize(128);
+      textSize(nX(128));
       text("YOU DIED", width / 2, height / 2.4);
       textFont(willowFont);
-      textSize(50);
+      textSize(nX(50));
       text("Continue? [Y/N]", width / 2, height / 1.3);  
     popMatrix();
   }
@@ -151,13 +151,13 @@ class Round {
      pushMatrix();
        fill(0, 255, 0);
        textFont(marineFont);
-       textSize(50);
+       textSize(nX(50));
        textAlign(CENTER, CENTER);
        text("Score:\n\n" + score, width / 2, 100);
      popMatrix();
      
      pushMatrix();
-      textSize(25);
+      textSize(nX(25));
       textAlign(LEFT, CENTER);
       text("Time: " + formatMillis(timePassed), width * 0.05, 100);
       textAlign(CENTER, CENTER);
