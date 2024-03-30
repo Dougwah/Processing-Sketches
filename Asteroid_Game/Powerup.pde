@@ -5,7 +5,7 @@ abstract class Powerup {
   float spawnChance;
 
   Powerup (float spawnChance) {
-    position = new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8));
+    position = new PVector(random(width * 0.1, width * 0.9), random(height * 0.1, height * 0.9));
     spawnTime = millis();
 
     float decider = ceil(random(101) * 100);
