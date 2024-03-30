@@ -47,7 +47,7 @@ class Asteroid {
     if (awardScore) {
       round.addScore(asteroidBaseScore * level);
     }
-    playSound(4);
+    playSound(ASTEROIDDEATH);
     spawned = false;
     velocity = new PVector(0,0);
     position = new PVector(width * 2, height * 2);
@@ -63,7 +63,7 @@ class Asteroid {
     maxHealth = level * asteroidBaseHealth;
     health = maxHealth;
     damage = 1; //damage = level * asteroidBaseDamage;
-    radius = asteroidBaseRadius * random(1, 2) + round.difficultyScale;
+    radius = nX(min(asteroidBaseRadius * random(1, 2) + round.difficultyScale, asteroidMaxRadius));
  
     if (round(random(1)) == 1) {
       position = new PVector(random(0, width), height * round(random(1)));
@@ -71,7 +71,7 @@ class Asteroid {
       position = new PVector(width * round(random(1)), random(height));
     }
 
-    velocity = PVector.sub(round.ply.getPosition(), position).setMag(random(asteroidMinSpeed, min(asteroidMaxSpeed + (round.difficultyScale / 4), 15)));
+    velocity = PVector.sub(round.ply.getPosition(), position).normalize().setMag(random(asteroidMinSpeed, min(asteroidMaxSpeed + (round.difficultyScale / 4), 15)));
     spawned = true;
   }
   

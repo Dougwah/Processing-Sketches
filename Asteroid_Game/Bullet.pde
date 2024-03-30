@@ -2,13 +2,14 @@ class Bullet {
   private PVector position, size, velocity = new PVector(), additionalVelocity;
   private float rotation;
   private float damage;
+  private color drawColor;
   private int bounces;
   private int lifeSpan = 10;
   private int spawnTime;
   
   private boolean destroyed = false;
 
-  Bullet(PVector _position, PVector _velocity, PVector _additionalVelocity, PVector _size, int _maxBounces, float _damage) {
+  Bullet(PVector _position, PVector _velocity, PVector _additionalVelocity, PVector _size, int _maxBounces, float _damage, color _color) {
     position = _position;
 
     additionalVelocity = _additionalVelocity.copy();
@@ -16,6 +17,7 @@ class Bullet {
     
     size = _size.copy();
     damage = _damage;
+    drawColor = _color;
     bounces = _maxBounces;
 
     spawnTime = millis();
@@ -84,7 +86,7 @@ class Bullet {
   
   void drawShape() {
     pushMatrix();
-      fill(0, 255, 0);
+      fill(drawColor);
       rectMode(CENTER);
       translate(position.x, position.y);
       rotate(rotation);

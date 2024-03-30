@@ -19,35 +19,37 @@ class Weapon {
     lastFired = millis();
    }
    
-   void addDamage(int _damage) {
-     damage += _damage;
-   }
+  void addDamage(int _damage) {
+    damage += _damage;
+  }
    
-   void addFireRate(float _fireRate) {
+  void addFireRate(float _fireRate) {
      fireRate += _fireRate;
    }
    
-   void addBulletSpeed(float _bulletSpeed) {
-     bulletSpeed += _bulletSpeed;
-   }
+  void addBulletSpeed(float _bulletSpeed) {
+    bulletSpeed += _bulletSpeed;
+  }
    
-   void enableExtraBounces(float duration) {
-     extraBounceEndTime = millis() + duration * 1000;
-   }
+  void enableExtraBounces(float duration) {
+    extraBounceEndTime = millis() + duration * 1000;
+  }
    
-   void enableAutoAim(float duration) {
-     autoAimEndTime = millis() + duration * 1000;
-   }
+  void enableAutoAim(float duration) {     
+    autoAimEndTime = millis() + duration * 1000;
+  }
    
   void fire(PVector startPos, PVector endPos, PVector initialVelocity) {
     if (millis() < lastFired + (1000 / fireRate)) {
       return;
     }
     
+    color drawColor = color(0, 255, 0);
     float velocityMult = bulletSpeed;
     int bulletBounces = bulletMaxBounces;
     if (extraBounceEndTime > millis()) {
-      bulletBounces = 5;
+      drawColor = color(255, 0, 200);
+      bulletBounces = 3;
     }
     
     if (autoAimEndTime > millis()) {
@@ -68,8 +70,8 @@ class Weapon {
     PVector velocity = PVector.sub(endPos, startPos).setMag(100);
     velocity.mult(velocityMult);
     
-    new Bullet(startPos, velocity, initialVelocity, bulletSize, bulletBounces, damage);
-    playSound(1);
+    new Bullet(startPos, velocity, initialVelocity, bulletSize, bulletBounces, damage, drawColor);
+    playSound(WEAPONFIRE);
     lastFired = millis();
   }
 }

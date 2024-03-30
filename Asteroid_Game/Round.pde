@@ -1,7 +1,6 @@
 // GAME VALUES
 float difficultyScaleRate = 0.03;
 // POWERUP VALUES
-float powerupSpawnChance = 10;
 float powerupScale = 1;
 float powerupLifeTime = 10;
 // PLAYER VALUES
@@ -20,9 +19,10 @@ int bulletMaxBounces = 1;
 float asteroidBaseHealth = 2;
 float asteroidBaseDamage = 1;
 float asteroidBaseRadius = 30;
+float asteroidMaxRadius = 150;
 float asteroidBaseScore = 10;
 float asteroidMinSpeed = 2;
-float asteroidMaxSpeed = 6;
+float asteroidMaxSpeed = 10;
 float asteroidMinLevel = 1;
 float asteroidMaxLevel = 3;
 int asteroidMaxAmount = 15;
@@ -34,8 +34,11 @@ class Round {
   boolean over;
   float difficultyScaleRate;
   float difficultyScale;
-  float lastTick;
   float scoreLastAdded;
+  int powerupsCollected;
+  int lastSecond;
+  int lastMilli;
+  int timePassed;
    
   Player ply;
 
@@ -48,8 +51,12 @@ class Round {
     score = 0;
     over = false;
     difficultyScale = 1;
-    lastTick = millis();
+    lastSecond = millis();
     scoreLastAdded = millis();
+    powerupsCollected = 0;
+    lastSecond = 0;
+    lastMilli = millis();
+    timePassed = 0;
     
     ply = new Player(
       new PVector(width / 2, height / 2), 
@@ -93,23 +100,27 @@ class Round {
     ply.run();
     objHandler.run();
      
-    if (millis() > lastTick + 1000) {
+    if (millis() > lastSecond + 1000) {
       difficultyScale += difficultyScale * difficultyScaleRate;
       spawnPowerups();
-      lastTick = millis();
+      lastSecond = millis();
     }
-
+    
+    timePassed += millis() - lastMilli;
+    lastMilli = millis();
    drawRoundInfo();
   }
   
   void spawnPowerups() {
     if (millis() > scoreLastAdded + 10000) { return; }
-    new ShipSpeedPowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 0.05, 0.4);
-    new BulletSpeedPowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 0.05, 0.5);
-    new FireRatePowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 1, 0.75);
-    new DamagePowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 1, 0.8);
-    new AutoAimPowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 10, 0.15);
-    new ExtraBulletBouncesPowerup(new PVector(random(width * 0.2, width * 0.8), random(height * 0.2, height * 0.8)), 10, 0.15);
+    new ShipSpeedPowerup(0.05, 5);
+    new BulletSpeedPowerup(0.05, 8);
+    new FireRatePowerup(1, 8);
+    new DamagePowerup(1, 8);
+    new AutoAimPowerup(15, 3);
+    new ExtraBulletBouncesPowerup(15, 2);
+    new ShipHealPowerup(1, 9);
+    new ShipInvinciblePowerup(5, 2);
   }
  
   void endGame() {
@@ -120,11 +131,13 @@ class Round {
       textAlign(CENTER, CENTER);
       textSize(50);
       text("Score: " + score, width / 2, height / 2);
+      text("Time: " + formatMillis(timePassed), width / 2, height / 1.8);
+      text("Powerups: " + powerupsCollected, width / 2, height / 1.6);
       textSize(128);
-      text("YOU DIED", width / 2, height / 2.5);
+      text("YOU DIED", width / 2, height / 2.4);
       textFont(willowFont);
       textSize(50);
-      text("Continue? [Y/N]", width / 2, height / 1.5);      
+      text("Continue? [Y/N]", width / 2, height / 1.3);  
     popMatrix();
   }
  
@@ -142,5 +155,29 @@ class Round {
        textAlign(CENTER, CENTER);
        text("Score:\n\n" + score, width / 2, 100);
      popMatrix();
+     
+     pushMatrix();
+      textSize(25);
+      textAlign(LEFT, CENTER);
+      text("Time: " + formatMillis(timePassed), width * 0.05, 100);
+      textAlign(CENTER, CENTER);
+      text("Health", width * 0.8, 100);
+     popMatrix();
+     
+    PVector shipSize = new PVector(20, 44);
+    float shipDistance = 80;
+    float listWidth = shipSize.x + shipDistance * (ply.getHealth() + 1);
+    float listCentre = listWidth / 2 - (shipSize.x / 2);
+    color iconColor = color(255, 255, 255);
+
+    for (int i = 1; i <= ply.getHealth(); i++) {
+      PVector iconPosition = new PVector(((width * 0.8 - listCentre) + shipDistance * i), 120);
+      pushMatrix();
+        if (ply.getInvincible()) {
+          iconColor = color(250, 190, 0);
+        }
+        drawPlayerShape(iconPosition, ply.getSize(), iconColor, radians(1));
+      popMatrix();
+    }
   }
 }

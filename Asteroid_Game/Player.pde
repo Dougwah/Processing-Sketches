@@ -12,7 +12,8 @@ class Player {
   private float health;
   private color drawColor = color(255, 255, 255);
   private boolean destroyed = false;
-
+  private float invincibleEndTime;
+  
   private Weapon weapon;
 
   Player(PVector _position, float _maxVelocity, float _accelerationRate, float _deccelerationRate, float _rotationRate, int _maxHealth) {
@@ -35,26 +36,47 @@ class Player {
   }
   
   void takeDamage(float damage) {
+    if (getInvincible()) {
+      playSound(SHIPBLOCKDAMAGE);
+      return; 
+    }
     health -= damage;
-    playSound(3);
+    playSound(SHIPDAMAGE);
     drawColor = color(200, 0 ,0);
-
     if (health <= 0) {
       kill();
     }
+  }
+  
+  void heal(float _health) {
+    if (health == maxHealth) {
+      playSound(SHIPHEALTHFULL);
+      return;
+    }
+    health = min(maxHealth, health + _health);
+    drawColor = (color(0, 200, 0));
+    playSound(SHIPHEAL);
+  }
+  
+   void enableNoDamage(float duration) {
+     invincibleEndTime = millis() + duration * 1000;
+   }
+  
+  void kill() {
+    playSound(SHIPDEATH);
+    destroyed = true; 
+  }
+  
+  void setWeapon(Weapon _weapon) {
+    weapon = _weapon;
   }
   
   boolean getDestroyed() {
    return destroyed; 
   }
   
-  void kill() {
-    playSound(2);
-    destroyed = true; 
-  }
-
-  void setWeapon(Weapon _weapon) {
-    weapon = _weapon;
+  boolean getInvincible() {
+    return invincibleEndTime > millis();
   }
   
   PVector getPosition() {
@@ -67,6 +89,14 @@ class Player {
   
   float getRotation() {
    return rotation; 
+  }
+  
+  float getHealth() {
+    return health; 
+  }
+  
+  float getMaxHealth() {
+    return maxHealth; 
   }
 
   void run() {
@@ -126,11 +156,11 @@ class Player {
       position.y += height;
     }
     
-    if (keys[37] || keys[78]) { // LEFT || n
+    if (keys[37] || keys[78]) { // LEFT || N
       rotation -= rotationRate;
     }
 
-    if (keys[39] || keys[77]) { // RIGHT || m
+    if (keys[39] || keys[77]) { // RIGHT || M
       rotation += rotationRate;
     }
     
@@ -142,24 +172,26 @@ class Player {
   }
   
   void drawPlayer() {
-
     pushMatrix();
-      translate(position.x, position.y + (size.y / 2));
-      rectMode(CENTER);
-      fill(0, 255, 0);
-      rect(0, size.y * 0.8, size.x * (health / maxHealth) * 2, 5);
-      rotate(rotation);
-      translate(0, -size.y / 2);
-      fill(drawColor);
-      beginShape();
-        vertex(0, 0);
-        vertex(size.x, size.y);
-        vertex(0, size.y * 0.85);
-        vertex(-size.x, size.y);
-      endShape(CLOSE);
+      drawPlayerShape(position, size, drawColor, rotation);
     popMatrix();
     drawColor = lerpColor(drawColor, color(255, 255, 255), 0.1);
-    
   }
   
+}
+
+void drawPlayerShape(PVector position, PVector size, color drawColor, float rotation) {
+  translate(position.x, position.y + (size.y / 2));
+  rectMode(CENTER);
+  fill(0, 255, 0);
+  //rect(0, size.y * 0.8, size.x * (health / maxHealth) * 2, 5);
+  rotate(rotation);
+  translate(0, -size.y / 2);
+  fill(drawColor);
+  beginShape();
+    vertex(0, 0);
+    vertex(size.x, size.y);
+    vertex(0, size.y * 0.85);
+    vertex(-size.x, size.y);
+  endShape(CLOSE);
 }
