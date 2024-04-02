@@ -8,7 +8,7 @@ abstract class Powerup {
     position = new PVector(random(width * 0.1, width * 0.9), random(height * 0.1, height * 0.9));
     spawnTime = millis();
 
-    float decider = ceil(random(101) * 100);
+    float decider = ceil(random(101 * 100));
     if (decider <= spawnChance * 100) {
       expired = false;
     }
