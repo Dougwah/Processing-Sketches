@@ -19,7 +19,7 @@ class Snake {
     println(headPosition);
     for (int i = 0; i < _sLength; i++) {
       println(headPosition.x - segmentSize * i);
-      positions.add(new PVector(headPosition.x - segmentSize, headPosition.y));   
+      positions.add(new PVector(headPosition.x, headPosition.y));   
     }
     println(positions);
   }
