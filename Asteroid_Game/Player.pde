@@ -109,8 +109,8 @@ class Player {
   void control() {
    acceleration.mult(0); // reset the active control directions when keys are released 
    
-   if (keys[87]) { // W
-      acceleration.y = -accelerationRate;
+    if (keys[87]) { // W
+      acceleration.y = -accelerationRate; 
     }
 
     if (keys[65]) { // A
@@ -123,6 +123,14 @@ class Player {
 
     if (keys[68]) { // D
       acceleration.x = accelerationRate;
+    }
+    
+    if (keys[37] || keys[78]) { // LEFT || N
+      rotation -= rotationRate;
+    }
+
+    if (keys[39] || keys[77]) { // RIGHT || M
+      rotation += rotationRate;
     }
     
     if (keys[32]) { // SPACE
@@ -155,14 +163,6 @@ class Player {
 
     if (position.y < 0) {
       position.y += height;
-    }
-    
-    if (keys[37] || keys[78]) { // LEFT || N
-      rotation -= rotationRate;
-    }
-
-    if (keys[39] || keys[77]) { // RIGHT || M
-      rotation += rotationRate;
     }
     
     position.add(nVector(velocity));
