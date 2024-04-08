@@ -1,7 +1,8 @@
 int lastKey;
-int lastDirection;
 boolean keyMatch;
-String[] directions = {"Up", "Down", "Left", "Right"};
+PVector arrowSize = new PVector(100., 200.);
+String[] directionStrings = {"Up", "Down", "Left", "Right"};
+int[] directions = new int[1];
 
 int UP = 0;
 int DOWN = 1;
@@ -12,20 +13,20 @@ void setup () {
   size(1000, 1000);
   random(3);
   lastKey = -1;
-  lastDirection = -1;
   keyMatch = false;
 }
 
 void draw() {
   background(0);
+  drawArrow(100);
   checkDirection();
   if (keyMatch == true) {
-    pickDirection();
+    setDirection();
   }
 
   textSize(100);
-  textAlign(2, 2);
-  text(directions[lastDirection], 500, 500);
+  textAlign(CENTER, CENTER);
+  text(directionStrings[getDirection()], 500, 500);
 }
 
 void keyPressed() {
@@ -45,15 +46,34 @@ void keyPressed() {
   }
 }
 
-void pickDirection() {
-  lastDirection = floor(random(4));
-  println(lastDirection);
+void setDirection() {
+  directions = append(directions, floor(random(4)));
+  println(directions);
+  
+}
+
+void drawArrow(int angle) {
+  PVector origin = new PVector(width / 2, height / 2);
+  beginShape();
+    vertex(origin.x, origin.y);
+    vertex(origin.x + arrowSize.x / 2, origin.y + arrowSize.y / 4);
+    vertex(origin.x + arrowSize.x / 2, origin.y + arrowSize.y / 3);
+    vertex(origin.x + arrowSize.x / 4, origin.y + arrowSize.y / 3);
+    vertex(origin.x + arrowSize.x / 4, origin.y + arrowSize.y);
+    vertex(origin.x - arrowSize.x / 4, origin.y + arrowSize.y);
+    vertex(origin.x + arrowSize.x / 4, origin.y + arrowSize.y / 3);    
+  endShape();
+}
+
+int getDirection () {
+  return(directions[directions.length - 1]);    
 }
 
 void checkDirection() {
-  if (lastKey == lastDirection) {
+  if (lastKey == getDirection()) {
     lastKey = -1;
     keyMatch = true;
   } else {
-    keyMatch = false;;
+    keyMatch = false;
+  }
 }
