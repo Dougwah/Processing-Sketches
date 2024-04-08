@@ -1,4 +1,4 @@
-class BouncyBall {
+class ControllableCircle {
   PVector position;
   PVector velocity;
   PVector acceleration;
@@ -6,7 +6,7 @@ class BouncyBall {
   int diameter;
  
   
-  BouncyBall(PVector _position, PVector _velocity, int _diameter) {
+  ControllableCircle(PVector _position, PVector _velocity, int _diameter) {
     position = _position;
     velocity = new PVector(0, 0);
     acceleration = new PVector(0, 0);
@@ -28,7 +28,7 @@ class BouncyBall {
     acceleration.set(moveDirection.mult(speed));
     velocity.add(acceleration);
     position.add(velocity);
-    acceleration.mult(0.95);
+    velocity.mult(0.95);
   }
   
   void checkCollisions() {
@@ -42,23 +42,4 @@ class BouncyBall {
     
     
   }
-  
-
-  
-  //void keyReleased() {
-  //    switch(key) {
-  //    case('w'):
-  //      mUp = 0;
-  //      break;
-  //    case('a'):
-  //      mLeft = 0;
-  //      break;
-  //    case('s'):
-  //      mDown = 0;
-  //      break;
-  //    case('d'):
-  //      mRight = 0;
-  //      break;
-  //  }
-  //}
 }

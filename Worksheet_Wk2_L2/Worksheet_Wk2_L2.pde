@@ -68,7 +68,6 @@ void mousePressed() {
   circle(mouseX, mouseY, 40);
 }
 
-
 //TASK 5
 /*
 PVector position;

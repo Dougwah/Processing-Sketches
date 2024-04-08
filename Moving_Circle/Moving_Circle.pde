@@ -2,7 +2,7 @@ float posX;
 float posY;
 float velocityX;
 
-BouncyBall bouncyBall;
+ControllableCircle controllableCircle;
 PVector moveDirection = new PVector(0, 0);
 
 void setup() {
@@ -10,7 +10,7 @@ void setup() {
   posX = 0.;
   posY = height / 2.;
   velocityX = 20;
-  bouncyBall = new BouncyBall(new PVector(width / 2, height / 2), new PVector(30, -15), 50);
+  controllableCircle = new ControllableCircle(new PVector(width / 2, height / 2), new PVector(30, -15), 50);
 }
 
 void draw() {
@@ -28,7 +28,7 @@ void draw() {
     posX += width;  
   }
   
-  bouncyBall.run();
+  controllableCircle.run();
  
 }
 
