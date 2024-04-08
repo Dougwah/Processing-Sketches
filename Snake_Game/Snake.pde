@@ -2,6 +2,7 @@ class Snake {
   PVector headPosition;
   PVector currentDirection = new PVector(1, 0);
   ArrayList<PVector> positions = new ArrayList<PVector>();
+  boolean dLeft, dRight, dUp, dDown = false; 
 
   String keys = "wasd";
   int[] xMovement = {0, -1, 0, 1};
@@ -75,25 +76,46 @@ class Snake {
   }
   
   void control() {
-    //if (lastKey) {
-      int keyIndex = keys.indexOf(lastKey);
-      if (keyIndex != -1) {
-        currentDirection.set(new PVector(xMovement[keyIndex], yMovement[keyIndex]));
-      }
-    //}
+    switch(lastKey) {
+      case 'w':
+        if (currentDirection.y == 0) {
+          currentDirection.set(0, -1);
+        }
+        break;
+      case 's':
+        if (currentDirection.y == 0) {        
+          currentDirection.set(0, 1);
+        }
+        break;
+      case 'a':
+        if (currentDirection.x == 0) {
+          currentDirection.set(-1, 0);
+        }
+        break;
+      case 'd':
+        if (currentDirection.x == 0) {
+          currentDirection.set(1, 0);
+        }
+     }
   }
   
   void drawSnake() {
     for (int i = positions.size() - 1; i >= positions.size() - sLength; i--) {
       PVector position = positions.get(i);
       fill(255, 255, 255);
-      if (i == positions.size() - 1) {
-        fill(0, 0, 0);  
+      if (i % 2 == 0) {
+        fill(#FF7D03);  
+      } else {
+        fill(#FFD603);
       }
-      if (i <= 1) {
-        fill(200, 200, 200);  
+      if (i == positions.size() - 1) {
+        fill(255, 255, 255);
+        rect(position.x, position.y, 4, 4);
+        fill(0, 0, 0);
       }
       rect(position.x, position.y, gridSize, gridSize);  
     }
   }
 }
+
+// orange, black, yellow

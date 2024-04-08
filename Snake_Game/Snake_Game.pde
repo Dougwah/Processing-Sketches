@@ -1,7 +1,7 @@
 int gridSize = 40;
 int boardSize = 400;
 int gameInterval = 200;
-char lastKey = ' ';
+char lastKey = 'd';
 boolean inProgress = false;
 Pickup pickup;
 Snake snake;
@@ -11,6 +11,7 @@ void settings() {
 }
 
 void draw() {
+  noStroke();
   background(#24A502);
   if (!inProgress) {
     newGame();
@@ -31,7 +32,6 @@ void draw() {
 }
 
 void keyPressed() {
-  println(key);
   lastKey = key;
 }
 
