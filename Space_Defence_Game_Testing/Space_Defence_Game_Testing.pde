@@ -1,6 +1,7 @@
 // GAME SETTINGS
 int infoAreaY = 50;
-int maxEnemies = 100;
+int spaceStationDiameter = 50;
+int maxEnemies = 10;
 
 float crossHairX = 3.;
 float crossHairY = 20.;
@@ -14,8 +15,9 @@ int DESTROYER = 2;
 int CANNONPROJ = 3;
 int[] enemyHealthValues = {1, 5, 3, 1};
 int[] enemyDamageValues = {1, 2, 0, 3};
-int[] enemySpeedValues = {10, 5, 5, 3};
+float[] enemySpeedValues = {1.5, 0.5, 1, 2};
 int[] enemyScoreValues = {10, 20, 15, 30};
+PVector[] enemySizes = {new PVector(25, 25)};
 
 // PROJECTILE TYPES
 int CANNON = 0;
@@ -41,6 +43,7 @@ boolean[] enemyStates = new boolean[maxEnemies];
 int[] enemyHitPoints = new int[maxEnemies];
 
 void setup() {
+  println(0%2);
   noCursor();
   size(800, 600);
   centerPos = new PVector(width / 2, height / 2);
@@ -54,25 +57,11 @@ void draw() {
     newGame();  
   }
   
-  // SPACE STATION
-  fill(#08CFFF);
-  circle(centerPos.x, centerPos.y, 100);
+  drawSpaceStation();
   
-  // CROSSHAIR
-  mousePos = getMousePos();
-  fill(xHairColor);
-  rect(mousePos.x - xHairGap - crossHairY, mousePos.y - crossHairX / 2, crossHairY, crossHairX); // LEFT
-  rect(mousePos.x + xHairGap, mousePos.y - crossHairX / 2, crossHairY, crossHairX);              // RIGHT
-  rect(mousePos.x - crossHairX / 2, mousePos.y - crossHairY - xHairGap, crossHairX, crossHairY); // UP
-  rect(mousePos.x - crossHairX / 2, mousePos.y + xHairGap, crossHairX, crossHairY);              // DOWN
-  noFill();
-  strokeWeight(crossHairX);
-  stroke(xHairColor);
-  circle(mousePos.x, mousePos.y, crossHairY);
-  point(mousePos.x, mousePos.y);
-  
-  if(aliveEnemies < maxEnemies) {
-    spawnEnemy((int)random(3));  
+  if(aliveEnemies < currentMaxEnemies) {
+    spawnEnemy(0);
+    //spawnEnemy((int)random(4));  
   }
   
   for (int i = 0; i < enemyPositions.length; i++) {
@@ -80,12 +69,17 @@ void draw() {
       continue; 
     }
     moveEnemy(i);
+    checkEnemyCollision(i);
     drawEnemy(i);
   }
+  
+  drawCrosshair();
   
   // GAME INFO AREA
   fill(255, 255, 255);
   rect(0, 0, width, infoAreaY);
+  
+
 }
 
 // GAME FUNCTIONS
@@ -106,6 +100,25 @@ PVector getMousePos() {
   return new PVector(mouseX, max(mouseY, infoAreaY));
 }
 
+void drawCrosshair() {
+  mousePos = getMousePos();
+  fill(xHairColor);
+  rect(mousePos.x - xHairGap - crossHairY, mousePos.y - crossHairX / 2, crossHairY, crossHairX); // LEFT
+  rect(mousePos.x + xHairGap, mousePos.y - crossHairX / 2, crossHairY, crossHairX);              // RIGHT
+  rect(mousePos.x - crossHairX / 2, mousePos.y - crossHairY - xHairGap, crossHairX, crossHairY); // UP
+  rect(mousePos.x - crossHairX / 2, mousePos.y + xHairGap, crossHairX, crossHairY);              // DOWN
+  noFill();
+  strokeWeight(crossHairX);
+  stroke(xHairColor);
+  circle(mousePos.x, mousePos.y, crossHairY);
+  point(mousePos.x, mousePos.y);
+}
+
+void drawSpaceStation() {
+  fill(#08CFFF);
+  circle(centerPos.x, centerPos.y, spaceStationDiameter);   
+}
+
 // ENEMY FUNCTIONS
 int findNextDeadEnemy() {
   for (int i = 0; i < enemyStates.length; i++) {
@@ -121,12 +134,29 @@ void moveEnemy(int index) {
 }
 
 void drawEnemy(int index) {
-  fill(255, 0, 0);
-  circle(enemyPositions[index].x, enemyPositions[index].y, 50);  
+  PVector position = enemyPositions[index];
+  if (enemyTypes[index] == FRIGATE) {
+    noStroke();
+    fill(200, 200, 200);
+    PVector size = enemySizes[FRIGATE];
+    triangle(position.x - size.x, position.y - size.y / 2, position.x, position.y - size.y * 1.2, position.x + size.x, position.y - size.y / 2);
+    triangle(position.x - size.x, position.y + size.y / 2, position.x, position.y + size.y * 1.2, position.x + size.x, position.y + size.y / 2);
+    circle(position.x, position.y, size.x);
+    fill(255 , 0, 0);
+    circle(position.x, position.y, size.x / 2);
+  }
 }
 
 void checkEnemyCollision(int index) {
-  
+  if (PVector.sub(enemyPositions[index], centerPos).mag() < spaceStationDiameter) {
+    killEnemy(index);  
+  }
+}
+
+void checkMouseCollision() {
+  for (int i = 0; i < enemyPositions.length; i++) {
+    
+  }
 }
 
 void killEnemy(int index) {
@@ -134,12 +164,16 @@ void killEnemy(int index) {
   enemyStates[index] = false;
 }
 
+void damageEnemy(int index, int damage) {
+  enemyHitPoints[index] -= damage;
+}
+
 void spawnEnemy(int enemyType) {
   int index = findNextDeadEnemy();
   if (index == -1) { 
     return; 
   }
-  println("Spawning Enemy");
+  
   PVector position;
   if (boolean((int)random(2))) {
     position = new PVector(random(width), max(infoAreaY, height * (int)random(2)));
@@ -147,11 +181,12 @@ void spawnEnemy(int enemyType) {
     position = new PVector(width * (int)random(2), random(infoAreaY, height));
   }
   
-  PVector velocity = PVector.sub(centerPos, position).setMag(5);
+  PVector velocity = PVector.sub(centerPos, position);
   
   aliveEnemies++;
   enemyTypes[index] = enemyType;
   enemyStates[index] = true;
+  enemyHitPoints[index] = enemyHealthValues[enemyType];
   enemyPositions[index] = position;
-  enemyVelocities[index] = velocity;
+  enemyVelocities[index] = velocity.setMag(enemySpeedValues[enemyType]);
 }
