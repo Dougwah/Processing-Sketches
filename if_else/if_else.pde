@@ -14,7 +14,6 @@ void draw() {
 
 void mousePressed() {
   if (mouseY < height * 0.5) {
-    
     if (mouseX < width * 0.25) {
       fill(0);
       circle(mouseX, mouseY, 30);
@@ -22,9 +21,7 @@ void mousePressed() {
       fill(0, 0, 255);
       square(mouseX - 15, mouseY - 15, 30);   
     }
-  
   } else {
-    
     if (mouseX > width * 0.5 && mouseX < width * 0.75) {
       fill(255, 0, 0);
       triangle(mouseX - 15, mouseY + 15, mouseX, mouseY - 15, mouseX + 15, mouseY + 15);   
@@ -32,6 +29,5 @@ void mousePressed() {
        fill(0, 255, 0);
        circle(mouseX, mouseY, 30);   
     }
-    
   }
 }
