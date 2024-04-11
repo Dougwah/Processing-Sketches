@@ -45,13 +45,13 @@ int[] projPointValues = {30};
 int score;
 int millisPassed;
 int lastMilli;
-boolean gameStarted = false;
 PVector mousePos;
 PVector centerPos;
-int currentEnemyCount = 3;
+int currentEnemyCount;
+int spaceStationHealth;
 
 int aliveEnemies = 0;
-int[] enemyTypes = new int[maxEnemies];
+int[] enemies = new int[maxEnemies];
 PVector[] enemyPositions = new PVector[maxEnemies];
 PVector[] enemyVelocities = new PVector[maxEnemies];
 boolean[] enemyStates = new boolean[maxEnemies];
@@ -61,15 +61,12 @@ void setup() {
   noCursor();
   size(800, 600);
   centerPos = new PVector(width / 2, height / 2);
+  newGame();
 }
 
 void draw() {
   background(0);
-  
-  if (!gameStarted) {
-    newGame();  
-  }
-  
+    
   mousePos = new PVector(mouseX, max(mouseY, infoAreaY));
   
   if(aliveEnemies < currentEnemyCount) {
@@ -85,14 +82,18 @@ void draw() {
 
 // GAME FUNCTIONS
 void newGame() {
-  println("New Game");
   generateStars();
   score = 0;
   millisPassed = 0;
   lastMilli = 0;
+  spaceStationHealth = 5;
+  currentEnemyCount = 3;
   aliveEnemies = 0;
   enemyStates = new boolean[maxEnemies];
-  gameStarted = true;
+}
+
+void endGame() {
+  newGame();  
 }
 
 void generateStars() {
@@ -112,6 +113,13 @@ void mousePressed() {
   line(centerPos.x, centerPos.y, mousePos.x, mousePos.y);
   if (enemyIndex > -1 && enemyStates[enemyIndex]) {
     damageEnemy(enemyIndex, 1);
+  }
+}
+
+void damageSpaceStation(int damage) {
+  spaceStationHealth -= damage;
+  if (spaceStationHealth <= 0) {
+    endGame();  
   }
 }
 
@@ -150,22 +158,25 @@ void drawSpaceStation() {
 
 void drawEnemy(int index) {
   PVector position = enemyPositions[index];
-  int enemyType = enemyTypes[index];
+  int enemyType = enemies[index];
   PVector size = enemySizes[enemyType];
   noStroke();
   fill(200, 200, 200);
-  if (enemyTypes[index] == FRIGATE) {
+  if (enemies[index] == FRIGATE) {
     rect(position.x - size.x / 2, position.y - size.y / 2, size.x, size.y);
     //triangle(position.x - size, position.y - size / 2, position.x, position.y - size, position.x + size, position.y - size / 2);
     //triangle(position.x - size, position.y + size / 2, position.x, position.y + size, position.x + size, position.y + size / 2);
     //circle(position.x, position.y, size);
     //fill(255 , 0, 0);
     //circle(position.x, position.y, size / 2);
-  } else if (enemyTypes[index] == CRUISER) {
+  } else if (enemies[index] == CRUISER) {
     rect(position.x - size.x / 2, position.y - size.y / 2, size.x, size.y);
-  } else if (enemyTypes[index] == DESTROYER) {
+  } else if (enemies[index] == DESTROYER) {
   
   }
+  textAlign(CENTER, TOP);
+  textSize(20);
+  text(enemyHitPoints[index], position.x, position.y + size.y / 2);
 }
 
 void drawInfoArea() {
@@ -176,7 +187,7 @@ void drawInfoArea() {
 
 // ENEMY FUNCTIONS
 int findNextDeadEnemy() {
-  for (int i = 0; i < enemyStates.length; i++) {
+  for (int i = 0; i < maxEnemies; i++) {
     if (!enemyStates[i]) {
       return i;
     }
@@ -185,17 +196,17 @@ int findNextDeadEnemy() {
 }
 
 int getTargetEnemy() {
-  for (int i = 0; i < enemyPositions.length; i++) {
+  for (int i = 0; i < maxEnemies; i++) {
     if (!enemyStates[i]) { 
       continue; 
     }
     
-    //int enemyType = enemyTypes[i];
+    //int enemyType = enemies[i];
     //PVector enemySize = enemySizes[enemyType];
     //if (PVector.sub(enemyPositions[i], mousePos).mag() < enemySize) {
     //  return i;      
     //}
-    if (checkCollision(enemyPositions[i], enemySizes[enemyTypes[i]], mousePos, new PVector(5, 5))) {
+    if (checkCollision(enemyPositions[i], enemySizes[enemies[i]], mousePos, new PVector(5, 5))) {
       return i;  
     }
   }
@@ -238,7 +249,7 @@ void spawnEnemy(int enemyType) {
   PVector velocity = PVector.sub(centerPos, position);
   
   aliveEnemies++;
-  enemyTypes[index] = enemyType;
+  enemies[index] = enemyType;
   enemyStates[index] = true;
   enemyHitPoints[index] = enemyHitPointValues[enemyType];
   enemyPositions[index] = position;
@@ -254,7 +265,7 @@ void damageEnemy(int index, int damage) {
   enemyHitPoints[index] -= damage;
   if (enemyHitPoints[index] <= 0) {
     killEnemy(index);
-    score += enemyScoreValues[enemyTypes[index]];
+    score += enemyScoreValues[enemies[index]];
   }
 }
 
@@ -263,33 +274,31 @@ void moveEnemy(int index) {
 }
 
 boolean checkCollision(PVector pos1, PVector size1, PVector pos2, PVector size2) {
-  // if right side of rect 1 is less than the left side of rect 2 
-  // or the left side of rect 1 is greater than the right side of rect 2
+  // if right x coord of rect 1 is less than the left x coord of rect 2 
+  // or the left x coord of rect 1 is greater than the right x coord of rect 2
   if (pos1.x + size1.x / 2 < pos2.x - size2.x / 2 || pos1.x - size1.x / 2 > pos2.x + size2.x / 2) {
     return false; 
   }
   
-  // if the top side of rect 1 is less than the top side of rect 2
-  // or the bottom side of rect 1 is greater than the bottom side of rect 2
+
+  // if bottom y coord of rect 1 is less than the top y coord of rect 2
+  // or the top y coord of rect 1 is greater than the bottom y coord of rect 2
   if (pos1.y + size1.y / 2 < pos2.y - size2.y / 2 || pos1.y - size1.y / 2 > pos2.y + size2.y / 2) {
     return false; 
   }
   
   return true;
-  //if (PVector.sub(enemyPositions[index], centerPos).mag() < spaceStationDiameter) {
-  //  killEnemy(index);  
-  //}
 }
 
 void runEnemies() {
-  for (int i = 0; i < enemyPositions.length; i++) {
+  for (int i = 0; i < maxEnemies; i++) {
     if (!enemyStates[i]) { 
       continue; 
     }
     moveEnemy(i);
-    if (checkCollision(enemyPositions[i], enemySizes[enemyTypes[i]], centerPos, spaceStationSize)) {
+    if (checkCollision(enemyPositions[i], enemySizes[enemies[i]], centerPos, spaceStationSize)) {
       killEnemy(i);
-      //damageStation();
+      damageSpaceStation(enemyDamageValues[enemies[i]]);
     }
     drawEnemy(i);
   }
