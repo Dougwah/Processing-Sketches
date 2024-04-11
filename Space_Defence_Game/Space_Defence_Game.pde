@@ -1,6 +1,6 @@
 // GAME SETTINGS
-int infoAreaY = 50;
-int maxEnemies = 10;
+int infoAreaY = 80;
+int maxShips = 10;
 
 int starCount = 100;
 PVector[] gStarPositions = new PVector[starCount];
@@ -27,12 +27,20 @@ color xHairColor = color(255, 255, 255);
 int FRIGATE = 0;
 int CRUISER = 1;
 int DESTROYER = 2;
-int CANNONPROJ = 3;
-int[] enemyHitPointValues = {1, 5, 3, 1};
-int[] enemyDamageValues = {1, 2, 0, 3};
-float[] enemySpeedValues = {1.5, 0.5, 1, 2};
-int[] enemyScoreValues = {10, 20, 15, 30};
-PVector[] enemySizes = {new PVector(50, 25), new PVector(50, 50)};
+int FRIENDLY = 3;
+int CANNONPROJ = 4;
+int[] shipHitPointValues = {1, 5, 3, 1, 1};
+int[] shipDamageValues = {1, 2, 0, 0, 3};
+float[] shipSpeedValues = {1.5, 0.5, 1, 1, 2};
+int[] shipScoreValues = {10, 20, 15, -50, 30};
+int[] shipTargetDistanceValues = {};
+
+PVector[] shipSizeValues = {
+  new PVector(70, 30), 
+  new PVector(50, 50),
+  new PVector(30, 30),
+  new PVector(60, 40),
+};
 
 // PROJECTILE TYPES
 int CANNON = 0;
@@ -43,24 +51,25 @@ int[] projPointValues = {30};
 
 // CURRENT ROUND VALUES
 int score;
+int kills;
 int millisPassed;
 int lastMilli;
 PVector mousePos;
 PVector centerPos;
-int currentEnemyCount;
+int currentShipCount;
 int spaceStationHealth;
 
-int aliveEnemies = 0;
-int[] enemies = new int[maxEnemies];
-PVector[] enemyPositions = new PVector[maxEnemies];
-PVector[] enemyVelocities = new PVector[maxEnemies];
-boolean[] enemyStates = new boolean[maxEnemies];
-int[] enemyHitPoints = new int[maxEnemies];
+int aliveShips = 0;
+int[] ships = new int[maxShips];
+PVector[] shipPositions = new PVector[maxShips];
+PVector[] shipVelocities = new PVector[maxShips];
+boolean[] shipStates = new boolean[maxShips];
+int[] shipHitPoints = new int[maxShips];
 
 void setup() {
   noCursor();
   size(800, 600);
-  centerPos = new PVector(width / 2, height / 2);
+  centerPos = new PVector(width * 0.5, height * 0.5 + (infoAreaY * 0.5));
   newGame();
 }
 
@@ -69,27 +78,31 @@ void draw() {
     
   mousePos = new PVector(mouseX, max(mouseY, infoAreaY));
   
-  if(aliveEnemies < currentEnemyCount) {
-    spawnEnemy((int)random(2));  
+  if(aliveShips < currentShipCount) {
+    spawnShip((int)random(3));  
   }
   
   drawStars();
   drawSpaceStation();
-  runEnemies();
+  runShips();
   drawCrosshair();
   drawInfoArea();
+  
+  millisPassed += millis() - lastMilli;
+  lastMilli = millis();
 }
 
 // GAME FUNCTIONS
 void newGame() {
   generateStars();
   score = 0;
+  kills = 0;
   millisPassed = 0;
-  lastMilli = 0;
+  lastMilli = millis();
   spaceStationHealth = 5;
-  currentEnemyCount = 3;
-  aliveEnemies = 0;
-  enemyStates = new boolean[maxEnemies];
+  currentShipCount = 3;
+  aliveShips = 0;
+  shipStates = new boolean[maxShips];
 }
 
 void endGame() {
@@ -98,21 +111,20 @@ void endGame() {
 
 void generateStars() {
   for (int i = 0; i < starCount; i++) {
-    PVector pos = new PVector(random(0, width), random(0, height));
+    PVector pos = new PVector(random(width), random(infoAreaY, height));
     gStarPositions[i] = pos;
     gStarColors[i] = starColors[floor(random(starColors.length))];
     gStarSizes[i] = random(1, 3);
-    println(gStarSizes[i]);
   }
 }
 
 void mousePressed() {
-  int enemyIndex = getTargetEnemy();
+  int shipIndex = getTargetShip();
   stroke(#FCD300);
   strokeWeight(3);
   line(centerPos.x, centerPos.y, mousePos.x, mousePos.y);
-  if (enemyIndex > -1 && enemyStates[enemyIndex]) {
-    damageEnemy(enemyIndex, 1);
+  if (shipIndex > -1 && shipStates[shipIndex]) {
+    damageShip(shipIndex, 1);
   }
 }
 
@@ -121,6 +133,11 @@ void damageSpaceStation(int damage) {
   if (spaceStationHealth <= 0) {
     endGame();  
   }
+}
+
+String formatMillis(int millis) {
+  int seconds = millis / 1000;
+  return nf(floor(seconds / 60), 2, 0) + " : " + nf((seconds % 60), 2, 0) + " : " + nf((millis) % 1000, 3, 0); 
 }
 
 // DRAW FUNCTIONS
@@ -133,16 +150,16 @@ void drawStars() {
 }
 
 void drawCrosshair() {
-  if (getTargetEnemy() > -1) {
+  if (getTargetShip() > -1) {
     xHairColor = color(255, 0, 0);
   } else {
     xHairColor = color(255, 255, 255); 
   }
   fill(xHairColor);
-  rect(mousePos.x - xHairGap - crossHairY, mousePos.y - crossHairX / 2, crossHairY, crossHairX); // LEFT
-  rect(mousePos.x + xHairGap, mousePos.y - crossHairX / 2, crossHairY, crossHairX);              // RIGHT
-  rect(mousePos.x - crossHairX / 2, mousePos.y - crossHairY - xHairGap, crossHairX, crossHairY); // UP
-  rect(mousePos.x - crossHairX / 2, mousePos.y + xHairGap, crossHairX, crossHairY);              // DOWN
+  rect(mousePos.x - xHairGap - crossHairY, mousePos.y - crossHairX * 0.5, crossHairY, crossHairX); // LEFT
+  rect(mousePos.x + xHairGap, mousePos.y - crossHairX * 0.5, crossHairY, crossHairX);              // RIGHT
+  rect(mousePos.x - crossHairX * 0.5, mousePos.y - crossHairY - xHairGap, crossHairX, crossHairY); // UP
+  rect(mousePos.x - crossHairX * 0.5, mousePos.y + xHairGap, crossHairX, crossHairY);              // DOWN
   noFill();
   strokeWeight(crossHairX);
   stroke(xHairColor);
@@ -153,73 +170,140 @@ void drawCrosshair() {
 void drawSpaceStation() {
   fill(#08CFFF);
   noStroke();
-  rect(centerPos.x - spaceStationSize.x / 2, centerPos.y - spaceStationSize.y / 2, spaceStationSize.x, spaceStationSize.y);   
+  rect(centerPos.x - spaceStationSize.x * 0.5, centerPos.y - spaceStationSize.y * 0.5, spaceStationSize.x, spaceStationSize.y);   
 }
 
-void drawEnemy(int index) {
-  PVector position = enemyPositions[index];
-  int enemyType = enemies[index];
-  PVector size = enemySizes[enemyType];
+void drawShip(int index) {
+  PVector position = shipPositions[index];
+  int shipType = ships[index];
+  PVector size = shipSizeValues[shipType];
   noStroke();
-  fill(200, 200, 200);
-  if (enemies[index] == FRIGATE) {
-    rect(position.x - size.x / 2, position.y - size.y / 2, size.x, size.y);
-    //triangle(position.x - size, position.y - size / 2, position.x, position.y - size, position.x + size, position.y - size / 2);
-    //triangle(position.x - size, position.y + size / 2, position.x, position.y + size, position.x + size, position.y + size / 2);
-    //circle(position.x, position.y, size);
-    //fill(255 , 0, 0);
-    //circle(position.x, position.y, size / 2);
-  } else if (enemies[index] == CRUISER) {
-    rect(position.x - size.x / 2, position.y - size.y / 2, size.x, size.y);
-  } else if (enemies[index] == DESTROYER) {
-  
+  if (ships[index] == FRIGATE) {
+    fill(200, 200, 200);
+    rect(position.x - size.x / 4, position.y - size.y / 4, size.x * 0.5, size.y * 0.5);
+    fill(200, 200, 200);
+    circle(position.x, position.y, size.y);
+    triangle(
+      position.x - size.x * 0.5, 
+      position.y, 
+      
+      position.x - size.x / 4,
+      position.y - size.y / 4,
+      
+      position.x - size.x / 4,
+      position.y + size.y / 4
+    );
+    triangle(
+      position.x + size.x * 0.5, 
+      position.y, 
+      
+      position.x + size.x / 4,
+      position.y - size.y / 4,
+      
+      position.x + size.x / 4,
+      position.y + size.y / 4
+    );
+    fill(255, 0, 0);
+    rect(position.x - size.x / 6, position.y - size.y / 6, size.x / 3, size.y / 3);
+  } else if (ships[index] == CRUISER) {
+    fill(200, 200, 200);
+    triangle(
+      position.x - size.x * 0.4,
+      position.y,
+      
+      position.x,
+      position.y - size.y * 0.5,
+           
+      position.x + size.x * 0.4,
+      position.y
+    );
+    triangle(
+      position.x + size.x * 0.4,
+      position.y,
+      
+      position.x,
+      position.y + size.y * 0.5,
+           
+      position.x - size.x * 0.4,
+      position.y
+    );
+    fill(255, 0, 0);
+    square(position.x - size.x * 0.15, position.y - size.y * 0.15, size.y * 0.3);
+    fill(200, 200, 200);
+    rect(position.x - size.x * 0.5, position.y - size.y * 0.5, size.x, size.y * 0.2);
+    rect(position.x - size.x * 0.5, position.y + size.y * 0.3, size.x, size.y * 0.2);
+  } else if (ships[index] == DESTROYER) {
+    fill(200, 200, 200);
+    rect(position.x - size.x * 0.5, position.y - size.y * 0.5, size.x, size.y);
+  } else if (ships[index] == FRIENDLY) {
+   
   }
+  fill(255);
   textAlign(CENTER, TOP);
   textSize(20);
-  text(enemyHitPoints[index], position.x, position.y + size.y / 2);
+  text(shipHitPoints[index], position.x, position.y + size.y * 0.5);
 }
+
+PVector hpIconSize = new PVector(20, 25);
+float hpIconDistance = 30;
 
 void drawInfoArea() {
   noStroke();
-  fill(255, 255, 255);
+  fill(#626262);
   rect(0, 0, width, infoAreaY);
+  textSize(24);
+  fill(255);
+  textAlign(CENTER, TOP);
+  text("Space Defender", centerPos.x, infoAreaY / 5);
+  text(formatMillis(millisPassed), centerPos.x, infoAreaY * 0.5);
+  text("Score\n" + score, width * 0.10, infoAreaY / 4);
+  text("Kills\n" + kills, width * 0.25, infoAreaY / 4);
+  text("Lives", width * 0.85, infoAreaY / 4);
+
+  float listWidth = hpIconSize.x + hpIconDistance * (spaceStationHealth + 1);
+  float listCentre = listWidth * 0.5 - (hpIconSize.x * 0.5);
+  for (int i = 1; i <= spaceStationHealth; i++) {
+    PVector iconPos = new PVector(((width * 0.84 - listCentre) + hpIconDistance * i), infoAreaY * 0.6);
+    fill(0, 255, 0);
+    rect(iconPos.x, iconPos.y, hpIconSize.x, hpIconSize.y);
+  }
 }
 
 // ENEMY FUNCTIONS
-int findNextDeadEnemy() {
-  for (int i = 0; i < maxEnemies; i++) {
-    if (!enemyStates[i]) {
+int findNextDeadShip() {
+  for (int i = 0; i < maxShips; i++) {
+    if (!shipStates[i]) {
       return i;
     }
   }
   return -1;
 }
 
-int getTargetEnemy() {
-  for (int i = 0; i < maxEnemies; i++) {
-    if (!enemyStates[i]) { 
+int getTargetShip() {
+  for (int i = 0; i < maxShips; i++) {
+    if (!shipStates[i]) { 
       continue; 
     }
     
-    //int enemyType = enemies[i];
-    //PVector enemySize = enemySizes[enemyType];
-    //if (PVector.sub(enemyPositions[i], mousePos).mag() < enemySize) {
+    //int shipType = ships[i];
+    //PVector shipSize = shipSizeValues[shipType];
+    //if (PVector.sub(shipPositions[i], mousePos).mag() < shipSize) {
     //  return i;      
     //}
-    if (checkCollision(enemyPositions[i], enemySizes[enemies[i]], mousePos, new PVector(5, 5))) {
+    if (checkCollision(shipPositions[i], shipSizeValues[ships[i]], mousePos, new PVector(5, 5))) {
       return i;  
     }
   }
   return -1;
 }
 
-void spawnEnemy(int enemyType) {
-  int index = findNextDeadEnemy();
+void spawnShip(int shipType) {
+  int index = findNextDeadShip();
   if (index == -1) { 
     return; 
   }
   
-  PVector size = enemySizes[enemyType];
+  PVector size = shipSizeValues[shipType];
   PVector position;
  
   //if (boolean((int)random(2))) {
@@ -231,75 +315,75 @@ void spawnEnemy(int enemyType) {
   if (boolean((int)random(2))) {
     float posY;
     if (boolean((int)random(2))) {
-      posY = height - size.y; // Bottom
+      posY = height - size.y * 0.5; // Bottom
     } else {
-      posY = infoAreaY + size.y; // Top
+      posY = infoAreaY + size.y * 0.5; // Top
     }
-    position = new PVector(random(width), posY);
+    position = new PVector(random(size.x * 0.5, width), posY);
   } else {
     float posX;
     if (boolean((int)random(2))) {
-      posX = size.x; // Left
+      posX = size.x * 0.5; // Left
     } else {
-      posX = width - size.x; // Right
+      posX = width - size.x * 0.5; // Right
     }
-    position = new PVector(posX, random(infoAreaY + size.y, height - size.y));
+    position = new PVector(posX, random(infoAreaY + size.y, height - size.y * 0.5));
   }
   
   PVector velocity = PVector.sub(centerPos, position);
   
-  aliveEnemies++;
-  enemies[index] = enemyType;
-  enemyStates[index] = true;
-  enemyHitPoints[index] = enemyHitPointValues[enemyType];
-  enemyPositions[index] = position;
-  enemyVelocities[index] = velocity.setMag(enemySpeedValues[enemyType]);
+  aliveShips++;
+  ships[index] = shipType;
+  shipStates[index] = true;
+  shipHitPoints[index] = shipHitPointValues[shipType];
+  shipPositions[index] = position;
+  shipVelocities[index] = velocity.setMag(shipSpeedValues[shipType]);
 }
 
-void killEnemy(int index) {
-  aliveEnemies--;
-  enemyStates[index] = false;
+void killShip(int index) {
+  aliveShips--;
+  shipStates[index] = false;
 }
 
-void damageEnemy(int index, int damage) {
-  enemyHitPoints[index] -= damage;
-  if (enemyHitPoints[index] <= 0) {
-    killEnemy(index);
-    score += enemyScoreValues[enemies[index]];
+void damageShip(int index, int damage) {
+  shipHitPoints[index] -= damage;
+  if (shipHitPoints[index] <= 0) {
+    killShip(index);
+    kills++;
+    score += shipScoreValues[ships[index]];
   }
 }
 
-void moveEnemy(int index) {
-  enemyPositions[index].add(enemyVelocities[index]);  
+void moveShip(int index) {
+  shipPositions[index].add(shipVelocities[index]);  
 }
 
 boolean checkCollision(PVector pos1, PVector size1, PVector pos2, PVector size2) {
   // if right x coord of rect 1 is less than the left x coord of rect 2 
   // or the left x coord of rect 1 is greater than the right x coord of rect 2
-  if (pos1.x + size1.x / 2 < pos2.x - size2.x / 2 || pos1.x - size1.x / 2 > pos2.x + size2.x / 2) {
+  if (pos1.x + size1.x * 0.5 < pos2.x - size2.x * 0.5 || pos1.x - size1.x * 0.5 > pos2.x + size2.x * 0.5) {
     return false; 
   }
   
-
   // if bottom y coord of rect 1 is less than the top y coord of rect 2
   // or the top y coord of rect 1 is greater than the bottom y coord of rect 2
-  if (pos1.y + size1.y / 2 < pos2.y - size2.y / 2 || pos1.y - size1.y / 2 > pos2.y + size2.y / 2) {
+  if (pos1.y + size1.y * 0.5 < pos2.y - size2.y * 0.5 || pos1.y - size1.y * 0.5 > pos2.y + size2.y * 0.5) {
     return false; 
   }
   
   return true;
 }
 
-void runEnemies() {
-  for (int i = 0; i < maxEnemies; i++) {
-    if (!enemyStates[i]) { 
+void runShips() {
+  for (int i = 0; i < maxShips; i++) {
+    if (!shipStates[i]) { 
       continue; 
     }
-    moveEnemy(i);
-    if (checkCollision(enemyPositions[i], enemySizes[enemies[i]], centerPos, spaceStationSize)) {
-      killEnemy(i);
-      damageSpaceStation(enemyDamageValues[enemies[i]]);
+    moveShip(i);
+    if (checkCollision(shipPositions[i], shipSizeValues[ships[i]], centerPos, spaceStationSize)) {
+      killShip(i);
+      damageSpaceStation(shipDamageValues[ships[i]]);
     }
-    drawEnemy(i);
+    drawShip(i);
   }
 }
