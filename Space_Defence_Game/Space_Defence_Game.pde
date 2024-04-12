@@ -52,6 +52,8 @@ int[] projPointValues = {30};
 // CURRENT ROUND VALUES
 int score;
 int kills;
+float shotsTaken;
+float shotsHit;
 int millisPassed;
 int lastMilli;
 PVector mousePos;
@@ -97,6 +99,8 @@ void newGame() {
   generateStars();
   score = 0;
   kills = 0;
+  shotsTaken = 0;
+  shotsHit = 0;
   millisPassed = 0;
   lastMilli = millis();
   spaceStationHealth = 5;
@@ -122,8 +126,10 @@ void mousePressed() {
   int shipIndex = getTargetShip();
   stroke(#FCD300);
   strokeWeight(3);
+  shotsTaken++;
   line(centerPos.x, centerPos.y, mousePos.x, mousePos.y);
   if (shipIndex > -1 && shipStates[shipIndex]) {
+    shotsHit++;
     damageShip(shipIndex, 1);
   }
 }
@@ -256,8 +262,9 @@ void drawInfoArea() {
   textAlign(CENTER, TOP);
   text("Space Defender", centerPos.x, infoAreaY / 5);
   text(formatMillis(millisPassed), centerPos.x, infoAreaY * 0.5);
-  text("Score\n" + score, width * 0.10, infoAreaY / 4);
-  text("Kills\n" + kills, width * 0.25, infoAreaY / 4);
+  text("Score\n" + score, width * 0.05, infoAreaY / 4);
+  text("Kills\n" + kills, width * 0.15, infoAreaY / 4);
+  text("Accuracy\n " + round((shotsHit + 1) / (shotsTaken + 1) * 10000) / 100 + "%", width * 0.28, infoAreaY * 0.25);
   text("Lives", width * 0.85, infoAreaY / 4);
 
   float listWidth = hpIconSize.x + hpIconDistance * (spaceStationHealth + 1);
