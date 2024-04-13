@@ -1,26 +1,11 @@
 void setup() {
   size(500, 500);  
-//int[] data = {10, 60, 71, 120, 80, 100};
+  int[] data = {10, 60, 71, 120, 80, 100};
   //int[] data = {1, 7, 3, 9};
-  //println(longestEvenRun(data));
-  
-  println(squaresOverlapping(40, 70, 10, 20, 50, 30));
+  println(longestEvenRun(data));
 }
 
-void draw() {
-  fill(255, 255, 255);
-  square(20, 50, 30);
-  fill(255, 0, 0);
-  square(40, 70, 10);
-}
-
-boolean squaresOverlapping(int x1, int y1, int side1, int x2, int y2, int side2) {
-  if( x1 - x2 <= side2 && y1 - y2 <= side2) {
-    return true;
-  }
-  return false;
-}
-
+void draw() {}
 
 int[] longestEvenRun(int[] data) {
   if (data.length == 0) { return new int[0]; };

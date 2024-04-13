@@ -2,7 +2,7 @@ PVector obj1Pos;
 PVector obj1Size = new PVector(50, 50);
 
 PVector obj2Pos = new PVector();
-PVector obj2Size = new PVector(2, 2);
+PVector obj2Size = new PVector(50, 40);
 
 void setup() {
   size(1000, 1000);
