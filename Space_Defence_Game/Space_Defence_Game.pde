@@ -43,13 +43,15 @@ int FRIGATE = 0;
 int CRUISER = 1;
 int DESTROYER = 2;
 int FRIENDLY = 3;
-int CANNONPROJ = 4; // Projectiles have same functionality to ships
-int[] shipHitPointValues = {1, 3, 2, 1, 1};
-int[] shipDamageValues = {1, 2, 0, -1, 1};
-float[] shipSpeedValues = {1.5, 0.5, 0, 1, 0.5};
-int[] shipScoreValues = {10, 20, 15, -50, 30};
-int[] shipProjectileValues = {-1, -1, 4, -1, -1}; // What projectile the ship fires (-1 if none);
-int[] shipSpawnChances = {100, 80, 60, 50, 0};
+int CARRIER = 4;
+int CANNONPROJ = 5; // Projectiles have same functionality to ships
+// Parallel arrays used to keep track of the stats between each ship type
+int[] shipHitPointValues = {1, 3, 2, 1, 5, 1}; // How many clicks the ship takes to destroy
+int[] shipDamageValues = {1, 2, 0, -1, 5, 1}; // How many lives are deducted when the ship touches the station
+float[] shipSpeedValues = {1, 0.5, 0, 1, 0.2, 0.5};
+int[] shipScoreValues = {10, 20, 15, -50, 100, 30}; // Negative score for friendly ships
+int[] shipProjectileValues = {-1, -1, 5, -1, 0, -1}; // What projectile the ship fires (-1 if none);
+int[] shipSpawnChances = {100, 75, 50, 30, 10, 0}; // Percent chance for ship to appear
 int shipFireDelay = 4000;
 
 PVector[] shipSizeValues = {
@@ -57,6 +59,7 @@ PVector[] shipSizeValues = {
   new PVector(50, 50),
   new PVector(70, 30),
   new PVector(50, 40),
+  new PVector(80, 40), 
   new PVector(20, 20),
 };
 
@@ -83,10 +86,20 @@ boolean[] shipStates = new boolean[maxShips];
 int[] shipHitPoints = new int[maxShips];
 int[] shipLastFireTimes = new int[maxShips];
 
+PVector[] notifPositions = new PVector[maxNotifs];
+String[] notifStrings = new String[maxNotifs];
+color[] notifColors = new color[maxNotifs];
+int[] notifSizes = new int[maxNotifs];
+int[] notifSpawnTimes = new int[maxNotifs];
+boolean[] activeNotifs = new boolean[maxNotifs];
+
+
 void setup() {
   noCursor();
   size(800, 600);
   centrePos = new PVector(width * 0.5, height * 0.5 + (infoAreaY * 0.5));
+  lShipPos = new PVector(180, 200);
+  rShipPos = new PVector(width - 180, 180);
   generateStars();
 }
 
@@ -108,10 +121,17 @@ void draw() {
   mousePos.y = max(mouseY, infoAreaY);
   
   if(aliveShips < min(currentMaxShips, maxShips)) {
-    spawnShip((int)random(4));  
+    int spawnDecider = (int)random(1, 101);
+    
+    for(int i = shipSpawnChances.length - 1; i > -1; i--) { // Only works if array is ordered in descending chances
+      if (spawnDecider <= shipSpawnChances[i]) {
+        spawnShip(i);
+        break;
+      }
+    }
   }
   
-  currentMaxShips += 0.001;
+  currentMaxShips += 0.001; // Make the difficulty ramp up over time
   
   drawBackgroundObjects();
   runNotifs();
@@ -253,7 +273,10 @@ void drawStartScreen() {
   textSize(64);
   text("Space Defender", centrePos.x, centrePos.y - height * 0.4);
   textSize(20);
-  text("Click on enemy ships to damage them, dont let them reach the space station!\n Friendly ships add lives if they make it to the station, but reduce score if killed.", centrePos.x, centrePos.y - height * 0.25);
+  text("Click on enemy ships to damage them, dont let them reach the space station!\nFriendly ships add lives if they make it to the station, but reduce score if killed.", 
+        centrePos.x, centrePos.y - height * 0.25); 
+  text("Some ships remove more than one life and are slower, taking more hits to kill.\nThe Carrier and Destroyer appear rarely and are capable of creating additional ships.\n\nGood Luck!", 
+        centrePos.x, centrePos.y - height * 0.1);
   textAlign(LEFT);
   text("[s] Start Game", width * 0.05, height * 0.8);
   text("[q] Quit", width * 0.05, height * 0.85);
@@ -308,6 +331,7 @@ void drawShip(int index) {
   int shipType = ships[index];
   PVector size = shipSizeValues[shipType];
   noStroke();
+  
   if (ships[index] == FRIGATE) {
     fill(150, 150, 150);
     rect(pos.x - size.x / 4, pos.y - size.y / 4, size.x * 0.5, size.y * 0.5);
@@ -331,29 +355,33 @@ void drawShip(int index) {
     );
     fill(255, 0, 0);
     rect(pos.x - size.x / 6, pos.y - size.y / 6, size.x / 3, size.y / 3);
+  
   } else if (ships[index] == CRUISER) {
     fill(150, 150, 150);
     triangle(
-      pos.x - size.x * 0.4,
-      pos.y, 
+      pos.x - size.x * 0.3,
+      pos.y - size.y * 0.1, 
       pos.x,
       pos.y - size.y * 0.5,          
-      pos.x + size.x * 0.4,
-      pos.y
+      pos.x + size.x * 0.3,
+      pos.y - size.y * 0.1
     );
     triangle(
-      pos.x + size.x * 0.41,
-      pos.y,
+      pos.x + size.x * 0.3,
+      pos.y + size.y * 0.1,
       pos.x,
       pos.y + size.y * 0.5,        
-      pos.x - size.x * 0.4,
-      pos.y
+      pos.x - size.x * 0.3,
+      pos.y + size.y * 0.1
     );
+    fill(200, 200, 200);
+    rect(pos.x - size.x * 0.3, pos.y - size.y * 0.11, size.x * 0.6, size.y * 0.22); 
     fill(255, 0, 0);
-    square(pos.x - size.x * 0.15, pos.y - size.y * 0.15, size.y * 0.3);
+    rect(pos.x - size.x * 0.15, pos.y - size.y * 0.15, size.x * 0.3, size.y * 0.3);
     fill(200, 200, 200);
     rect(pos.x - size.x * 0.5, pos.y - size.y * 0.5, size.x, size.y * 0.2);
     rect(pos.x - size.x * 0.5, pos.y + size.y * 0.3, size.x, size.y * 0.2);
+  
   } else if (ships[index] == DESTROYER) {
     fill(150, 150, 150);
     triangle(
@@ -376,9 +404,11 @@ void drawShip(int index) {
       pos.x - size.x * 0.5,
       pos.y + size.y * 0.2
     );
+  
   } else if (ships[index] == CANNONPROJ) {
     fill(255, 0, 0);
     circle(pos.x, pos.y, size.x);
+  
   } else if (ships[index] == FRIENDLY) {
     fill(150, 150, 150);
     rect(pos.x - size.x * 0.5, pos.y - size.y * 0.5, size.x * 0.25, size.y);
@@ -388,6 +418,16 @@ void drawShip(int index) {
     fill(0, 255, 0);
     rect(pos.x - size.x * 0.05, pos.y - size.y * 0.2, size.x * 0.1, size.y * 0.4);
     rect(pos.x - size.x * 0.175, pos.y - size.y * 0.06, size.x * 0.35, size.y * 0.12);
+  
+  } else if (ships[index] == CARRIER) {
+    fill(150, 150, 150);
+    ellipse(pos.x, pos.y, size.x, size.y);
+    fill(200, 200, 200);
+    rect(pos.x - size.x * 0.5, pos.y - size.y * 0.2, size.x, size.y * 0.4);
+    fill(255, 0, 0);
+    rect(pos.x - size.x * 0.4, pos.y - size.y * 0.1, size.x * 0.2, size.y * 0.2);    
+    rect(pos.x - size.x * 0.1, pos.y - size.y * 0.1, size.x * 0.2, size.y * 0.2);
+    rect(pos.x + size.x * 0.2, pos.y - size.y * 0.1, size.x * 0.2, size.y * 0.2);
   }
 
   drawHealthBar(pos.x, pos.y + size.y * 0.7, 6, 6, 10, shipHitPoints[index]);
@@ -528,8 +568,8 @@ void drawBackgroundObjects() {
   );
   
   // Laser effects
-  if ((int)random(101) < 15) {
-    PVector lShipLinePos = new PVector(random(lShipPos.x - lShipSize.x * 0.5, lShipPos.x + lShipSize.x * 0.5), random(lShipPos.y - lShipSize.y * 0.5, lShipPos.y + lShipSize.y * 0.5));
+  if ((int)random(101) <= 5) {
+    PVector lShipLinePos = new PVector(random(lShipPos.x - lShipSize.x * 0.5, lShipPos.x + lShipSize.x * 0.5), random(lShipPos.y, lShipPos.y + lShipSize.y * 0.5));
     PVector rShipLinePos = new PVector(random(rShipPos.x - rShipSize.x * 0.5, rShipPos.x + rShipSize.x * 0.5), random(rShipPos.y - rShipSize.y * 0.5, rShipPos.y + rShipSize.y * 0.5));
     stroke(0, 255, 0);
   
@@ -575,13 +615,6 @@ void drawHealthBar(float posX, float posY, int sizeX, int sizeY, float iconDista
 }
 
 // ===== NOTIFICATION FUNCTIONS =====
-PVector[] notifPositions = new PVector[maxNotifs];
-String[] notifStrings = new String[maxNotifs];
-color[] notifColors = new color[maxNotifs];
-int[] notifSizes = new int[maxNotifs];
-int[] notifSpawnTimes = new int[maxNotifs];
-boolean[] activeNotifs = new boolean[maxNotifs];
-
 void addNotif(int statValue, float posX, float posY, int size) {
   int index = findNextInactiveNotif();
   
@@ -739,7 +772,7 @@ void fireShipProjectile(int index) {
   }
 
   if (millis() > shipLastFireTimes[index] + shipFireDelay) {
-    spawnShip(CANNONPROJ, shipPositions[index]);
+    spawnShip(projectile, shipPositions[index]);
     shipLastFireTimes[index] = millis();
   }
 }
@@ -761,29 +794,26 @@ void runShips() {
   }
 }
 
-// add spawn chances
-// display tutorial
-
 /*
-Background is the correct size                                            2  X
-There is a start screen                                                   2  X
-User can only move to the game screen when a key is pressed               2  X
-Game screen has 2 sections and at least 4 shapes to add visual interest   6  X
-Score and lives are displayed using variables                             3  X
-Target is a composite shape                                               12 X
-Cross hairs are a composite shape                                         12 X
-Target appears at a random location                                       2  X
-A target is hit if the cross hairs and target collide                     10 X
-If a target is hit it should disappear                                    5  X
-When the target reappears the type of target is randomized                5  X
-When target reappears, its location is randomized                         5  X
-Target and cross hairs should be limited to the game area ONLY            5  X
-All of the target should be confined to the game area                     2  X
-Score and lives update as per the target and if it was a successful hit   6  X ?
-No key presses should work on the game screen                             2  X
-There is a finite end to game                                             4  X
-When game ends it moves to final screen with detail displayed             4  X
-Pressing a key should bring user back to game screen                      4  X
-Upon returning to game screen, scores and lives reset                     2  X
-Creativity                                                                5  X
+Background is the correct size                                            2
+There is a start screen                                                   2
+User can only move to the game screen when a key is pressed               2
+Game screen has 2 sections and at least 4 shapes to add visual interest   6
+Score and lives are displayed using variables                             3
+Target is a composite shape                                               12
+Cross hairs are a composite shape                                         12
+Target appears at a random location                                       2
+A target is hit if the cross hairs and target collide                     10
+If a target is hit it should disappear                                    5
+When the target reappears the type of target is randomized                5
+When target reappears, its location is randomized                         5
+Target and cross hairs should be limited to the game area ONLY            5
+All of the target should be confined to the game area                     2
+Score and lives update as per the target and if it was a successful hit   6
+No key presses should work on the game screen                             2
+There is a finite end to game                                             4
+When game ends it moves to final screen with detail displayed             4
+Pressing a key should bring user back to game screen                      4
+Upon returning to game screen, scores and lives reset                     2
+Creativity                                                                5
 */

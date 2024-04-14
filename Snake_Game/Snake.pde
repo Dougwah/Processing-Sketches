@@ -2,7 +2,8 @@ class Snake {
   PVector headPosition;
   PVector currentDirection = new PVector(1, 0);
   ArrayList<PVector> positions = new ArrayList<PVector>();
-  boolean dLeft, dRight, dUp, dDown = false; 
+  boolean dLeft, dRight, dUp, dDown = false;
+  boolean controlLocked = false;
 
   String keys = "wasd";
   int[] xMovement = {0, -1, 0, 1};
@@ -44,6 +45,7 @@ class Snake {
       setPosition();
       checkCollision();
       lastTick = millis();
+      controlLocked = false;
     }
 
     drawSnake();
@@ -76,6 +78,9 @@ class Snake {
   }
   
   void control() {
+    if (controlLocked) {
+      return;  
+    }
     switch(lastKey) {
       case 'w':
         if (currentDirection.y == 0) {
@@ -97,6 +102,7 @@ class Snake {
           currentDirection.set(1, 0);
         }
      }
+     controlLocked = true;
   }
   
   void drawSnake() {
