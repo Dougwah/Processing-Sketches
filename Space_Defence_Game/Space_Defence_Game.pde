@@ -1,7 +1,7 @@
 // ===== GAME SETTINGS ===== 
 int infoAreaY = 80;
 int maxShips = 20;
-int stationMaxHealth = 5;
+int stationMaxHealth = 1;
 PVector stationSize = new PVector(140, 80);
 int maxNotifs = 15;
 int notifLifeTime = 2000;
@@ -28,6 +28,11 @@ int craterMinSize = 10;
 PVector moonPos;
 PVector[] craterPositions = new PVector[craters];
 float[] craterSizes = new float[craters];
+
+PVector lShipSize = new PVector(300, 120); // 1 : 2.5 aspect ratio
+PVector rShipSize = new PVector(300, 120);
+PVector lShipPos = new PVector(180, 200);
+PVector rShipPos = new PVector(620, 180);
 
 PVector xHairSize = new PVector(3, 20);
 int xHairGap = 10;
@@ -56,6 +61,7 @@ PVector[] shipSizeValues = {
 };
 
 // ===== CURRENT ROUND VALUES =====
+int gameState = 0; // 0 == start screen, 1 = game screen, 2 = end screen
 int score;
 int kills;
 float shotsTaken;
@@ -81,12 +87,21 @@ void setup() {
   noCursor();
   size(800, 600);
   centrePos = new PVector(width * 0.5, height * 0.5 + (infoAreaY * 0.5));
-  newGame();
 }
 
 void draw() {
+  if (gameState == 2) {
+    drawEndScreen();
+    return;
+  }
+  
+  if (gameState == 0) {
+    drawStartScreen();
+    return;
+  }
+  
   background(0);
-    
+  
   mousePos.x = mouseX;
   mousePos.y = max(mouseY, infoAreaY);
   
@@ -108,6 +123,9 @@ void draw() {
 }
 
 void mousePressed() {
+  if (gameState != 1) {
+    return;  
+  }
   int shipIndex = getTargetShip();
   stroke(#FCD300);
   strokeWeight(3);
@@ -119,8 +137,33 @@ void mousePressed() {
   }
 }
 
+void keyPressed() {
+  if (gameState == 1) { // No key presses if game is active
+    return;  
+  }
+  
+  if (gameState == 2) {
+    if (key == 'r') { // Restart game at end screen
+      newRound();  
+    }
+    if (key == 'm') {
+      gameState = 0; // Return to menu at end screen
+    }
+  }
+  
+  if (gameState == 0) {
+    if(key == 's') { // Start new round from start screen
+      newRound();  
+    }
+  }
+  
+  if (key == 'q') { // Quit game when in start or end screen
+    exit();
+  }
+}
+
 // ===== GAME FUNCTIONS ===== 
-void newGame() {
+void newRound() {
   generateStars();
   generateMoon();
   score = 0;
@@ -133,10 +176,11 @@ void newGame() {
   currentMaxShips = 3;
   aliveShips = 0;
   shipStates = new boolean[maxShips];
+  gameState = 1;
 }
 
-void endGame() {
-  newGame();  
+void endRound() {
+  gameState = 2;
 }
 
 void generateStars() {
@@ -161,13 +205,20 @@ void damageStation(int damage) {
   stationHealth = min(stationHealth - damage, stationMaxHealth) ;
   addNotif(-damage, centrePos.x, centrePos.y - stationSize.y * 0.7, 30);
   if (stationHealth <= 0) {
-    endGame();  
+    endRound();  
   }
 }
 
 String formatMillis(int millis) {
   int seconds = millis / 1000;
   return nf(floor(seconds / 60), 2, 0) + " : " + nf((seconds % 60), 2, 0) + " : " + nf((millis) % 1000, 3, 0); 
+}
+
+int calcAccuracy() {
+  if (shotsTaken == 0) {
+    return 0;  
+  }
+  return round(shotsHit / shotsTaken * 10000) / 100;
 }
 
 boolean checkCollision(PVector pos1, PVector size1, PVector pos2, PVector size2) {
@@ -195,6 +246,34 @@ boolean checkCollision(PVector pos, PVector size, PVector point) {
 }
 
 // ===== DRAW FUNCTIONS =====
+void drawStartScreen() {
+  background(100, 0, 255);
+  textAlign(CENTER, CENTER);
+  textSize(64);
+  text("Space Defender", centrePos.x, centrePos.y - height * 0.4);
+  textAlign(LEFT);
+  textSize(20);
+  text("[s] Start Game", width * 0.05, height * 0.8);
+  text("[q] Quit", width * 0.05, height * 0.85);
+}
+
+void drawEndScreen() {
+  background(100, 0, 255);
+  textAlign(CENTER);
+  textSize(64);
+  text("You Died!", centrePos.x, centrePos.y - height * 0.4);
+  textSize(40);
+  text("Score: " + score, centrePos.x, centrePos.y - height * 0.3);
+  text("Kills: " + kills, centrePos.x, centrePos.y - height * 0.2);
+  text("Accuracy: " + calcAccuracy() + "%", centrePos.x, centrePos.y - height * 0.1);
+  text("Final Score: " + ceil(score - (score * ( 1 - (calcAccuracy() / 100.)))), centrePos.x, centrePos.y);
+  textAlign(LEFT);
+  textSize(20);
+  text("[r] New Round", width * 0.05, height * 0.8);
+  text("[m] Title Screen", width * 0.05, height * 0.85);
+  text("[q] Quit", width * 0.05, height * 0.9);
+}
+
 void drawStars() {
   for (int i = 0; i < gStarPositions.length; i++)  {
     fill(gStarColors[i]);
@@ -312,11 +391,6 @@ void drawShip(int index) {
   drawHealthBar(pos.x, pos.y + size.y * 0.7, 6, 6, 10, shipHitPoints[index]);
 }
 
-PVector lShipSize = new PVector(300, 120);
-PVector rShipSize = new PVector(300, 120);
-PVector lShipPos = new PVector(180, 180);
-PVector rShipPos = new PVector(620, 180);
-
 void drawBackgroundObjects() {
   // Space Station
   fill(150, 150, 150);
@@ -431,6 +505,8 @@ void drawBackgroundObjects() {
   rect(rShipPos.x - rShipSize.x * 0.45, rShipPos.y + rShipSize.y * 0.2, rShipSize.x * 0.15, rShipSize.y * 0.05); // Bottom Antenna
   rect(rShipPos.x + rShipSize.x * 0.35, rShipPos.y - rShipSize.y * 0.25, rShipSize.x * 0.1, rShipSize.y * 0.2); // Top Thruster
   rect(rShipPos.x + rShipSize.x * 0.35, rShipPos.y + rShipSize.y * 0.05, rShipSize.x * 0.1, rShipSize.y * 0.2); // Bottom Thruster
+  rect(rShipPos.x - rShipSize.x * 0.15, rShipPos.y - rShipSize.y * 0.3, rShipSize.x * 0.4, rShipSize.y * 0.2); // Top Middle
+  rect(rShipPos.x - rShipSize.x * 0.15, rShipPos.y + rShipSize.y * 0.1, rShipSize.x * 0.4, rShipSize.y * 0.2); // Bottom Middle
   fill(230, 255, 255);
   triangle( // Top Back
     rShipPos.x + rShipSize.x * 0.35, 
@@ -461,7 +537,7 @@ void drawInfoArea() {
   text(formatMillis(millisPassed), centrePos.x, infoAreaY * 0.5);
   text("Score\n" + score, width * 0.05, infoAreaY / 4);
   text("Kills\n" + kills, width * 0.15, infoAreaY / 4);
-  text("Accuracy\n " + round((shotsHit + 1) / (shotsTaken + 1) * 10000) / 100 + "%", width * 0.28, infoAreaY * 0.25);
+  text("Accuracy\n " + calcAccuracy() + "%", width * 0.28, infoAreaY * 0.25);
   text("Lives", width * 0.85, infoAreaY / 4);
   
   drawHealthBar(width * 0.85, infoAreaY * 0.6, 20, 20, 30, stationHealth);
@@ -670,9 +746,9 @@ void runShips() {
 
 /*
 Background is the correct size                                            2  X
-There is a start screen                                                   2
-User can only move to the game screen when a key is pressed               2
-Game screen has 2 sections and at least 4 shapes to add visual interest   6
+There is a start screen                                                   2  X
+User can only move to the game screen when a key is pressed               2  X
+Game screen has 2 sections and at least 4 shapes to add visual interest   6  X
 Score and lives are displayed using variables                             3  X
 Target is a composite shape                                               12 X
 Cross hairs are a composite shape                                         12 X
@@ -686,8 +762,8 @@ All of the target should be confined to the game area                     2  X
 Score and lives update as per the target and if it was a successful hit   6  X ?
 No key presses should work on the game screen                             2  X
 There is a finite end to game                                             4  X
-When game ends it moves to final screen with detail displayed             4
-Pressing a key should bring user back to game screen 4                    4
-Upon returning to game screen, scores and lives reset 2                   2 X
-Creativity                                                                5 X
+When game ends it moves to final screen with detail displayed             4  X
+Pressing a key should bring user back to game screen 4                    4  X
+Upon returning to game screen, scores and lives reset 2                   2  X
+Creativity                                                                5  X
 */
