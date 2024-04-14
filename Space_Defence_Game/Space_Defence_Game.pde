@@ -1,13 +1,13 @@
 // ===== GAME SETTINGS ===== 
 int infoAreaY = 80;
 int maxShips = 20;
-int stationMaxHealth = 1;
+int stationMaxHealth = 5;
 PVector stationSize = new PVector(140, 80);
 int maxNotifs = 15;
 int notifLifeTime = 2000;
 float notifRiseSpeed = 0.4;
 
-int starCount = 100;
+int starCount = 150;
 PVector[] gStarPositions = new PVector[starCount];
 color[] gStarColors = new color[starCount];
 float[] gStarSizes = new float[starCount];
@@ -87,9 +87,13 @@ void setup() {
   noCursor();
   size(800, 600);
   centrePos = new PVector(width * 0.5, height * 0.5 + (infoAreaY * 0.5));
+  generateStars();
 }
 
 void draw() {
+  background(0);
+  drawStars();
+  
   if (gameState == 2) {
     drawEndScreen();
     return;
@@ -100,8 +104,6 @@ void draw() {
     return;
   }
   
-  background(0);
-  
   mousePos.x = mouseX;
   mousePos.y = max(mouseY, infoAreaY);
   
@@ -111,7 +113,6 @@ void draw() {
   
   currentMaxShips += 0.001;
   
-  drawStars();
   drawBackgroundObjects();
   runNotifs();
   runShips();
@@ -185,7 +186,7 @@ void endRound() {
 
 void generateStars() {
   for (int i = 0; i < starCount; i++) {
-    PVector pos = new PVector(random(width), random(infoAreaY, height));
+    PVector pos = new PVector(random(width), random(height));
     gStarPositions[i] = pos;
     gStarColors[i] = starColors[floor(random(starColors.length))];
     gStarSizes[i] = random(1, 3);
@@ -247,21 +248,22 @@ boolean checkCollision(PVector pos, PVector size, PVector point) {
 
 // ===== DRAW FUNCTIONS =====
 void drawStartScreen() {
-  background(100, 0, 255);
+  fill(255, 200, 0);
   textAlign(CENTER, CENTER);
   textSize(64);
   text("Space Defender", centrePos.x, centrePos.y - height * 0.4);
-  textAlign(LEFT);
   textSize(20);
+  text("Click on enemy ships to damage them, dont let them reach the space station!\n Friendly ships add lives if they make it to the station, but reduce score if killed.", centrePos.x, centrePos.y - height * 0.25);
+  textAlign(LEFT);
   text("[s] Start Game", width * 0.05, height * 0.8);
   text("[q] Quit", width * 0.05, height * 0.85);
 }
 
 void drawEndScreen() {
-  background(100, 0, 255);
+  fill(255, 200, 0);  
   textAlign(CENTER);
   textSize(64);
-  text("You Died!", centrePos.x, centrePos.y - height * 0.4);
+  text("Game Over!", centrePos.x, centrePos.y - height * 0.4);
   textSize(40);
   text("Score: " + score, centrePos.x, centrePos.y - height * 0.3);
   text("Kills: " + kills, centrePos.x, centrePos.y - height * 0.2);
@@ -524,6 +526,26 @@ void drawBackgroundObjects() {
     rShipPos.x + rShipSize.x * 0.35, 
     rShipPos.y + rShipSize.y * 0.1
   );
+  
+  // Laser effects
+  if ((int)random(101) < 15) {
+    PVector lShipLinePos = new PVector(random(lShipPos.x - lShipSize.x * 0.5, lShipPos.x + lShipSize.x * 0.5), random(lShipPos.y - lShipSize.y * 0.5, lShipPos.y + lShipSize.y * 0.5));
+    PVector rShipLinePos = new PVector(random(rShipPos.x - rShipSize.x * 0.5, rShipPos.x + rShipSize.x * 0.5), random(rShipPos.y - rShipSize.y * 0.5, rShipPos.y + rShipSize.y * 0.5));
+    stroke(0, 255, 0);
+  
+    if (boolean((int)random(2))) {
+      fill(255, 85, 0);
+      noStroke();
+      circle(lShipLinePos.x, lShipLinePos.y, 20);
+      stroke(0, 255, 0);
+    } else {
+      fill(255, 85, 0);
+      noStroke();
+      circle(rShipLinePos.x, rShipLinePos.y, 20);
+      stroke(255, 0, 0);
+    }
+    line(lShipLinePos.x, lShipLinePos.y, rShipLinePos.x, rShipLinePos.y);
+  }
 }
 
 void drawInfoArea() {
@@ -740,9 +762,7 @@ void runShips() {
 }
 
 // add spawn chances
-// add start menu, start, quit, display tutorial
-// add game over screen
-// design 2 background ships
+// display tutorial
 
 /*
 Background is the correct size                                            2  X
@@ -763,7 +783,7 @@ Score and lives update as per the target and if it was a successful hit   6  X ?
 No key presses should work on the game screen                             2  X
 There is a finite end to game                                             4  X
 When game ends it moves to final screen with detail displayed             4  X
-Pressing a key should bring user back to game screen 4                    4  X
-Upon returning to game screen, scores and lives reset 2                   2  X
+Pressing a key should bring user back to game screen                      4  X
+Upon returning to game screen, scores and lives reset                     2  X
 Creativity                                                                5  X
 */
