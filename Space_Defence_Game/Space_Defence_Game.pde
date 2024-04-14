@@ -1,9 +1,9 @@
 // ===== GAME SETTINGS ===== 
 int infoAreaY = 80;
-int maxShips = 100;
+int maxShips = 20;
 int stationMaxHealth = 5;
 PVector stationSize = new PVector(140, 80);
-int maxNotifs = 10;
+int maxNotifs = 15;
 int notifLifeTime = 2000;
 float notifRiseSpeed = 0.4;
 
@@ -90,7 +90,7 @@ void draw() {
   mousePos.x = mouseX;
   mousePos.y = max(mouseY, infoAreaY);
   
-  if(aliveShips < currentMaxShips) {
+  if(aliveShips < min(currentMaxShips, maxShips)) {
     spawnShip((int)random(4));  
   }
   
@@ -313,7 +313,9 @@ void drawShip(int index) {
 }
 
 PVector lShipSize = new PVector(300, 120);
-PVector lShipPos= new PVector(180, 180);
+PVector rShipSize = new PVector(300, 120);
+PVector lShipPos = new PVector(180, 180);
+PVector rShipPos = new PVector(620, 180);
 
 void drawBackgroundObjects() {
   // Space Station
@@ -364,7 +366,6 @@ void drawBackgroundObjects() {
   }
   
   // Left Ship
-  //rect(lShipPos.x - lShipSize.x * 0.5, lShipPos.y - lShipSize.y * 0.5, lShipSize.x, lShipSize.y);
   fill(140, 130, 130);
   rect(lShipPos.x - lShipSize.x * 0.45, lShipPos.y, lShipSize.x * 0.2, lShipSize.y * 0.3); // Back
   fill(230, 255, 255);
@@ -418,6 +419,35 @@ void drawBackgroundObjects() {
   rect(lShipPos.x - lShipSize.x * 0.4, lShipPos.y + lShipSize.y * 0.1, lShipSize.x * 0.8, lShipSize.y * 0.1); // Middle
 
   // Right Ship
+  fill(230, 255, 255);
+  rect(rShipPos.x - rShipSize.x * 0.4, rShipPos.y - rShipSize.y * 0.3, rShipSize.x * 0.12, rShipSize.y * 0.4); // Front
+  rect(rShipPos.x - rShipSize.x * 0.3, rShipPos.y - rShipSize.y * 0.34, rShipSize.x * 0.12, rShipSize.y * 0.65); // Front - 1
+  rect(rShipPos.x - rShipSize.x * 0.2, rShipPos.y - rShipSize.y * 0.425, rShipSize.x * 0.55, rShipSize.y * 0.85); // Middle
+  rect(rShipPos.x + rShipSize.x * 0.2, rShipPos.y - rShipSize.y * 0.5, rShipSize.x * 0.3, rShipSize.y * 0.2); // Top Back
+  rect(rShipPos.x + rShipSize.x * 0.2, rShipPos.y + rShipSize.y * 0.3, rShipSize.x * 0.3, rShipSize.y * 0.2); // Bottom Back
+  fill(140, 130, 130);
+  rect(rShipPos.x - rShipSize.x * 0.5, rShipPos.y - rShipSize.y * 0.25, rShipSize.x * 0.1, rShipSize.y * 0.05); // Top Antenna
+  rect(rShipPos.x - rShipSize.x * 0.48, rShipPos.y - rShipSize.y * 0.05, rShipSize.x * 0.08, rShipSize.y * 0.05); // Middle Antenna
+  rect(rShipPos.x - rShipSize.x * 0.45, rShipPos.y + rShipSize.y * 0.2, rShipSize.x * 0.15, rShipSize.y * 0.05); // Bottom Antenna
+  rect(rShipPos.x + rShipSize.x * 0.35, rShipPos.y - rShipSize.y * 0.25, rShipSize.x * 0.1, rShipSize.y * 0.2); // Top Thruster
+  rect(rShipPos.x + rShipSize.x * 0.35, rShipPos.y + rShipSize.y * 0.05, rShipSize.x * 0.1, rShipSize.y * 0.2); // Bottom Thruster
+  fill(230, 255, 255);
+  triangle( // Top Back
+    rShipPos.x + rShipSize.x * 0.35, 
+    rShipPos.y - rShipSize.y * 0.3,
+    rShipPos.x + rShipSize.x * 0.5, 
+    rShipPos.y - rShipSize.y * 0.3,  
+    rShipPos.x + rShipSize.x * 0.35, 
+    rShipPos.y - rShipSize.y * 0.1
+  );
+  triangle( // Bottom Back
+    rShipPos.x + rShipSize.x * 0.35, 
+    rShipPos.y + rShipSize.y * 0.3,
+    rShipPos.x + rShipSize.x * 0.5, 
+    rShipPos.y + rShipSize.y * 0.3,  
+    rShipPos.x + rShipSize.x * 0.35, 
+    rShipPos.y + rShipSize.y * 0.1
+  );
 }
 
 void drawInfoArea() {
