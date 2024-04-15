@@ -4,7 +4,6 @@ int maxLives = 5;
 float stationSizeX = 140;
 float stationSizeY = 80;
 color stationOriginalColor = color(150, 150, 150);
-color stationColor;
 float targetSizeX = 70;
 float targetSizeY = 30;
 float minTargetSpeed = 0.5;
@@ -80,6 +79,7 @@ float targetVelocityY;
 int targetType; // 0 == enemy, 1 == friendly
 boolean targetAlive;
 float currentTargetSpeed;
+color stationColor;
 
 void setup() {
   noCursor();
@@ -92,7 +92,6 @@ void setup() {
   rShipPosY = 180;
   stationColor = stationOriginalColor;
   generateStars();
-  generateMoon();
 }
 
 void draw() {
@@ -131,10 +130,10 @@ void mousePressed() {
   if (gameState != 1) {
     return;  
   }
-
-  stroke(#FCD300);
-  strokeWeight(3);
+  
   shotsTaken++;
+  stroke(250, 210, 0);
+  strokeWeight(3);
   line(centrePosX + stationSizeX * 0.025 + 3, centrePosY - stationSizeY * 0.15 + 3, mousePosX, mousePosY);
   if (checkCollision(targetPosX, targetPosY, targetSizeX, targetSizeY, mousePosX, mousePosY)) {
     shotsHit++;
@@ -181,7 +180,7 @@ void newRound() {
   millisPassed = 0;
   lastMilli = millis();
   targetAlive = false;
-
+  generateMoon();
   currentTargetSpeed = minTargetSpeed;
   gameState = 1;
 }
@@ -349,7 +348,8 @@ void drawEndScreen() {
   text("Score: " + score, centrePosX, centrePosY - height * 0.3);
   text("Kills: " + kills, centrePosX, centrePosY - height * 0.2);
   text("Accuracy: " + calcAccuracy() + "%", centrePosX, centrePosY - height * 0.1);
-  text("Final Score: " + ceil(score - (score * ( 1 - (calcAccuracy() / 100.)))), centrePosX, centrePosY);
+  text("Time: " + formatMillis(millisPassed), centrePosX, centrePosY);
+  text("Final Score: " + ceil(score - (score * ( 1 - (calcAccuracy() / 100.)))), centrePosX, centrePosY + height * 0.1);
   textAlign(LEFT);
   textSize(20);
   text("[r] New Round", width * 0.05, height * 0.8);
@@ -394,7 +394,7 @@ void drawBackgroundObjects() {
   rect(centrePosX + stationSizeX * 0.35, centrePosY - stationSizeY * 0.4, stationSizeX * 0.1, stationSizeY * 0.8); // Right Light
   fill(stationColor);
   rect(centrePosX, centrePosY - stationSizeY * 0.2, stationSizeX * 0.1, stationSizeY * 0.2); // Middle Top
-  fill(#FCD300);
+  fill(250, 210, 0);
   rect(centrePosX + stationSizeX * 0.025, centrePosY - stationSizeY * 0.15, stationSizeX * 0.05, stationSizeY * 0.1); // Laser Origin
   fill(stationColor);
   rect(centrePosX - stationSizeX * 0.45, centrePosY - stationSizeY * 0.5, stationSizeX * 0.05, stationSizeY * 0.4); // Left antenna
@@ -562,7 +562,7 @@ void drawCrosshair() {
   
   noFill();
   circle(mousePosX, mousePosY, xHairSizeY); // Ring
-  stroke(0, 0, 255);
+  stroke(250, 210, 0);
   strokeWeight(xHairSizeX * 2);
   point(mousePosX, mousePosY); // Centre
 }
