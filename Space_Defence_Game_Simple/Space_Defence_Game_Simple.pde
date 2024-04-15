@@ -1,20 +1,59 @@
 // ===== GAME SETTINGS ===== 
 int infoAreaY = 80;
 int maxLives = 5;
-PVector stationSize = new PVector(140, 80);
-PVector targetSize =  new PVector(70, 30);
-float minShipSpeed = 0.5;
-int maxShipSpeed = 10;
+//PVector stationSize = new PVector(140, 80);
+stationSizeX = 140;
+stationSizeY = 80;
+//PVector targetSize =  new PVector(70, 30);
+targetSizeX = 70;
+targetSizeY = 30;
+float minTargetSpeed = 0.5;
+int maxTargetSpeed = 5;
 
-PVector xHairSize = new PVector(3, 20);
+//PVector xHairSize = new PVector(3, 20);
+xHairSizeX = 3;
+xHairSizeY = 20;
 int xHairGap = 10;
 color xHairColor = color(255, 255, 255);
 
 // ===== BACKGROUND OBJECT SETTINGS =====
-PVector lShipSize = new PVector(300, 120); // 1 : 2.5 aspect ratio
-PVector rShipSize = new PVector(300, 120);
-PVector lShipPos = new PVector(180, 200);
-PVector rShipPos = new PVector(620, 180);
+//PVector lShipSize = new PVector(300, 120); // 1 : 2.5 aspect ratio
+int lShipSizeX = 300;
+int lShipSizeY = 120;
+//PVector lShipPos = new PVector(180, 200);
+int lShipPosX;
+int lShipPosY;
+
+//PVector rShipSize = new PVector(300, 120);
+int rShipSizeX = 300;
+int rShipSizeY = 120;
+//PVector rShipPos = new PVector(620, 180);
+int rShipPosX;
+int rShipPosY;
+
+int starCount = 150;
+//PVector[] gStarPositions = new PVector[starCount];
+int[] gStarPositionsX = new int[starCount];
+int[] gStarPositionsY = new int[starCount];
+color[] gStarColors = new color[starCount];
+float[] gStarSizes = new float[starCount];
+color[] starColors = {
+  color(255, 255, 255),
+  color(217, 243, 255),
+  color(190, 229, 247),
+  color(250, 222, 65),
+  color(250, 167, 65),
+  color(252, 123, 58),
+  color(252, 81, 58),
+};
+
+int moonSize = 200;
+int craters = 15;
+int craterMaxSize = 40;
+int craterMinSize = 10;
+PVector moonPos;
+PVector[] craterPositions = new PVector[craters];
+float[] craterSizes = new float[craters];
 
 boolean lightOn = false;
 int lastLightTime = millis();
@@ -36,9 +75,9 @@ PVector centrePos;
 
 PVector targetPosition = new PVector();
 PVector targetVelocity = new PVector();
-int targetType;
+int targetType; // 0 == enemy, 1 == friendly
 boolean targetAlive;
-float currentMaxShipSpeed;
+float currentTargetSpeed;
 
 void setup() {
   noCursor();
@@ -46,10 +85,13 @@ void setup() {
   centrePos = new PVector(width * 0.5, height * 0.5 + (infoAreaY * 0.5));
   lShipPos = new PVector(180, 200);
   rShipPos = new PVector(width - 180, 180);
+  generateStars();
+  generateMoon();
 }
 
 void draw() {
   background(0);
+  drawStars();
   
   if (gameState == 2) {
     drawEndScreen();
@@ -68,10 +110,10 @@ void draw() {
     spawnTarget();
   }
 
-  currentMaxShipSpeed += 0.001; // Make the difficulty ramp up over time
+  currentTargetSpeed += 0.001; // Make the difficulty ramp up over time
   
-  runTarget();
   drawBackgroundObjects();
+  runTarget();
   drawCrosshair();
   drawInfoArea();
   
@@ -132,7 +174,7 @@ void newRound() {
   lastMilli = millis();
   targetAlive = false;
 
-  currentMaxShipSpeed = minShipSpeed;
+  currentTargetSpeed = minTargetSpeed;
   gameState = 1;
 }
 
@@ -142,13 +184,9 @@ void endRound() {
 
 void removeLives() {
   lives--;
-  if (lives < 0) {
+  if (lives <= 0) {
     endRound();  
   }
-}
-
-void addLives() {
-  lives += min(lives + 1, maxLives);
 }
 
 void incrementScore() {
@@ -160,10 +198,27 @@ void incrementScore() {
   }
 }
 
+void generateStars() {
+  for (int i = 0; i < starCount; i++) {
+    PVector pos = new PVector(random(width), random(height));
+    gStarPositions[i] = pos;
+    gStarColors[i] = starColors[floor(random(starColors.length))];
+    gStarSizes[i] = random(1, 3);
+  }
+}
+
+void generateMoon() {
+  moonPos= new PVector(width * 0.85, height * 0.75);
+  for (int i = 0; i < craters; i++) {
+    float craterSize = random(craterMinSize, craterMaxSize);
+    craterPositions[i] = PVector.add(moonPos,new PVector(random(-1, 1), random(-1, 1)).setMag(moonSize / random(2,4) - craterSize / 2));
+    craterSizes[i] = craterSize;
+  }
+}
+
+// ===== TARGET FUNCTIONS ===== 
 void spawnTarget() {
-  targetType = (int)random(1);
   PVector pos;
-  
   if (boolean((int)random(2))) { // spawn on X or Y edges
     float posY;
     if (boolean((int)random(2))) {
@@ -183,8 +238,10 @@ void spawnTarget() {
   }
 
   PVector velocity = PVector.sub(centrePos, pos);
+  targetType = (int)random(2);
+  println(targetType);
   targetPosition = pos;
-  targetVelocity = velocity.setMag(currentMaxShipSpeed);
+  targetVelocity = velocity.setMag(currentTargetSpeed);
   targetAlive = true;
 }
 
@@ -196,8 +253,10 @@ void runTarget() {
   if (targetAlive) {
     if(checkCollision(targetPosition, targetSize, centrePos, stationSize)) {
       killTarget();
+      if (targetType == 0) {
+        removeLives();
+      }
     }
-    
     targetPosition.add(targetVelocity);
     drawTarget();
   }
@@ -246,10 +305,10 @@ void drawStartScreen() {
   textSize(64);
   text("Space Defender", centrePos.x, centrePos.y - height * 0.4);
   textSize(20);
-  text("Click on enemy ships to damage them, dont let them reach the space station!\nFriendly ships add lives if they make it to the station, but reduce score if killed.", 
-        centrePos.x, centrePos.y - height * 0.25); 
-  text("Some ships remove more than one life and are slower, taking more hits to kill.\nThe Carrier and Destroyer appear rarely and are capable of creating additional ships.\n\nGood Luck!", 
-        centrePos.x, centrePos.y - height * 0.1);
+  text("Click on enemy ships to destroy them, dont let them reach the space station!\nFriendly ships reduce score if killed.", 
+        centrePos.x, centrePos.y - height * 0.2);
+  text("Ship speed increases over time, keep good accuracy to get a higher score.\n\nGood Luck!", 
+        centrePos.x, centrePos.y - height * 0.05); 
   textAlign(LEFT);
   text("[s] Start Game", width * 0.05, height * 0.8);
   text("[q] Quit", width * 0.05, height * 0.85);
@@ -289,10 +348,10 @@ void drawInfoArea() {
   drawLivesBar(width * 0.85, infoAreaY * 0.6, 20, 20, 30, lives);
 }
 
-void drawLivesBar(float posX, float posY, int sizeX, int sizeY, float iconDistance, int health) {
-  float barWidth = sizeX + iconDistance * (health + 1);
+void drawLivesBar(float posX, float posY, int sizeX, int sizeY, float iconDistance, int lives) {
+  float barWidth = sizeX + iconDistance * (lives + 1);
   float barCentre = barWidth * 0.5 - (sizeX * 0.5);
-  for (int i = 1; i <= health; i++) { 
+  for (int i = 1; i <= lives; i++) { 
     fill(0, 255, 0);
     rect(posX - sizeX / 2 - barCentre + iconDistance * i, posY, sizeX, sizeY);
   }
@@ -336,11 +395,132 @@ void drawBackgroundObjects() {
       rect(posX, posY, stationSize.x * 0.05, stationSize.y * 0.1);
     }
   }
+
+  // Moon
+  fill(220, 220, 220);
+  circle(moonPos.x, moonPos.y, 200);
+  for (int i = 0; i < craters; i++) {
+    PVector pos = craterPositions[i];
+    fill(170, 170, 170); 
+    circle(pos.x, pos.y, craterSizes[i]);  
+  }
+  
+// Left Ship
+  fill(140, 130, 130);
+  rect(lShipPos.x - lShipSize.x * 0.45, lShipPos.y, lShipSize.x * 0.2, lShipSize.y * 0.3); // Back
+  fill(230, 255, 255);
+  rect(lShipPos.x - lShipSize.x * 0.45, lShipPos.y - lShipSize.y * 0.25, lShipSize.x * 0.15, lShipSize.y * 0.2); // Back Top
+  rect(lShipPos.x - lShipSize.x * 0.4, lShipPos.y - lShipSize.y * 0.5, lShipSize.x * 0.05, lShipSize.y * 0.25); // Back Middle Top
+  rect(lShipPos.x - lShipSize.x * 0.35, lShipPos.y - lShipSize.y * 0.5, lShipSize.x * 0.05, lShipSize.y * 0.1); // Right Top
+  triangle( // Back Top
+    lShipPos.x - lShipSize.x * 0.45, 
+    lShipPos.y - lShipSize.y * 0.25,
+    lShipPos.x - lShipSize.x * 0.4, 
+    lShipPos.y - lShipSize.y * 0.5,
+    lShipPos.x - lShipSize.x * 0.4, 
+    lShipPos.y - lShipSize.y * 0.25
+  );
+  triangle( // Back Top
+    lShipPos.x - lShipSize.x * 0.35, 
+    lShipPos.y - lShipSize.y * 0.25,
+    lShipPos.x - lShipSize.x * 0.35, 
+    lShipPos.y - lShipSize.y * 0.5,
+    lShipPos.x - lShipSize.x * 0.3, 
+    lShipPos.y - lShipSize.y * 0.25
+  );
+  triangle( // Top Half
+    lShipPos.x - lShipSize.x * 0.5, 
+    lShipPos.y - lShipSize.y * 0.2,
+    lShipPos.x - lShipSize.x * 0.4,
+    lShipPos.y + lShipSize.y * 0.1,
+    lShipPos.x + lShipSize.x * 0.5,
+    lShipPos.y + lShipSize.y * 0.1
+   );
+  triangle( // Bottom Half
+    lShipPos.x - lShipSize.x * 0.5, 
+    lShipPos.y + lShipSize.y * 0.5,
+    lShipPos.x - lShipSize.x * 0.4,
+    lShipPos.y + lShipSize.y * 0.2,
+    lShipPos.x + lShipSize.x * 0.5,
+    lShipPos.y + lShipSize.y * 0.2
+   );
+  fill(140, 130, 130);
+  triangle(
+    lShipPos.x - lShipSize.x * 0.38, 
+    lShipPos.y - lShipSize.y * 0.05,
+    lShipPos.x - lShipSize.x * 0.38, 
+    lShipPos.y - lShipSize.y * 0.3,
+    lShipPos.x - lShipSize.x * 0.12, 
+    lShipPos.y - lShipSize.y * 0.05
+  );
+  //point(lShipPos.x - lShipSize.x * 0.38, lShipPos.y - lShipSize.y * 0.05);
+  //point(lShipPos.x - lShipSize.x * 0.38, lShipPos.y - lShipSize.y * 0.2);
+  //point(lShipPos.x - lShipSize.x * 0.2, lShipPos.y - lShipSize.y * 0.05);
+  fill(140, 130, 130);
+  rect(lShipPos.x - lShipSize.x * 0.4, lShipPos.y + lShipSize.y * 0.1, lShipSize.x * 0.8, lShipSize.y * 0.1); // Middle
+
+  // Right Ship
+  fill(230, 255, 255);
+  rect(rShipPos.x - rShipSize.x * 0.4, rShipPos.y - rShipSize.y * 0.3, rShipSize.x * 0.12, rShipSize.y * 0.4); // Front
+  rect(rShipPos.x - rShipSize.x * 0.3, rShipPos.y - rShipSize.y * 0.34, rShipSize.x * 0.12, rShipSize.y * 0.65); // Front - 1
+  rect(rShipPos.x - rShipSize.x * 0.2, rShipPos.y - rShipSize.y * 0.425, rShipSize.x * 0.55, rShipSize.y * 0.85); // Middle
+  rect(rShipPos.x + rShipSize.x * 0.2, rShipPos.y - rShipSize.y * 0.5, rShipSize.x * 0.3, rShipSize.y * 0.2); // Top Back
+  rect(rShipPos.x + rShipSize.x * 0.2, rShipPos.y + rShipSize.y * 0.3, rShipSize.x * 0.3, rShipSize.y * 0.2); // Bottom Back
+  fill(140, 130, 130);
+  rect(rShipPos.x - rShipSize.x * 0.5, rShipPos.y - rShipSize.y * 0.25, rShipSize.x * 0.1, rShipSize.y * 0.05); // Top Antenna
+  rect(rShipPos.x - rShipSize.x * 0.48, rShipPos.y - rShipSize.y * 0.05, rShipSize.x * 0.08, rShipSize.y * 0.05); // Middle Antenna
+  rect(rShipPos.x - rShipSize.x * 0.45, rShipPos.y + rShipSize.y * 0.2, rShipSize.x * 0.15, rShipSize.y * 0.05); // Bottom Antenna
+  rect(rShipPos.x + rShipSize.x * 0.35, rShipPos.y - rShipSize.y * 0.25, rShipSize.x * 0.1, rShipSize.y * 0.2); // Top Thruster
+  rect(rShipPos.x + rShipSize.x * 0.35, rShipPos.y + rShipSize.y * 0.05, rShipSize.x * 0.1, rShipSize.y * 0.2); // Bottom Thruster
+  rect(rShipPos.x - rShipSize.x * 0.15, rShipPos.y - rShipSize.y * 0.3, rShipSize.x * 0.4, rShipSize.y * 0.2); // Top Middle
+  rect(rShipPos.x - rShipSize.x * 0.15, rShipPos.y + rShipSize.y * 0.1, rShipSize.x * 0.4, rShipSize.y * 0.2); // Bottom Middle
+  fill(230, 255, 255);
+  triangle( // Top Back
+    rShipPos.x + rShipSize.x * 0.35, 
+    rShipPos.y - rShipSize.y * 0.3,
+    rShipPos.x + rShipSize.x * 0.5, 
+    rShipPos.y - rShipSize.y * 0.3,  
+    rShipPos.x + rShipSize.x * 0.35, 
+    rShipPos.y - rShipSize.y * 0.1
+  );
+  triangle( // Bottom Back
+    rShipPos.x + rShipSize.x * 0.35, 
+    rShipPos.y + rShipSize.y * 0.3,
+    rShipPos.x + rShipSize.x * 0.5, 
+    rShipPos.y + rShipSize.y * 0.3,  
+    rShipPos.x + rShipSize.x * 0.35, 
+    rShipPos.y + rShipSize.y * 0.1
+  );
+  
+  // Laser effects
+  if ((int)random(101) <= 5) {
+    PVector lShipLinePos = new PVector(random(lShipPos.x - lShipSize.x * 0.5, lShipPos.x + lShipSize.x * 0.5), random(lShipPos.y, lShipPos.y + lShipSize.y * 0.5));
+    PVector rShipLinePos = new PVector(random(rShipPos.x - rShipSize.x * 0.5, rShipPos.x + rShipSize.x * 0.5), random(rShipPos.y - rShipSize.y * 0.5, rShipPos.y + rShipSize.y * 0.5));
+    stroke(0, 255, 0);
+  
+    if (boolean((int)random(2))) {
+      fill(255, 85, 0);
+      noStroke();
+      circle(lShipLinePos.x, lShipLinePos.y, 20);
+      stroke(0, 255, 0);
+    } else {
+      fill(255, 85, 0);
+      noStroke();
+      circle(rShipLinePos.x, rShipLinePos.y, 20);
+      stroke(255, 0, 0);
+    }
+    line(lShipLinePos.x, lShipLinePos.y, rShipLinePos.x, rShipLinePos.y);
+  }
+  
 }
 
 void drawCrosshair() {
   if (checkCollision(targetPosition, targetSize, mousePos)) {
-    xHairColor = color(255, 0, 0);
+    if(targetType == 0) {
+      xHairColor = color(255, 0, 0);
+    } else {
+      xHairColor = color(0, 255, 0); 
+    }
   } else {
     xHairColor = color(255, 255, 255); 
   }
@@ -357,74 +537,95 @@ void drawCrosshair() {
   point(mousePos.x, mousePos.y); // Centre
 }
 
+void drawStars() {
+  for (int i = 0; i < gStarPositions.length; i++)  {
+    fill(gStarColors[i]);
+    noStroke();
+    circle(gStarPositions[i].x, gStarPositions[i].y, gStarSizes[i]);
+  }
+}
+
 void drawTarget() {
   PVector pos = targetPosition;
   PVector size = targetSize;
   noStroke();
-  fill(150, 150, 150);
-  triangle(
-    pos.x - size.x * 0.5,
-    pos.y - size.y * 0.2,    
-    pos.x,
-    pos.y - size.y * 0.5,         
-    pos.x + size.x * 0.5,
-    pos.y - size.y * 0.2
-  );
-  rect(pos.x - size.x * 0.15, pos.y - size.y * 0.25, size.x * 0.3, size.y * 0.5);
-  fill(255, 0, 0);
-  rect(pos.x - size.x * 0.05, pos.y - size.y * 0.1, size.x * 0.1, size.y * 0.2);
-  fill(150, 150, 150);
-  triangle(
-    pos.x + size.x * 0.5,
-    pos.y + size.y * 0.2,  
-    pos.x,
-    pos.y + size.y * 0.5,        
-    pos.x - size.x * 0.5,
-    pos.y + size.y * 0.2
-  );
+  if (targetType == 0) {
+    fill(150, 150, 150);
+    triangle(
+      pos.x - size.x * 0.5,
+      pos.y - size.y * 0.2,    
+      pos.x,
+      pos.y - size.y * 0.5,         
+      pos.x + size.x * 0.5,
+      pos.y - size.y * 0.2
+    );
+    triangle(
+      pos.x + size.x * 0.5,
+      pos.y + size.y * 0.2,  
+      pos.x,
+      pos.y + size.y * 0.5,        
+      pos.x - size.x * 0.5,
+      pos.y + size.y * 0.2
+    );
+
+    rect(pos.x - size.x * 0.15, pos.y - size.y * 0.25, size.x * 0.3, size.y * 0.5);
+    fill(200, 200, 200);
+    circle(pos.x, pos.y, size.y * 0.5);
+    fill(255, 0, 0);
+    rect(pos.x - size.x * 0.05, pos.y - size.y * 0.1, size.x * 0.1, size.y * 0.2);
+
+  } else {
+    fill(150, 150, 150);
+    ellipse(pos.x, pos.y, size.x, size.y);
+    fill(200, 200, 200);
+    rect(pos.x - size.x * 0.5, pos.y - size.y * 0.2, size.x, size.y * 0.4);
+    fill(0, 255, 0);
+    rect(pos.x - size.x * 0.4, pos.y - size.y * 0.1, size.x * 0.2, size.y * 0.2);    
+    rect(pos.x - size.x * 0.1, pos.y - size.y * 0.1, size.x * 0.2, size.y * 0.2);
+    rect(pos.x + size.x * 0.2, pos.y - size.y * 0.1, size.x * 0.2, size.y * 0.2);
+  }
 }
 
 
 
 /*
-Background is the correct size                                            2
-There is a start screen                                                   2
-User can only move to the game screen when a key is pressed               2
-Game screen has 2 sections and at least 4 shapes to add visual interest   6
-Score and lives are displayed using variables                             3
-Target is a composite shape                                               12
-Cross hairs are a composite shape                                         12
-Target appears at a random location                                       2
-A target is hit if the cross hairs and target collide                     10
-If a target is hit it should disappear                                    5
-When the target reappears the type of target is randomized                5
-When target reappears, its location is randomized                         5
-Target and cross hairs should be limited to the game area ONLY            5
-All of the target should be confined to the game area                     2
-Score and lives update as per the target and if it was a successful hit   6
-No key presses should work on the game screen                             2
-There is a finite end to game                                             4
-When game ends it moves to final screen with detail displayed             4
-Pressing a key should bring user back to game screen                      4
-Upon returning to game screen, scores and lives reset                     2
+Background is the correct size                                            2 X
+There is a start screen                                                   2 X
+User can only move to the game screen when a key is pressed               2 X
+Game screen has 2 sections and at least 4 shapes to add visual interest   6 X
+Score and lives are displayed using variables                             3 X
+Target is a composite shape                                               12 X
+Cross hairs are a composite shape                                         12 X
+Target appears at a random location                                       2 X
+A target is hit if the cross hairs and target collide                     10 X
+If a target is hit it should disappear                                    5 X
+When the target reappears the type of target is randomized                5 X
+When target reappears, its location is randomized                         5 X
+Target and cross hairs should be limited to the game area ONLY            5 X
+All of the target should be confined to the game area                     2 X
+Score and lives update as per the target and if it was a successful hit   6 X
+No key presses should work on the game screen                             2 X
+There is a finite end to game                                             4 X
+When game ends it moves to final screen with detail displayed             4 X
+Pressing a key should bring user back to game screen                      4 X
+Upon returning to game screen, scores and lives reset                     2 X
 Creativity                                                                5
 */
 
 /*
-Background(800, 600)
-2 sections, 1 for game info, other for game
+Background(800, 600)                                                                 X
+2 sections, 1 for game info, other for game                                          X
 4 static shapes in background for visual interest
-Targets and crosshairs must consist of 5 different shapes with more than 1 color
-2 types of target, distinguishable appearance
-show score and lives left on top section of screen
+Targets and crosshairs must consist of 5 different shapes with more than 1 color     X
+2 types of target, distinguishable appearance                                        X
+show score and lives left on top section of screen                                   X
 
-Begins with start screen, game starts when key is pressed
-target randomly chosen between the 2 types
-target appears at random position on games screen not cut off by edges
-crosshair follows mouse
-clicking mouse counts as shot taken
-one target increases score by 4 while the other reduces it by 1
-decrement lives if shot has missed
-game has finite end
-end screen that displays stats and allows restarting of game
+Begins with start screen, game starts when key is pressed                            X
+target randomly chosen between the 2 types                                            X
+target appears at random position on games screen not cut off by edges                X
+crosshair follows mouse                                                              X
+clicking mouse counts as shot taken                                                  X
+one target increases score by 4 while the other reduces it by 1                      X
+game has finite end                                                                  X
+end screen that displays stats and allows restarting of game                         X
 */
