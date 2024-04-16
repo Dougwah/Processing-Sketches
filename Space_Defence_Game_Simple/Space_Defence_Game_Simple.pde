@@ -229,7 +229,7 @@ void generateMoon() {
 }
 
 // Needed to make my own vector functions to avoid using PVector
-float[] vectorNormalize(float x, float y) { // Converts a vector into its unit form
+float[] vectorNormalize(float x, float y) { // Converts a vector into its unit form with a magnitude of 1
   float m = vectorGetMag(x, y);
   return new float[] {x / m, y / m};
 }
@@ -267,6 +267,10 @@ boolean checkCollision(float posX, float posY, float sizeX, float sizeY, float p
   return true;
 }
 
+boolean randomBool() {
+  return boolean((int)random(2));  
+}
+
 String formatMillis(int millis) {
   int seconds = millis / 1000;
   return nf(floor(seconds / 60), 2, 0) + " : " + nf((seconds % 60), 2, 0) + " : " + nf((millis) % 1000, 3, 0); 
@@ -282,15 +286,18 @@ int calcAccuracy() {
 // ===== TARGET FUNCTIONS ===== 
 void spawnTarget() {
 
-  if (boolean((int)random(2))) { // Spawn along X
-    if (boolean((int)random(2))) { // Spawn on Bottom
+  if (randomBool()) { // Spawn along X
+    
+    if (randomBool()) { // Spawn on Bottom
       targetPosY = height - targetSizeY * 0.5; 
     } else { // Spawn on top
       targetPosY = infoAreaY + targetSizeY * 0.5;
     }
     targetPosX = random(targetSizeX * 0.5, width);
+    
   } else { // spawn along Y
-    if (boolean((int)random(2))) {
+    
+    if (randomBool()) {
       targetPosX = targetSizeX * 0.5; // Spawn on Left
     } else {
       targetPosX = width - targetSizeX * 0.5; // Spawn on Right
@@ -525,7 +532,7 @@ void drawBackgroundObjects() {
     float rShipLinePosY =random(rShipPosY - rShipSizeY * 0.5, rShipPosY + rShipSizeY * 0.5);
     
     stroke(0, 255, 0);
-    if (boolean((int)random(2))) {
+    if (randomBool()) {
       fill(255, 85, 0);
       noStroke();
       circle(lShipLinePosX, lShipLinePosY, 20);
@@ -616,47 +623,3 @@ void drawTarget() {
     rect(posX + sizeX * 0.2, posY - sizeY * 0.1, sizeX * 0.2, sizeY * 0.2);
   }
 }
-
-
-
-/*
-Background is the correct size                                            2 X
-There is a start screen                                                   2 X
-User can only move to the game screen when a key is pressed               2 X
-Game screen has 2 sections and at least 4 shapes to add visual interest   6 X
-Score and lives are displayed using variables                             3 X
-Target is a composite shape                                               12 X
-Cross hairs are a composite shape                                         12 X
-Target appears at a random location                                       2 X
-A target is hit if the cross hairs and target collide                     10 X
-If a target is hit it should disappear                                    5 X
-When the target reappears the type of target is randomized                5 X
-When target reappears, its location is randomized                         5 X
-Target and cross hairs should be limited to the game area ONLY            5 X
-All of the target should be confined to the game area                     2 X
-Score and lives update as per the target and if it was a successful hit   6 X
-No key presses should work on the game screen                             2 X
-There is a finite end to game                                             4 X
-When game ends it moves to final screen with detail displayed             4 X
-Pressing a key should bring user back to game screen                      4 X
-Upon returning to game screen, scores and lives reset                     2 X
-Creativity                                                                5
-*/
-
-/*
-Background(800, 600)                                                                 X
-2 sections, 1 for game info, other for game                                          X
-4 static shapes in background for visual interest
-Targets and crosshairs must consist of 5 different shapes with more than 1 color     X
-2 types of target, distinguishable appearance                                        X
-show score and lives left on top section of screen                                   X
-
-Begins with start screen, game starts when key is pressed                            X
-target randomly chosen between the 2 types                                            X
-target appears at random position on games screen not cut off by edges                X
-crosshair follows mouse                                                              X
-clicking mouse counts as shot taken                                                  X
-one target increases score by 4 while the other reduces it by 1                      X
-game has finite end                                                                  X
-end screen that displays stats and allows restarting of game                         X
-*/
