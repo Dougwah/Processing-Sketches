@@ -146,27 +146,25 @@ void mousePressed() {
 
 
 void keyPressed() {
-  if (gameState == 1) { // No key presses if game is active
-    return;  
-  }
-  
   if (gameState == 2) {
-    if (key == 'r') { // Restart game at end screen
+    if (key == 'r') { // Start new round from end screen
       newRound();  
     }
     if (key == 'm') {
-      gameState = 0; // Return to menu at end screen
+      gameState = 0; // Return to menu from end screen
+    }
+    if (key == 'q') { // Quit game from end screen
+      exit();
     }
   }
   
-  if (gameState == 0) {
-    if(key == 's') { // Start new round from start screen
+  if(gameState == 0) {
+    if (key == 'q') { // Quit game from start seceen
+      exit();
+    }
+    if (key == 's') { // Start new round from start screen
       newRound();  
     }
-  }
-  
-  if (key == 'q') { // Quit game when in start or end screen
-    exit();
   }
 }
 
@@ -268,7 +266,7 @@ boolean checkCollision(float posX, float posY, float sizeX, float sizeY, float p
 }
 
 boolean randomBool() {
-  return boolean((int)random(2));  
+  return boolean((int)random(2));
 }
 
 String formatMillis(int millis) {
