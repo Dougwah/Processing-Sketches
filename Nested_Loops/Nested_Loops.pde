@@ -99,22 +99,23 @@ void draw() {
 }
 // CHECKERBOARD
 */
-/*
+
 int tileWidth;
 int halfTileWidth;
 PVector[] circlePositions;
 int currentTile = 0;
 void setup() {
+  noStroke();
   size(1000, 1000);
-  tileWidth = width / 100;
+  
+  tileWidth = width / 8;
   halfTileWidth = tileWidth / 2;
   for(int i = halfTileWidth; i < width; i+= tileWidth) {
     for(int k = halfTileWidth; k < height; k += tileWidth) {
-      println(i);
-      if(currentTile % 2 == 0) {
-        fill(0);
+      if(currentTile % 2 != 0) {
+        fill(118, 145, 84);
       } else {
-        fill(255);  
+        fill(233, 233, 206);  
       }
       currentTile++;
       square(i - halfTileWidth, k - halfTileWidth, tileWidth);
@@ -122,9 +123,10 @@ void setup() {
     currentTile++;
   }
 }
-*/
+
 
 // CIRCLE PYRAMIDS
+/*
 int diameter;
 int radius;
 PVector[] circlePositions;
@@ -169,3 +171,46 @@ void setup() {
     }
   }
 }
+*/
+/*
+// 4 COLOUR GRID
+int diameter;
+int radius;
+PVector[] circlePositions;
+
+void setup() {
+  noStroke();
+  size(1000, 1000);
+  diameter = width / 300;
+  radius = diameter / 2;
+  
+  // LEFT
+  for(int i = radius; i < width / 2; i+= diameter) {
+    for(int k = i; k <= height - i; k += diameter) { 
+      fill(255 ,0 ,0);
+      circle(i, k, diameter);
+    }
+  }
+  // RIGHT
+  for(int i = radius; i < width; i+= diameter) {
+    for(int k = height - i; k <= i; k += diameter) { 
+      fill(0 ,255 ,0);
+      circle(i, k, diameter);
+    }
+  }  
+  // TOP
+  for(int i = radius; i < width / 2; i+= diameter) {
+    for(int k = i; k <= height - i; k += diameter) { 
+      fill(0 ,0 ,255);
+      circle(k, i, diameter);
+    }
+  }
+  // BOTTOM
+  for(int i = radius; i < width; i+= diameter) {
+    for(int k = height - i; k <= i; k += diameter) { 
+      fill(0 ,255 ,255);
+      circle(k, i, diameter);
+    }
+  }
+}
+*/
