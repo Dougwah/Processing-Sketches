@@ -3,11 +3,14 @@ int halfTileWidth;
 PVector[] circlePositions;
 int currentTile = 0;
 
-//Piece[] pieces = new Piece[24];
 PVector[][] positions = new PVector[8][8];
 int[][] piecePositions = new int[8][8];
+// 0 - Empty
+// 1 - Black
+// 2 - Red
 
 boolean pieceSelected = false;
+int currentPlayersTurn = 1;
 int lastI;
 int lastK;
 
@@ -24,61 +27,87 @@ void setup() {
 void draw() {
   drawBoard();
   drawPieces();
+  if (pieceSelected) {
+    int[] mouseTile = getMouseTile();
+    PVector pos = positions[mouseTile[0]][mouseTile[1]];
+    if (validateMove(mouseTile[0], mouseTile[1])) {
+      fill(255);
+    } else {
+      fill(150);
+    }
+    circle(pos.x, pos.y, halfTileWidth);
+  }
 }
 
 void mousePressed() {
-  int i = floor(mouseY / tileWidth);
-  int k = floor(mouseX / tileWidth);
-  boolean validMove = true;
-  if(!pieceSelected) {
+  int[] mouseTile = getMouseTile();
+  int i = mouseTile[0];
+  int k = mouseTile[1];
+
+  if(!pieceSelected && piecePositions[i][k] == currentPlayersTurn) {
     lastI = i;
     lastK = k;
     pieceSelected = true;
   } else {
-    if(piecePositions[lastI][lastK] == 1) {
-       if (lastI > i || i - lastI > 1) {
-         validMove = false;  
-       }
-    } else {
-       if (lastI < i || lastI - i > 1) {
-         validMove = false;  
-       }
-    }
-    if(k == lastK || i == lastI || piecePositions[i][k] > 0) {
-      validMove = false;  
-    }
-    if(validMove) {
+    if(validateMove(i, k)) {
       piecePositions[i][k] = piecePositions[lastI][lastK];
       piecePositions[lastI][lastK] = 0;
+      if (currentPlayersTurn == 1) {
+        currentPlayersTurn = 2;
+      } else {
+        currentPlayersTurn = 1; 
+      }
     }   
-    
     pieceSelected = false;
   }
 }
 
-int currentPiece = 0;
-void createPieces() {
-  for(int i = 0; i < positions.length; i++) {
-    for(int k = 0; k < positions.length; k++) {
-      if((k + i) % 2 != 0) {
-        if(i < 3) {
-          piecePositions[i][k] = 1;
-        }
-        if(i > 4) {
-          piecePositions[i][k] = 2;
-        }    
-      }  
-    }
+int[] getMouseTile() {
+  return new int[] {floor(mouseX / tileWidth), floor(mouseY / tileWidth)};
+}
+
+int[] getTileDistance(int i, int k, int i2, int k2) {
+  return new int[] {i - i2, k - k2};
+}
+
+boolean validateMove(int i, int k) {
+  int[] dist = getTileDistance(i, k, lastI, lastK);
+  
+  if(dist[0] == 0 || dist[1] == 0 || piecePositions[i][k] > 0) { // Only diagonal, Cant move onto taken square
+    return false;  
   }
+  if(abs(dist[0]) > 1 || abs(dist[1]) > 1) { // Can only move 1 tile away
+    return false;  
+  }
+  if(dist[1] > 0 && currentPlayersTurn == 2 || dist[1] < 0 && currentPlayersTurn == 1) { // No backwards
+    return false;  
+  }
+  
+  return true;
 }
 
 void createBoard() {
    for(int i = 0; i < 8; i++) {
     PVector[] row = new PVector[8];
     for(int k = 0; k < positions.length; k++) {
-      row[k] = new PVector(k * tileWidth + halfTileWidth, i * tileWidth + halfTileWidth);
+      row[k] = new PVector(i * tileWidth + halfTileWidth, k * tileWidth + halfTileWidth);
     }
     positions[i] = row; 
+  }
+}
+
+void createPieces() {
+  for(int i = 0; i < positions.length; i++) {
+    for(int k = 0; k < positions.length; k++) {
+      if((k + i) % 2 != 0) {
+        if(i < 3) {
+          piecePositions[k][i] = 1;
+        }
+        if(i > 4) {
+          piecePositions[k][i] = 2;
+        }    
+      }  
+    }
   }
 }
 
