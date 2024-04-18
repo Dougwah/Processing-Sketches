@@ -97,17 +97,75 @@ void setup() {
 void draw() {
 
 }
+// CHECKERBOARD
 */
+/*
 int tileWidth;
 int halfTileWidth;
 PVector[] circlePositions;
+int currentTile = 0;
 void setup() {
   size(1000, 1000);
-  tileWidth = width / 50;
+  tileWidth = width / 100;
   halfTileWidth = tileWidth / 2;
   for(int i = halfTileWidth; i < width; i+= tileWidth) {
-    for(int k = halfTileWidth; k < height; k += tileWidth) { 
+    for(int k = halfTileWidth; k < height; k += tileWidth) {
+      println(i);
+      if(currentTile % 2 == 0) {
+        fill(0);
+      } else {
+        fill(255);  
+      }
+      currentTile++;
       square(i - halfTileWidth, k - halfTileWidth, tileWidth);
+    }
+    currentTile++;
+  }
+}
+*/
+
+// CIRCLE PYRAMIDS
+int diameter;
+int radius;
+PVector[] circlePositions;
+
+void setup() {
+  noStroke();
+  size(1000, 1000);
+  diameter = width / 50;
+  radius = diameter / 2;
+  // TOP LEFT CORNER
+
+  for(int i = 0 + radius; i < width; i+= diameter) {
+    for(int k = 0 + radius; k <= height - i; k += diameter) { 
+      fill(255 ,0 ,0);
+      circle(i, k, diameter);
+    }
+  }
+
+  // TOP RIGHT CORNER
+
+  for(int i = 0 + radius; i < width; i+= diameter) {
+    for(int k = 0 + radius; k <= - i; k += diameter) { 
+      fill(0 ,255 ,0);
+      circle(i, k, diameter);
+    }
+  }
+
+  // BOTTOM LEFT CORNER
+
+  for(int i = 0 + radius; i < width; i+= diameter) {
+    for(int k = height - radius; k >= 0 + i; k -= diameter) { 
+      fill(0 ,0 ,255); 
+      circle(i, k, diameter);
+    }
+  }
+
+  // BOTTOM RIGHT CORNER
+  for(int i = 0 + radius; i < width; i+= diameter) {
+    for(int k = height - radius; k >= width -  i; k -= diameter) { 
+      fill(0 ,255 ,0); 
+      circle(i, k, diameter);
     }
   }
 }
