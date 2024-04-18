@@ -86,6 +86,16 @@ boolean validateMove(int i, int k) {
   return true;
 }
 
+int[][] checkDiagonals(int i, int k) {
+  int[][] result = new int[4][2];
+  result[0] = piecePositions[i - 1][k - 1];
+  result[1] = piecePositions[i - 1][k + 1];
+  result[2] = piecePositions[i + 1][k + 1]; 
+  result[3] = piecePositions[i + 1][k + 1]; 
+  
+  return result;
+}
+
 void createBoard() {
    for(int i = 0; i < 8; i++) {
     PVector[] row = new PVector[8];
