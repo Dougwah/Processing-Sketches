@@ -73,26 +73,38 @@ int[] getTileDistance(int i, int k, int i2, int k2) {
 boolean validateMove(int i, int k) {
   int[] dist = getTileDistance(i, k, lastI, lastK);
   
-  if(dist[0] == 0 || dist[1] == 0 || piecePositions[i][k] > 0) { // Only diagonal, Cant move onto taken square
-    return false;  
-  }
-  if(abs(dist[0]) > 1 || abs(dist[1]) > 1) { // Can only move 1 tile away
-    return false;  
-  }
   if(dist[1] > 0 && currentPlayersTurn == 2 || dist[1] < 0 && currentPlayersTurn == 1) { // No backwards
     return false;  
   }
   
+  if(dist[0] == 0 || dist[1] == 0 || piecePositions[i][k] > 0) { // Only diagonal, Cant move onto taken square
+    return false;  
+  }
+  
+  if() {
+    
+  }
+  
+  if(abs(dist[0]) > 1 || abs(dist[1]) > 1) { // Can only move 1 tile away
+    return false;  
+  }
+
+  
+  checkDiagonals(i, k);
   return true;
 }
 
 int[][] checkDiagonals(int i, int k) {
   int[][] result = new int[4][2];
-  result[0] = piecePositions[i - 1][k - 1];
-  result[1] = piecePositions[i - 1][k + 1];
-  result[2] = piecePositions[i + 1][k + 1]; 
-  result[3] = piecePositions[i + 1][k + 1]; 
-  
+  for(int j = -1; j <= 1; j+=2) {
+    for(int l = -1; l <= 1; l+=2) {
+      int pieceType = piecePositions[constrain(i + j, 0, 7)][constrain(k + l, 0, 7)];
+      if(pieceType > 0 && pieceType != currentPlayersTurn) {  
+        println(i + j, k + l);
+      }
+    }
+  }
+  println();  
   return result;
 }
 

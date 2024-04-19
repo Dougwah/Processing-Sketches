@@ -99,7 +99,7 @@ void draw() {
 }
 // CHECKERBOARD
 */
-
+/*
 int tileWidth;
 int halfTileWidth;
 PVector[] circlePositions;
@@ -123,7 +123,7 @@ void setup() {
     currentTile++;
   }
 }
-
+*/
 
 // CIRCLE PYRAMIDS
 /*
@@ -210,6 +210,106 @@ void setup() {
     for(int k = height - i; k <= i; k += diameter) { 
       fill(0 ,255 ,255);
       circle(k, i, diameter);
+    }
+  }
+}
+*/
+// DIGIT FUNCTIONS
+/*
+void setup() {
+  println("Digit Sum of 1729: " + sumDigits(1729));
+  println("Digit Count of 1729: " + countDigits(1729));
+  println("Highest Digit of 1729: " + getHighestDigit(1729));
+  println("Odd Digit Count of 1729: " + countOddDigits(1729));
+  println("Odd Digit Count of 222: " + countOddDigits(222));
+  println("Odd Digit Count of 110: " + countOddDigits(110));
+}
+
+int countDigits(int n) {
+  int result = 0;
+  for(int i = n; i > 0; i /= 10) {
+    result ++;
+  }
+  return result;
+}
+
+int sumDigits(int n) {
+  int result = 0;
+  for(int i = n; i > 0; i /= 10) {
+    result += i % 10;
+  }
+  return result;
+}
+
+int getHighestDigit(int n) {
+  int result = 0;
+  for(int i = n; i > 0; i /=10) {
+    int digit = i % 10;
+    result = max(digit, result);
+  }
+  return result;
+}
+
+int countOddDigits(int n) {
+  int result = 0;
+  for(int i = n; i > 0; i /= 10) {
+   if(i % 10 % 2 != 0) {
+     result++;
+    }
+  }
+  return result;
+}
+*/
+//WK2 L5 
+//SLIDE 13
+/*
+for(int i = 2; i <= 50; i+=3) {
+  print(i + " ");  
+}
+println();
+for(int i = 100; i >= 20; i-=5) {
+  print(i + " ");  
+}
+println();
+for(int i = 1; i <= 8192; i*=2) {
+  print(i + " ");  
+}
+println();
+for(int i = 7; i <= 147; i+=7) {
+  print(i + " ");  
+}
+*/
+//SLIDE 14
+/*
+void setup() {
+  size(200, 200);
+  int radius = 25;
+  for(int i = radius; i <= 200 - radius; i += radius*2) {
+    circle(i, i, radius * 2);  
+  }
+}
+*/
+//SLIDE 15
+
+void setup() {
+  size(200, 200);
+  int radius = 20;
+  for(int i = radius; i <= 200 - radius; i += radius * 2) {
+    for(int k = height / 3 - radius; k <= height - height / 3 + radius; k+= radius * 2) {
+      circle(i, k, radius * 2);  
+    }
+  }
+}
+
+// SLIDE 16
+/*
+void setup() {
+  size(200, 200);
+  int diameter = 20;
+  int radius = diameter / 2;
+  for(int i = radius; i <= width; i+= diameter) {
+    for(int k = radius; k <= i; k+= diameter) {
+      circle(i, k, diameter);  
     }
   }
 }
