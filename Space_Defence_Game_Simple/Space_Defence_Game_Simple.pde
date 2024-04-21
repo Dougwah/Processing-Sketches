@@ -3,7 +3,7 @@ int infoAreaY = 80;
 int maxLives = 5;
 float stationSizeX = 140;
 float stationSizeY = 80;
-color stationOriginalColor = color(150, 150, 150);
+color stationOriginalColor;
 float targetSizeX = 70;
 float targetSizeY = 30;
 float minTargetSpeed = 0.5;
@@ -168,6 +168,7 @@ void keyPressed() {
   }
 }
 
+// I decided to organise my code into functions to make it easier to read and be easily expandable
 // ===== GAME FUNCTIONS ===== 
 void newRound() {
   score = 0;
@@ -178,6 +179,7 @@ void newRound() {
   millisPassed = 0;
   lastMilli = millis();
   targetAlive = false;
+  stationOriginalColor = color(150, 150, 150);
   generateMoon();
   currentTargetSpeed = minTargetSpeed;
   gameState = 1;
@@ -268,10 +270,10 @@ boolean checkCollision(float posX, float posY, float sizeX, float sizeY, float p
 boolean randomBool() {
   return boolean((int)random(2));
 }
-
+// I was originally using the nf() function to format 0s into the time but wasnt sure if that was part of an extra library or not
 String formatMillis(int millis) {
   int seconds = millis / 1000;
-  return nf(floor(seconds / 60), 2, 0) + " : " + nf((seconds % 60), 2, 0) + " : " + nf((millis) % 1000, 3, 0); 
+  return floor(seconds / 60) + " : " + (seconds % 60) + " : " + (millis) % 1000; 
 }
 
 int calcAccuracy() {
@@ -304,6 +306,7 @@ void spawnTarget() {
   }
 
   targetType = (int)random(2);
+  // Subtracts the targets position from the centre position to get the direction, uses set mag to set the speed
   float[] velocity = vectorSetMag(centrePosX - targetPosX, centrePosY - targetPosY, currentTargetSpeed);
   targetVelocityX = velocity[0];
   targetVelocityY = velocity[1];
@@ -354,7 +357,7 @@ void drawEndScreen() {
   text("Kills: " + kills, centrePosX, centrePosY - height * 0.2);
   text("Accuracy: " + calcAccuracy() + "%", centrePosX, centrePosY - height * 0.1);
   text("Time: " + formatMillis(millisPassed), centrePosX, centrePosY);
-  text("Final Score: " + ceil(score - (score * ( 1 - (calcAccuracy() / 100.)))), centrePosX, centrePosY + height * 0.1);
+  text("Final Score: " + ceil(score - (score * ( 1 - (calcAccuracy() / 100.)))), centrePosX, centrePosY + height * 0.1); // Multiplies score by accuracy
   textAlign(LEFT);
   textSize(20);
   text("[r] New Round", width * 0.05, height * 0.8);
@@ -387,7 +390,8 @@ void drawLivesBar(float posX, float posY, int sizeX, int sizeY, float iconDistan
     rect(posX - sizeX / 2 - barCentre + iconDistance * i, posY, sizeX, sizeY);
   }
 }
-
+// I find it easier to multiply coordinates rather than divide them
+// These values took a lot of trial and error to find but I wanted the background objects to be scalable
 void drawBackgroundObjects() {
   // Space Station
   stationColor = lerpColor(stationColor, stationOriginalColor, 0.1);
@@ -587,7 +591,7 @@ void drawTarget() {
   float sizeY = targetSizeY;
   
   noStroke();
-  if (targetType == 0) {
+  if (targetType == 0) { // Enemy
     fill(150, 150, 150);
     triangle(
       posX - sizeX * 0.5,
@@ -610,7 +614,7 @@ void drawTarget() {
     circle(posX, posY, sizeY * 0.5);
     fill(255, 0, 0);
     rect(posX - sizeX * 0.05, posY - sizeY * 0.1, sizeX * 0.1, sizeY * 0.2);
-  } else {
+  } else { // Friendly
     fill(150, 150, 150);
     ellipse(posX, posY, sizeX, sizeY);
     fill(200, 200, 200);

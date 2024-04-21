@@ -57,7 +57,7 @@ int countPrimeFactors(int x) {
   if(isPrime(x)) {
     result++;  
   }
-  for(int i = 2; i <= x / 2; i++) {
+  for(int i = 3; i <= sqrt(x); i += 2) {
     loops++;
     if(x % i == 0 && isPrime(i)) {
       result++; 

@@ -81,9 +81,9 @@ boolean validateMove(int i, int k) {
     return false;  
   }
   
-  if() {
-    
-  }
+  //if() {
+  //  
+  //}
   
   if(abs(dist[0]) > 1 || abs(dist[1]) > 1) { // Can only move 1 tile away
     return false;  
