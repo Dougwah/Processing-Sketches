@@ -3,7 +3,7 @@ int infoAreaY = 80;
 int maxLives = 5;
 float stationSizeX = 140;
 float stationSizeY = 80;
-color stationOriginalColor;
+color stationOriginalColor = color(150, 150, 150);
 float targetSizeX = 70;
 float targetSizeY = 30;
 float minTargetSpeed = 0.5;
@@ -90,7 +90,6 @@ void setup() {
   lShipPosY = 200;
   rShipPosX = width - 180;
   rShipPosY = 180;
-  stationColor = stationOriginalColor;
   generateStars();
 }
 
@@ -100,47 +99,45 @@ void draw() {
   
   if (gameState == 2) {
     drawEndScreen();
-    return;
   }
   
   if (gameState == 0) {
     drawStartScreen();
-    return;
   }
   
-  mousePosX = mouseX;
-  mousePosY = max(mouseY, infoAreaY);
+  if (gameState == 1) {
+    mousePosX = mouseX;
+    mousePosY = max(mouseY, infoAreaY);
+    
+    if(!targetAlive) {
+      spawnTarget();
+    }
   
-  if(!targetAlive) {
-    spawnTarget();
+    currentTargetSpeed += 0.001; // Make the difficulty ramp up over time
+    
+    drawBackgroundObjects();
+    runTarget();
+    drawCrosshair();
+    drawInfoArea();
+    
+    millisPassed += millis() - lastMilli;
+    lastMilli = millis();
   }
-
-  currentTargetSpeed += 0.001; // Make the difficulty ramp up over time
-  
-  drawBackgroundObjects();
-  runTarget();
-  drawCrosshair();
-  drawInfoArea();
-  
-  millisPassed += millis() - lastMilli;
-  lastMilli = millis();
 }
 
 void mousePressed() {
-  if (gameState != 1) {
-    return;  
-  }
-  
-  shotsTaken++;
-  stroke(250, 210, 0);
-  strokeWeight(3);
-  line(centrePosX + stationSizeX * 0.025 + 3, centrePosY - stationSizeY * 0.15 + 3, mousePosX, mousePosY);
-  if (checkCollision(targetPosX, targetPosY, targetSizeX, targetSizeY, mousePosX, mousePosY)) {
-    shotsHit++;
-    incrementScore();
-    killTarget();
-  } else {
-    removeLives();  
+  if (gameState == 1) {
+    shotsTaken++;
+    stroke(250, 210, 0);
+    strokeWeight(3);
+    line(centrePosX + stationSizeX * 0.025 + 3, centrePosY - stationSizeY * 0.15 + 3, mousePosX, mousePosY);
+    if (checkCollision(targetPosX, targetPosY, targetSizeX, targetSizeY, mousePosX, mousePosY)) {
+      shotsHit++;
+      updateScore();
+      killTarget();
+    } else {
+      removeLives();  
+    }   
   }
 }
 
@@ -179,7 +176,7 @@ void newRound() {
   millisPassed = 0;
   lastMilli = millis();
   targetAlive = false;
-  stationOriginalColor = color(150, 150, 150);
+  stationColor = stationOriginalColor;
   generateMoon();
   currentTargetSpeed = minTargetSpeed;
   gameState = 1;
@@ -197,7 +194,7 @@ void removeLives() {
   }
 }
 
-void incrementScore() {
+void updateScore() {
   if(targetType == 0) {
     kills++;
     score += 4;
@@ -240,7 +237,9 @@ float vectorGetMag(float x, float y) { // Uses pythag to get the hypotenuse of t
 
 float[] vectorSetMag(float x, float y, float m) { // Normalizes vector before magnitude is applied to keep correct direction
   float[] nVector = vectorNormalize(x, y);
-  return new float[] {nVector[0] * m, nVector[1] * m};
+  nVector[0] *= m;
+  nVector[1] *= m;
+  return nVector;
 }
 
 boolean checkCollision(float pos1X, float pos1Y, float size1X, float size1Y, float pos2X, float pos2Y, float size2X, float size2Y) {
@@ -270,7 +269,7 @@ boolean checkCollision(float posX, float posY, float sizeX, float sizeY, float p
 boolean randomBool() {
   return boolean((int)random(2));
 }
-// I was originally using the nf() function to format 0s into the time but wasnt sure if that was part of an extra library or not
+
 String formatMillis(int millis) {
   int seconds = millis / 1000;
   return floor(seconds / 60) + " : " + (seconds % 60) + " : " + (millis) % 1000; 
@@ -280,7 +279,7 @@ int calcAccuracy() {
   if (shotsTaken == 0) {
     return 0;  
   }
-  return round(shotsHit / shotsTaken * 10000) / 100;
+  return round(shotsHit / shotsTaken * 100);
 }
 
 // ===== TARGET FUNCTIONS ===== 
@@ -391,7 +390,7 @@ void drawLivesBar(float posX, float posY, int sizeX, int sizeY, float iconDistan
   }
 }
 // I find it easier to multiply coordinates rather than divide them
-// These values took a lot of trial and error to find but I wanted the background objects to be scalable
+// These values took a lot of trial and error to find but I wanted the background objects to be scalable and positional
 void drawBackgroundObjects() {
   // Space Station
   stationColor = lerpColor(stationColor, stationOriginalColor, 0.1);
