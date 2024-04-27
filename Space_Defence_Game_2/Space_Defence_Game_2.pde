@@ -1,6 +1,6 @@
 // Add 2 more background ships on either side that shoot at targets when they randomly dissapear
-// Make player ship that faces upwards and shoots 2 lasers that converge on the click coords
-// Ships spawn with a randomised life time and die if reached before making to the planet
+// Make ply ship that faces upwards and shoots 2 lasers that converge on the click coords
+
 // Remake ships as they only face downwards now
 // Make menu background
 
@@ -17,7 +17,7 @@ color xHairColor = color(255, 255, 255);
 // Targets
 int[] targetKillScoreValues = {4, -1};
 int[] targetExpireScoreValues = {-2, 2}; // Point awards when targets die randomly or when touching the planet
-int[] targetDamageValues = {-1, 0}; // Friendlies add lives when they make it to the planet
+int[] targetDamageValues = {-1, 1}; // Friendlies add lives when they make it to the planet
 int targetMinLifeTime = 2;
 int targetMaxLifeTime = 8;
 float targetMinSpeed = 1;
@@ -26,6 +26,7 @@ PVector[] targetSizeValues = {
   new PVector(70, 30),
   new PVector(70, 30)
 };
+int friendlySpawnChance = 25;
 
 // ===== BACKGROUND OBJECT SETTINGS =====
 
@@ -57,8 +58,8 @@ int craterCount = 15;
 int craterMaxSize = 20;
 int craterMinSize = 10;
 
-// PlayerShip
-PVector playerShipSize = new PVector(50, 60);
+// PlyShip
+PVector plyShipSize = new PVector(50, 60);
 
 // Station
 PVector stationSize = new PVector(70, 40);
@@ -80,14 +81,14 @@ int millisPassed;
 int lastMilli;
 PVector centrePos;
 
-// Player
+// Ply
 int score;
 int kills;
 int lives;
 float shotsTaken;
 float shotsHit;
 PVector mousePos = new PVector(); // Make instance here instead of the draw function
-PVector playerShipPos;
+PVector plyShipPos;
 
 // Targets
 int[] targetTypes = new int[targetCount];
@@ -118,7 +119,7 @@ void setup() {
   centrePos = new PVector(width * 0.5, height * 0.5 + infoAreaY * 0.5);
   stationPos = new PVector(width * 0.9, height * 0.65);
   moonPos = new PVector(width * 0.1, height * 0.6);
-  playerShipPos = new PVector(0, height * 0.8);
+  plyShipPos = new PVector(0, height * 0.8);
   planetPos = new PVector(width * 0.5, height * 1.1);
   planetSize = new PVector(width * 2.2, height * 0.5); 
   
@@ -149,20 +150,21 @@ void draw() {
   if (gameState == 1) {
     mousePos.x = mouseX;
     mousePos.y = max(mouseY, infoAreaY);
-    playerShipPos.x = constrain(mouseX, playerShipSize.x * 0.5, width - playerShipSize.x * 0.5);
+    plyShipPos.x = constrain(mouseX, plyShipSize.x * 0.5, width - plyShipSize.x * 0.5);
      
     drawStars();
     drawMoon();
     drawPlanet();
     drawSpaceStation();
     drawFarShips();
-    drawPlayerShip();
-    drawInfoArea();
+    drawPlyShip();
     
     runTargets();
     drawCrosshair();
+    drawInfoArea();
     
     millisPassed += millis() - lastMilli;
+    println(millis() - lastMilli);
     lastMilli = millis();
   }
 }
@@ -170,7 +172,7 @@ void draw() {
 void mousePressed() {
  if (gameState == 1) {
     shotsTaken++;
-    drawShot(playerShipPos, mousePos, color(250, 210, 0));
+    drawShot(plyShipPos, mousePos, color(250, 210, 0));
     boolean targetHit = false;
     for(int i = 0; i < targetCount; i++) {
       int type = targetTypes[i];
@@ -231,7 +233,7 @@ void endRound() {
 }
 
 void updateLives(int _lives) {
-  lives = min(maxLives, lives + _lives);
+  //lives = min(maxLives, lives + _lives);
   if(lives <= 0) {
     endRound();  
   }
@@ -331,7 +333,7 @@ void runTargets() {
   }
 }
 
-void killTarget(int index) { // When killed by the player or reaching the planet
+void killTarget(int index) { // When killed by the ply or reaching the planet
   int type = targetTypes[index];
   if(type == 0) {
     kills++;  
@@ -347,7 +349,12 @@ void despawnTarget(int index) { // When target time exceeds its generated life t
 
 void spawnTarget(int index) {
   PVector pos = new PVector();
-  int type = (int)random(2);
+  
+  int type = 0;
+  if((int)random(101) <= friendlySpawnChance) {
+    type = 1;
+  }
+  
   PVector size = targetSizeValues[type];
   
   if (randomBool()) { // Spawn along X
@@ -472,8 +479,6 @@ void drawLivesBar(PVector pos, PVector size, float iconDistance, int lives) {
 }
 
 void drawCrosshair() {
-
-  
   for(int i = 0; i < targetCount; i++) {
     int type = targetTypes[i];
     if(checkCollision(targetPositions[i], targetSizeValues[type], mousePos)) {
@@ -649,9 +654,31 @@ void drawPlanet() {
   ellipse(planetPos.x, planetPos.y + height * 0.05, planetSize.x, planetSize.y);
 }
 
-void drawPlayerShip() {
+void drawPlyShip() {
   fill(255, 195, 40);
-  rect(playerShipPos.x - playerShipSize.x * 0.5, playerShipPos.y - playerShipSize.y * 0.5, playerShipSize.x, playerShipSize.y);
+  rect(plyShipPos.x - plyShipSize.x * 0.5, plyShipPos.y - plyShipSize.y * 0.5, plyShipSize.x, plyShipSize.y);
+ 
+  fill(255, 255, 255);
+  rect(plyShipPos.x - plyShipSize.x * 0.1, plyShipPos.y - plyShipSize.y * 0.5, plyShipSize.x * 0.2, plyShipSize.y * 0.25); // Middle Top
+  rect(plyShipPos.x - plyShipSize.x * 0.2, plyShipPos.y - plyShipSize.y * 0.25, plyShipSize.x * 0.4, plyShipSize.y * 0.4); // Middle
+  triangle( // Middle Left
+    plyShipPos.x - plyShipSize.x * 0.5, plyShipPos.y + plyShipSize.y * 0.15,
+    plyShipPos.x - plyShipSize.x * 0.2, plyShipPos.y - plyShipSize.y * 0.25,
+    plyShipPos.x - plyShipSize.x * 0.2, plyShipPos.y + plyShipSize.y * 0.15
+  );
+  triangle( // Middle Right
+    plyShipPos.x + plyShipSize.x * 0.2, plyShipPos.y + plyShipSize.y * 0.15,    
+    plyShipPos.x + plyShipSize.x * 0.2, plyShipPos.y - plyShipSize.y * 0.25,
+    plyShipPos.x + plyShipSize.x * 0.5, plyShipPos.y + plyShipSize.y * 0.15
+  );
+  triangle( // Bottom Left
+    plyShipPos.x - plyShipSize.x * 0.5, plyShipPos.y + plyShipSize.y * 0.15,
+    plyShipPos.x - plyShipSize.x * 0.05, plyShipPos.y + plyShipSize.y * 0.15,
+    plyShipPos.x - plyShipSize.x * 0.5, plyShipPos.y + plyShipSize.y * 0.5
+
+  );
+  stroke(255,0,0);
+  strokeWeight(2);
 }
 
 void drawSpaceStation() {
