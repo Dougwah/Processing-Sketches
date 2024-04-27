@@ -1,21 +1,13 @@
-// Make background ships smaller and add an array to spawn multiple
 // Add 2 more background ships on either side that shoot at targets when they randomly dissapear
 // Make player ship that faces upwards and shoots 2 lasers that converge on the click coords
 // Ships spawn with a randomised life time and die if reached before making to the planet
 // Remake ships as they only face downwards now
-// Separate draw background objects into different funcs
 // Make menu background
 
 // ===== GAME SETTINGS ===== 
 int infoAreaY = 80;
-int maxLives = 6;
+int maxLives = 20;
 int targetCount = 5;
-
-// Station
-PVector stationSize = new PVector(70, 40);
-PVector stationPos;
-boolean lightOn = false;
-int lastLightTime = millis();
 
 // Crosshair
 PVector xHairSize = new PVector(3, 20);
@@ -23,9 +15,13 @@ int xHairGap = 10;
 color xHairColor = color(255, 255, 255);
 
 // Targets
-int[] targetKillPointValues = {4, -1};
-int[] targetExpirePointValues = {-2, 2}; // Point awards when targets die randomly or when touching the planet
-int[] targetDamageValues = {1, -1}; // Friendlies add lives when they make it to the planet
+int[] targetKillScoreValues = {4, -1};
+int[] targetExpireScoreValues = {-2, 2}; // Point awards when targets die randomly or when touching the planet
+int[] targetDamageValues = {-1, 0}; // Friendlies add lives when they make it to the planet
+int targetMinLifeTime = 2;
+int targetMaxLifeTime = 8;
+float targetMinSpeed = 1;
+float targetMaxSpeed = 2.5;
 PVector[] targetSizeValues = {
   new PVector(70, 30),
   new PVector(70, 30)
@@ -40,11 +36,6 @@ PVector[] farShipSizes = {
   new PVector(100, 40)
 };
 PVector[][] farShipBounds = new PVector[farShipCount][farShipCount];
-
-//PVector lShipSize = new PVector(300, 120); // 1 : 2.5 aspect ratio
-//PVector lShipPos;
-//PVector rShipSize = new PVector(300, 120);
-//PVector rShipPos;
 
 // Close Ships
 
@@ -66,6 +57,19 @@ int craterCount = 15;
 int craterMaxSize = 20;
 int craterMinSize = 10;
 
+// PlayerShip
+PVector playerShipSize = new PVector(50, 60);
+
+// Station
+PVector stationSize = new PVector(70, 40);
+PVector stationPos;
+boolean lightOn = false;
+int lastLightTime = millis();
+
+// Planet
+PVector planetSize;
+PVector planetPos;
+
 // Menu Background
 
 // ===== CURRENT ROUND VALUES =====
@@ -83,6 +87,7 @@ int lives;
 float shotsTaken;
 float shotsHit;
 PVector mousePos = new PVector(); // Make instance here instead of the draw function
+PVector playerShipPos;
 
 // Targets
 int[] targetTypes = new int[targetCount];
@@ -111,8 +116,11 @@ void setup() {
   noCursor();
   size(800, 600);
   centrePos = new PVector(width * 0.5, height * 0.5 + infoAreaY * 0.5);
-  stationPos = new PVector(width * 0.9, height * 0.75);
-  moonPos = new PVector(width * 0.1, height * 0.7);
+  stationPos = new PVector(width * 0.9, height * 0.65);
+  moonPos = new PVector(width * 0.1, height * 0.6);
+  playerShipPos = new PVector(0, height * 0.8);
+  planetPos = new PVector(width * 0.5, height * 1.1);
+  planetSize = new PVector(width * 2.2, height * 0.5); 
   
   farShipBounds[0] = new PVector[] { // Ships on the left
     new PVector(farShipSizes[0].x * 0.5, infoAreaY + farShipSizes[0].y * 0.5), // Minimum Coords
@@ -141,11 +149,18 @@ void draw() {
   if (gameState == 1) {
     mousePos.x = mouseX;
     mousePos.y = max(mouseY, infoAreaY);
+    playerShipPos.x = constrain(mouseX, playerShipSize.x * 0.5, width - playerShipSize.x * 0.5);
      
-    drawBackgroundObjects();
+    drawStars();
+    drawMoon();
+    drawPlanet();
+    drawSpaceStation();
     drawFarShips();
-    drawCrosshair();
+    drawPlayerShip();
     drawInfoArea();
+    
+    runTargets();
+    drawCrosshair();
     
     millisPassed += millis() - lastMilli;
     lastMilli = millis();
@@ -155,9 +170,20 @@ void draw() {
 void mousePressed() {
  if (gameState == 1) {
     shotsTaken++;
-    stroke(250, 210, 0);
-    strokeWeight(3);
-    line(centrePos.x + stationSize.x * 0.025 + 3, centrePos.y - stationSize.y * 0.15 + 3, mousePos.x, mousePos.y);
+    drawShot(playerShipPos, mousePos, color(250, 210, 0));
+    boolean targetHit = false;
+    for(int i = 0; i < targetCount; i++) {
+      int type = targetTypes[i];
+      if(checkCollision(targetPositions[i], targetSizeValues[type], mousePos)) {
+        targetHit = true;
+        killTarget(i);
+      }
+    }
+    if(targetHit) {
+      shotsHit++;  
+    } else {
+      updateLives(-1);  
+    }
   }  
 }
 
@@ -204,49 +230,23 @@ void endRound() {
   gameState = 2;
 }
 
+void updateLives(int _lives) {
+  lives = min(maxLives, lives + _lives);
+  if(lives <= 0) {
+    endRound();  
+  }
+}
+
+void updateScore(int _score) {
+  score += _score;
+}
+
 void generateStars() {
   for (int i = 0; i < starCount; i++) {
     starPositions[i] = new PVector((int)random(width), (int)random(infoAreaY, height));
     starColors[i] = starColorList[floor(random(starColorList.length))];
     starSizes[i] = random(1, 3);
   }
-}
-
-void generateFarShips() {
-  int lastY = (int)(farShipBounds[0][0].y + random(0, 60));
-
-  for(int i = 0; i < farShipCount / 2; i++) {
-    farShipPositions[i] = new PVector((int)random(farShipBounds[0][0].x, farShipBounds[0][1].x), lastY);
-    lastY += farShipSizes[0].y + (int)random(0, 20);
-  }
-  
-  lastY = (int)(farShipBounds[1][0].y + random(0, 60));
-  for(int i = farShipCount / 2; i < farShipCount; i++) {
-    farShipPositions[i] = new PVector((int)random(farShipBounds[1][0].x, farShipBounds[1][1].x), lastY);
-    lastY += farShipSizes[1].y + (int)random(0, 20); 
-  }
-  
-  
-  
-  //for (int i = 0; i < farShipCount; i++) {
-  //  if(i <= farShipCount * 0.5 - 1) {
-  //    type = 0;
-  //  } else {
-  //    type = 1;
-  //    //lastY = (int)farShipBounds[1][0].y;
-  //  }
-    
-  //  lastY += farShipSizes[type].y + (int)random(0, 20);
-  //  farShipPositions[i] = new PVector((int)random(farShipBounds[type][0].x, farShipBounds[type][1].x), lastY);
-     
-  //   //for(int k = 0; k < i; k++) { // Check all previous positions for overlapping
-  //   //  float yDistance = Math.abs(farShipPositions[k].y - farShipPositions[i].y);
-  //   //  float xDistance = Math.abs(farShipPositions[k].x - farShipPositions[i].x);
-  //   //  if (xDistance <= farShipSizes[type].x && yDistance <= farShipSizes[type].y) {
-  //   //    farShipPositions[i].y += yDistance + farShipSizes[type].y;
-  //   //  }
-  //   //}
-  //}
 }
 
 void generateMoonCraters() {
@@ -259,12 +259,24 @@ void generateMoonCraters() {
   }
 }
 
-// Circular collision
-boolean checkCollision(PVector pos1, int rad1, PVector pos2, int rad2) {
-  if(PVector.sub(pos1, pos2).mag() < rad1 + rad2) {
-    return true;
+void generateFarShips() {
+  int lastY = (int)(farShipBounds[0][0].y + random(0, 60));  for(int i = 0; i < farShipCount / 2; i++) {
+    farShipPositions[i] = new PVector((int)random(farShipBounds[0][0].x, farShipBounds[0][1].x), lastY);
+    lastY += farShipSizes[0].y + (int)random(0, 20);
   }
   
+  lastY = (int)(farShipBounds[1][0].y + random(0, 60));
+  for(int i = farShipCount / 2; i < farShipCount; i++) {
+    farShipPositions[i] = new PVector((int)random(farShipBounds[1][0].x, farShipBounds[1][1].x), lastY);
+    lastY += farShipSizes[1].y + (int)random(0, 20); 
+  }
+}
+
+// Ellipse collision
+boolean checkCollision(PVector pos1, PVector size1, PVector pos2, PVector size2) {
+  if(abs(pos1.x - pos2.x) < abs((size1.x + size2.x) / 2) && abs(pos1.y - pos2.y) < abs((size1.y + size2.y) / 2)) {
+    return true;
+  }
   return false;
 }
 
@@ -298,11 +310,67 @@ int calcAccuracy() {
 // ===== TARGET FUNCTIONS =====
 
 void runTargets() {
-  
+  for(int i = 0; i < targetCount; i++) {
+    int type = targetTypes[i];
+    PVector pos = targetPositions[i];
+    if(targetStates[i]) {
+      target(pos.x, pos.y, type);
+      pos.add(targetVelocities[i]);
+      if(checkCollision(pos, targetSizeValues[type], planetPos, planetSize)) {
+        killTarget(i);
+        updateLives(targetDamageValues[type]);
+      }
+      
+      if(millis() > targetSpawnTimes[i] + targetLifeTimes[i]) {
+        despawnTarget(i);  
+      }
+      
+    } else {
+      spawnTarget(i);
+    }
+  }
 }
 
-void killTarget(int index) {
+void killTarget(int index) { // When killed by the player or reaching the planet
+  int type = targetTypes[index];
+  if(type == 0) {
+    kills++;  
+  }
+  updateScore(targetKillScoreValues[type]);
+  targetStates[index] = false;
+}
+
+void despawnTarget(int index) { // When target time exceeds its generated life time before being killed
+  drawShot(centrePos, targetPositions[index], color(255, 0, 0));
+  targetStates[index] = false;
+}
+
+void spawnTarget(int index) {
+  PVector pos = new PVector();
+  int type = (int)random(2);
+  PVector size = targetSizeValues[type];
   
+  if (randomBool()) { // Spawn along X
+    
+    pos.y = infoAreaY + size.y * 0.5;
+    pos.x = random(size.x * 0.5, width);
+    
+  } else { // spawn along Y
+    
+    if (randomBool()) {
+      pos.x = size.x * 0.5; // Spawn on Left
+    } else {
+      pos.x = width - size.x * 0.5; // Spawn on Right
+    }
+    pos.y = random(infoAreaY + size.y, height * 0.5 - size.y * 0.5);
+  }
+  
+  targetTypes[index] = type;
+  targetPositions[index] = pos;
+  targetVelocities[index] = PVector.sub(planetPos, pos).normalize().setMag(random(targetMinSpeed, targetMaxSpeed));
+  targetSpawnTimes[index] = millis();
+  targetLifeTimes[index] = (int)(random(targetMinLifeTime, targetMaxLifeTime) * 1000);
+  targetStates[index] = true;
 }
 
 // ===== DRAW FUNCTIONS =====
@@ -391,11 +459,34 @@ void drawInfoArea() {
   text("Kills\n" + kills, width * 0.15, infoAreaY / 4);
   text("Accuracy\n " + calcAccuracy() + "%", width * 0.28, infoAreaY * 0.25);
   text("Lives", width * 0.85, infoAreaY / 4);
-  drawLivesBar(new PVector(width * 0.85, infoAreaY * 0.6), new PVector(20, 20), 30, lives);
+  drawLivesBar(new PVector(width * 0.85, infoAreaY * 0.6), new PVector(5, 5), 10, lives);
+}
+
+void drawLivesBar(PVector pos, PVector size, float iconDistance, int lives) {
+  float barWidth = size.x + iconDistance * (lives + 1);
+  float barCentre = barWidth * 0.5 - (size.x * 0.5);
+  for (int i = 1; i <= lives; i++) { 
+    fill(0, 255, 0);
+    rect(pos.x - size.x * 0.5 - barCentre + iconDistance * i, pos.y, size.x, size.y);
+  }
 }
 
 void drawCrosshair() {
-  xHairColor = color(255, 255, 255); 
+
+  
+  for(int i = 0; i < targetCount; i++) {
+    int type = targetTypes[i];
+    if(checkCollision(targetPositions[i], targetSizeValues[type], mousePos)) {
+      if (type == 0) {
+        xHairColor = color(255, 0, 0);
+      } else {
+        xHairColor = color(0, 255, 0); 
+      }
+      break;
+    } else {
+      xHairColor = color(255, 255, 255);
+    }
+  }
 
   stroke(xHairColor);
   strokeWeight(xHairSize.x);
@@ -534,23 +625,36 @@ void drawFarShips() {
   }
 }
 
-void drawBackgroundObjects() {
-  // Stars
+void drawStars() {
   for (int i = 0; i < starCount; i++)  {
     fill(starColors[i]);
     noStroke();
     circle(starPositions[i].x, starPositions[i].y, starSizes[i]);
   }
-  
-  // Planet
-  fill(160, 10, 185);
-  ellipse(width * 0.5, height * 1.1, width * 2.2, height * 0.5);
-  
-  // Player Ship
+}
+
+void drawMoon() {
+  fill(220, 220, 220);
+  circle(moonPos.x, moonPos.y, moonSize);
+  for (int i = 0; i < craterCount; i++) {
+    fill(170, 170, 170); 
+    circle(craterPositions[i].x, craterPositions[i].y, craterSizes[i]);  
+  }
+}
+
+void drawPlanet() {
+  fill(150, 218, 240);
+  ellipse(planetPos.x, planetPos.y, planetSize.x, planetSize.y);
+  fill(12, 175, 0);  
+  ellipse(planetPos.x, planetPos.y + height * 0.05, planetSize.x, planetSize.y);
+}
+
+void drawPlayerShip() {
   fill(255, 195, 40);
-  square(constrain(mouseX - 10, 0, width - 20), height * 0.8, 20);
-  
-  // Space Station
+  rect(playerShipPos.x - playerShipSize.x * 0.5, playerShipPos.y - playerShipSize.y * 0.5, playerShipSize.x, playerShipSize.y);
+}
+
+void drawSpaceStation() {
   fill(color(150, 150, 150));
   rect(stationPos.x - stationSize.x * 0.5, stationPos.y - stationSize.y * 0.2, stationSize.x * 0.3, stationSize.y * 0.6); // Left
   rect(stationPos.x + stationSize.x * 0.3, stationPos.y - stationSize.y * 0.5, stationSize.x * 0.2, stationSize.y); // Right
@@ -586,22 +690,5 @@ void drawBackgroundObjects() {
       fill(255);
       rect(posX, posY, stationSize.x * 0.05, stationSize.y * 0.1);
     }
-  }
-
-  // Moon
-  fill(220, 220, 220);
-  circle(moonPos.x, moonPos.y, moonSize);
-  for (int i = 0; i < craterCount; i++) {
-    fill(170, 170, 170); 
-    circle(craterPositions[i].x, craterPositions[i].y, craterSizes[i]);  
-  }
-}
-
-void drawLivesBar(PVector pos, PVector size, float iconDistance, int lives) {
-  float barWidth = size.x + iconDistance * (lives + 1);
-  float barCentre = barWidth * 0.5 - (size.x * 0.5);
-  for (int i = 1; i <= lives; i++) { 
-    fill(0, 255, 0);
-    rect(pos.x - size.x * 0.5 - barCentre + iconDistance * i, pos.y, size.x, size.y);
   }
 }
