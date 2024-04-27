@@ -1,11 +1,19 @@
+// Make background ships smaller and add an array to spawn multiple
+// Add 2 more background ships on either side that shoot at targets when they randomly dissapear
+// Make player ship that faces upwards and shoots 2 lasers that converge on the click coords
+// Ships spawn with a randomised life time and die if reached before making to the planet
+// Remake ships as they only face downwards now
+// Separate draw background objects into different funcs
+// Make menu background
+
 // ===== GAME SETTINGS ===== 
 int infoAreaY = 80;
-int maxLives = 5;
-int maxTargets = 5;
+int maxLives = 6;
+int targetCount = 5;
 
 // Station
-PVector stationSize = new PVector(140, 80);
-color stationOriginalColor = color(150, 150, 150);
+PVector stationSize = new PVector(70, 40);
+PVector stationPos;
 boolean lightOn = false;
 int lastLightTime = millis();
 
@@ -14,19 +22,34 @@ PVector xHairSize = new PVector(3, 20);
 int xHairGap = 10;
 color xHairColor = color(255, 255, 255);
 
+// Targets
+int[] targetKillPointValues = {4, -1};
+int[] targetExpirePointValues = {-2, 2}; // Point awards when targets die randomly or when touching the planet
+int[] targetDamageValues = {1, -1}; // Friendlies add lives when they make it to the planet
+PVector[] targetSizeValues = {
+  new PVector(70, 30),
+  new PVector(70, 30)
+};
+
 // ===== BACKGROUND OBJECT SETTINGS =====
 
-// Ships
-PVector lShipSize = new PVector(300, 120); // 1 : 2.5 aspect ratio
-PVector lShipPos;
-PVector rShipSize = new PVector(300, 120);
-PVector rShipPos;
+// Far Ships
+int farShipCount = 8;
+PVector[] farShipSizes = {
+  new PVector(100, 40), // 1 : 2.5 aspect ratio
+  new PVector(100, 40)
+};
+PVector[][] farShipBounds = new PVector[farShipCount][farShipCount];
+
+//PVector lShipSize = new PVector(300, 120); // 1 : 2.5 aspect ratio
+//PVector lShipPos;
+//PVector rShipSize = new PVector(300, 120);
+//PVector rShipPos;
+
+// Close Ships
 
 // Stars
 int starCount = 150;
-PVector[] starPositions = new PVector[starCount];
-float[] starSizes = new float[starCount];
-color[] starColors = new color[starCount];
 color[] starColorList = {
   color(255, 255, 255),
   color(217, 243, 255),
@@ -38,13 +61,10 @@ color[] starColorList = {
 };
 
 // Moon
-int moonSize = 200;
+int moonSize = 100;
 int craterCount = 15;
-int craterMaxSize = 40;
+int craterMaxSize = 20;
 int craterMinSize = 10;
-PVector moonPos;
-PVector[] craterPositions = new PVector[craterCount];
-float[] craterSizes = new float[craterCount];
 
 // Menu Background
 
@@ -55,7 +75,6 @@ int gameState = 0; // 0 == start screen, 1 = game screen, 2 = end screen
 int millisPassed;
 int lastMilli;
 PVector centrePos;
-color stationColor;
 
 // Player
 int score;
@@ -66,10 +85,25 @@ float shotsHit;
 PVector mousePos = new PVector(); // Make instance here instead of the draw function
 
 // Targets
-int[] targetTypes = new int[maxTargets];
-PVector[] targetPositions = new PVector[maxTargets];
-PVector[] targetVelocities = new PVector[maxTargets];
-boolean[] targetStates = new boolean[maxTargets];
+int[] targetTypes = new int[targetCount];
+PVector[] targetPositions = new PVector[targetCount];
+PVector[] targetVelocities = new PVector[targetCount];
+boolean[] targetStates = new boolean[targetCount];
+int[] targetSpawnTimes = new int[targetCount];
+int[] targetLifeTimes = new int[targetCount];
+
+// Stars
+PVector[] starPositions = new PVector[starCount];
+float[] starSizes = new float[starCount];
+color[] starColors = new color[starCount];
+
+// Moon
+PVector moonPos;
+PVector[] craterPositions = new PVector[craterCount];
+float[] craterSizes = new float[craterCount];
+
+// Far Background Ships
+PVector[] farShipPositions = new PVector[farShipCount];
 
 // ===== PROCESSING FUNCTIONS =====
 
@@ -77,8 +111,20 @@ void setup() {
   noCursor();
   size(800, 600);
   centrePos = new PVector(width * 0.5, height * 0.5 + infoAreaY * 0.5);
-  lShipPos = new PVector(180, 200);
-  rShipPos = new PVector(width - 180, 180);
+  stationPos = new PVector(width * 0.9, height * 0.75);
+  moonPos = new PVector(width * 0.1, height * 0.7);
+  
+  farShipBounds[0] = new PVector[] { // Ships on the left
+    new PVector(farShipSizes[0].x * 0.5, infoAreaY + farShipSizes[0].y * 0.5), // Minimum Coords
+    new PVector(width * 0.5 - farShipSizes[0].x, height * 0.4 - farShipSizes[0].y * 0.5) // Maximum Coords
+  };
+  farShipBounds[1] = new PVector[] { // Ships on the right
+    new PVector(width * 0.5 + farShipSizes[1].x * 0.5, infoAreaY + farShipSizes[1].y * 0.5),
+    new PVector(width - farShipSizes[1].x * 0.5, height * 0.4 - farShipSizes[1].y * 0.5)
+  };
+  
+  //lShipPos = new PVector(180, 200);
+  //rShipPos = new PVector(width - 180, 180);
 }
 
 void draw() {
@@ -97,6 +143,7 @@ void draw() {
     mousePos.y = max(mouseY, infoAreaY);
      
     drawBackgroundObjects();
+    drawFarShips();
     drawCrosshair();
     drawInfoArea();
     
@@ -106,7 +153,12 @@ void draw() {
 }
 
 void mousePressed() {
-  
+ if (gameState == 1) {
+    shotsTaken++;
+    stroke(250, 210, 0);
+    strokeWeight(3);
+    line(centrePos.x + stationSize.x * 0.025 + 3, centrePos.y - stationSize.y * 0.15 + 3, mousePos.x, mousePos.y);
+  }  
 }
 
 void keyPressed() {
@@ -142,8 +194,8 @@ void newRound() {
   shotsHit = 0;
   millisPassed = 0;
   lastMilli = millis();
-  stationColor = stationOriginalColor;
-  generateMoon();
+  generateFarShips();
+  generateMoonCraters();
   generateStars();
   gameState = 1;
 }
@@ -152,49 +204,76 @@ void endRound() {
   gameState = 2;
 }
 
-
-void runTargets() {
-  
-}
-
 void generateStars() {
   for (int i = 0; i < starCount; i++) {
-    starPositions[i] = new PVector(random(width), random(infoAreaY, height));
-    starColors[i] = starColors[floor(random(starColors.length))];
+    starPositions[i] = new PVector((int)random(width), (int)random(infoAreaY, height));
+    starColors[i] = starColorList[floor(random(starColorList.length))];
     starSizes[i] = random(1, 3);
   }
 }
 
-void generateMoon() {
-  moonPos = new PVector(width * 0.85, height * 0.75);
+void generateFarShips() {
+  int lastY = (int)(farShipBounds[0][0].y + random(0, 60));
+
+  for(int i = 0; i < farShipCount / 2; i++) {
+    farShipPositions[i] = new PVector((int)random(farShipBounds[0][0].x, farShipBounds[0][1].x), lastY);
+    lastY += farShipSizes[0].y + (int)random(0, 20);
+  }
+  
+  lastY = (int)(farShipBounds[1][0].y + random(0, 60));
+  for(int i = farShipCount / 2; i < farShipCount; i++) {
+    farShipPositions[i] = new PVector((int)random(farShipBounds[1][0].x, farShipBounds[1][1].x), lastY);
+    lastY += farShipSizes[1].y + (int)random(0, 20); 
+  }
+  
+  
+  
+  //for (int i = 0; i < farShipCount; i++) {
+  //  if(i <= farShipCount * 0.5 - 1) {
+  //    type = 0;
+  //  } else {
+  //    type = 1;
+  //    //lastY = (int)farShipBounds[1][0].y;
+  //  }
+    
+  //  lastY += farShipSizes[type].y + (int)random(0, 20);
+  //  farShipPositions[i] = new PVector((int)random(farShipBounds[type][0].x, farShipBounds[type][1].x), lastY);
+     
+  //   //for(int k = 0; k < i; k++) { // Check all previous positions for overlapping
+  //   //  float yDistance = Math.abs(farShipPositions[k].y - farShipPositions[i].y);
+  //   //  float xDistance = Math.abs(farShipPositions[k].x - farShipPositions[i].x);
+  //   //  if (xDistance <= farShipSizes[type].x && yDistance <= farShipSizes[type].y) {
+  //   //    farShipPositions[i].y += yDistance + farShipSizes[type].y;
+  //   //  }
+  //   //}
+  //}
+}
+
+void generateMoonCraters() {
   for (int i = 0; i < craterCount; i++) {
     float craterSize = random(craterMinSize, craterMaxSize);
-    float magnitude = moonSize / random(2, 4) - craterSize / 2;
+    float magnitude = moonSize / random(2, 4) - craterSize * 0.5;
     PVector relativePos = new PVector(random(-1, 1), random(-1, 1)).setMag(magnitude);
     craterPositions[i] = PVector.add(moonPos, relativePos);
     craterSizes[i] = craterSize;
   }
 }
 
-boolean checkCollision(float pos1X, float pos1Y, float size1X, float size1Y, float pos2X, float pos2Y, float size2X, float size2Y) {
-  // if right x coord of rect 1 is less than the left x coord of rect 2 
-  // or the left x coord of rect 1 is greater than the right x coord of rect 2
-  if (pos1X + size1X * 0.5 < pos2X - size2X * 0.5 || pos1X - size1X * 0.5 > pos2X + size2X * 0.5) {
-    return false; 
+// Circular collision
+boolean checkCollision(PVector pos1, int rad1, PVector pos2, int rad2) {
+  if(PVector.sub(pos1, pos2).mag() < rad1 + rad2) {
+    return true;
   }
-  // if bottom y coord of rect 1 is less than the top y coord of rect 2
-  // or the top y coord of rect 1 is greater than the bottom y coord of rect 2
-  if (pos1Y + size1Y * 0.5 < pos2Y - size2Y * 0.5 || pos1Y - size1Y * 0.5 > pos2Y + size2Y * 0.5) {
-    return false; 
-  }
-  return true;
+  
+  return false;
 }
 
-boolean checkCollision(float posX, float posY, float sizeX, float sizeY, float pointX, float pointY) {
-  if (pointX < posX - sizeX * 0.5 || pointX > posX + sizeX * 0.5) {
+// Rectangular collision
+boolean checkCollision(PVector pos, PVector size, PVector point) {
+  if (point.x < pos.x - size.x * 0.5 || point.x > pos.x + size.x * 0.5) {
     return false;
   }
-  if (pointY < posY - sizeY * 0.5 || pointY > posY + sizeY * 0.5) {
+  if (point.y < pos.y - size.y * 0.5 || point.y > pos.y + size.y * 0.5) {
     return false;
   }
   return true;
@@ -216,7 +295,55 @@ int calcAccuracy() {
   return round(shotsHit / shotsTaken * 100);
 }
 
+// ===== TARGET FUNCTIONS =====
+
+void runTargets() {
+  
+}
+
+void killTarget(int index) {
+  
+}
+
 // ===== DRAW FUNCTIONS =====
+
+void target(float x, float y, int typeOfTarget) {
+  PVector size = targetSizeValues[typeOfTarget];
+  noStroke();
+  if (typeOfTarget == 0) { // Enemy
+    fill(150, 150, 150);
+    triangle(
+      x - size.x * 0.5,
+      y - size.y * 0.2,    
+      x,
+      y - size.y * 0.5,         
+      x + size.x * 0.5,
+      y - size.y * 0.2
+    );
+    triangle(
+      x + size.x * 0.5,
+      y + size.y * 0.2,  
+      x,
+      y + size.y * 0.5,        
+      x - size.x * 0.5,
+      y + size.y * 0.2
+    );
+    rect(x - size.x * 0.15, y - size.y * 0.25, size.x * 0.3, size.y * 0.5);
+    fill(200, 200, 200);
+    circle(x, y, size.y * 0.5);
+    fill(255, 0, 0);
+    rect(x - size.x * 0.05, y - size.y * 0.1, size.x * 0.1, size.y * 0.2);
+  } else { // Friendly
+    fill(150, 150, 150);
+    ellipse(x, y, size.x, size.y);
+    fill(200, 200, 200);
+    rect(x - size.x * 0.5, y - size.y * 0.2, size.x, size.y * 0.4);
+    fill(0, 255, 0);
+    rect(x - size.x * 0.4, y - size.y * 0.1, size.x * 0.2, size.y * 0.2);    
+    rect(x - size.x * 0.1, y - size.y * 0.1, size.x * 0.2, size.y * 0.2);
+    rect(x + size.x * 0.2, y - size.y * 0.1, size.x * 0.2, size.y * 0.2);
+  }
+}
 
 void drawStartScreen() {
   fill(255, 200, 0);
@@ -284,6 +411,129 @@ void drawCrosshair() {
   point(mousePos.x, mousePos.y); // Centre
 }
 
+void drawShot(PVector startPos, PVector endPos, color col) {
+  strokeWeight(3);
+  stroke(col);
+  line(startPos.x, startPos.y, endPos.x, endPos.y);
+  fill(255, 85, 0);
+  noStroke();
+  circle(endPos.x, endPos.y, 15);
+}
+
+void drawFarShips() {
+  for(int i = 0; i < farShipPositions.length; i++) {
+    PVector pos = farShipPositions[i];
+    PVector size;
+    boolean drawShot = ((int)random(101) <= 1); // % chance for a ship to shot another when it is draw
+
+    if(i <= farShipCount / 2 - 1) { //Left Ships
+      size = farShipSizes[0];
+      fill(140, 130, 130);
+      rect(pos.x - size.x * 0.45, pos.y, size.x * 0.2, size.y * 0.3); // Back
+      fill(230, 255, 255);
+      rect(pos.x - size.x * 0.45, pos.y - size.y * 0.25, size.x * 0.15, size.y * 0.2); // Back Top
+      rect(pos.x - size.x * 0.4, pos.y - size.y * 0.5, size.x * 0.05, size.y * 0.25); // Back Middle Top
+      rect(pos.x - size.x * 0.35, pos.y - size.y * 0.5, size.x * 0.05, size.y * 0.1); // Right Top
+      triangle( // Back Top
+        pos.x - size.x * 0.45, 
+        pos.y - size.y * 0.25,
+        pos.x - size.x * 0.4, 
+        pos.y - size.y * 0.5,
+        pos.x - size.x * 0.4, 
+        pos.y - size.y * 0.25
+      );
+      triangle( // Back Top
+        pos.x - size.x * 0.35, 
+        pos.y - size.y * 0.25,
+        pos.x - size.x * 0.35, 
+        pos.y - size.y * 0.5,
+        pos.x - size.x * 0.3, 
+        pos.y - size.y * 0.25
+      );
+      triangle( // Top Half
+        pos.x - size.x * 0.5, 
+        pos.y - size.y * 0.2,
+        pos.x - size.x * 0.4,
+        pos.y + size.y * 0.1,
+        pos.x + size.x * 0.5,
+        pos.y + size.y * 0.1
+       );
+      triangle( // Bottom Half
+        pos.x - size.x * 0.5, 
+        pos.y + size.y * 0.5,
+        pos.x - size.x * 0.4,
+        pos.y + size.y * 0.2,
+        pos.x + size.x * 0.5,
+        pos.y + size.y * 0.2
+       );
+      fill(140, 130, 130);
+      triangle(
+        pos.x - size.x * 0.38, 
+        pos.y - size.y * 0.05,
+        pos.x - size.x * 0.38, 
+        pos.y - size.y * 0.3,
+        pos.x - size.x * 0.12, 
+        pos.y - size.y * 0.05
+      );
+      fill(140, 130, 130);
+      rect(pos.x - size.x * 0.4, pos.y + size.y * 0.1, size.x * 0.8, size.y * 0.1); // Middle
+      
+      if(drawShot) {
+        int index = (int)random(farShipCount * 0.5, farShipCount);
+        PVector tPos = farShipPositions[index];
+        PVector tSize = farShipSizes[0];
+        PVector startPos = new PVector(random(pos.x - size.x * 0.5, pos.x + size.x * 0.5), random(pos.y - size.y * 0.5, pos.y + size.y * 0.5));
+        PVector endPos = new PVector(random(tPos.x - tSize.x * 0.5, tPos.x + tSize.x * 0.5), random(tPos.y - tSize.y * 0.5, tPos.y + tSize.y * 0.5));
+        drawShot(startPos, endPos, color(255, 100, 80));
+      }
+      
+    } else { // Right Ships
+      size = farShipSizes[1];
+      
+      fill(230, 255, 255);
+      rect(pos.x - size.x * 0.4, pos.y - size.y * 0.3, size.x * 0.12, size.y * 0.4); // Front
+      rect(pos.x - size.x * 0.3, pos.y - size.y * 0.34, size.x * 0.12, size.y * 0.65); // Front - 1
+      rect(pos.x - size.x * 0.2, pos.y - size.y * 0.425, size.x * 0.55, size.y * 0.85); // Middle
+      rect(pos.x + size.x * 0.2, pos.y - size.y * 0.5, size.x * 0.3, size.y * 0.2); // Top Back
+      rect(pos.x + size.x * 0.2, pos.y + size.y * 0.3, size.x * 0.3, size.y * 0.2); // Bottom Back
+      fill(140, 130, 130);
+      rect(pos.x - size.x * 0.5, pos.y - size.y * 0.25, size.x * 0.1, size.y * 0.05); // Top Antenna
+      rect(pos.x - size.x * 0.48, pos.y - size.y * 0.05, size.x * 0.08, size.y * 0.05); // Middle Antenna
+      rect(pos.x - size.x * 0.45, pos.y + size.y * 0.2, size.x * 0.15, size.y * 0.05); // Bottom Antenna
+      rect(pos.x + size.x * 0.35, pos.y - size.y * 0.25, size.x * 0.1, size.y * 0.2); // Top Thruster
+      rect(pos.x + size.x * 0.35, pos.y + size.y * 0.05, size.x * 0.1, size.y * 0.2); // Bottom Thruster
+      rect(pos.x - size.x * 0.15, pos.y - size.y * 0.3, size.x * 0.4, size.y * 0.2); // Top Middle
+      rect(pos.x - size.x * 0.15, pos.y + size.y * 0.1, size.x * 0.4, size.y * 0.2); // Bottom Middle
+      fill(230, 255, 255);
+      triangle( // Top Back
+        pos.x + size.x * 0.35, 
+        pos.y - size.y * 0.3,
+        pos.x + size.x * 0.5, 
+        pos.y - size.y * 0.3,  
+        pos.x + size.x * 0.35, 
+        pos.y - size.y * 0.1
+      );
+      triangle( // Bottom Back
+        pos.x + size.x * 0.35, 
+        pos.y + size.y * 0.3,
+        pos.x + size.x * 0.5, 
+        pos.y + size.y * 0.3,  
+        pos.x + size.x * 0.35, 
+        pos.y + size.y * 0.1
+      );
+      
+      if(drawShot) {
+        int index = (int)random(farShipCount * 0.5);
+        PVector tPos = farShipPositions[index];
+        PVector tSize = farShipSizes[1];
+        PVector startPos = new PVector(random(pos.x - size.x * 0.5, pos.x + size.x * 0.5), random(pos.y - size.y * 0.5, pos.y + size.y * 0.5));
+        PVector endPos = new PVector(random(tPos.x - tSize.x * 0.5, tPos.x + tSize.x * 0.5), random(tPos.y - tSize.y * 0.5, tPos.y + tSize.y * 0.5));
+        drawShot(startPos, endPos, color(80, 255, 115));
+      }
+    } 
+  }
+}
+
 void drawBackgroundObjects() {
   // Stars
   for (int i = 0; i < starCount; i++)  {
@@ -292,20 +542,26 @@ void drawBackgroundObjects() {
     circle(starPositions[i].x, starPositions[i].y, starSizes[i]);
   }
   
-  // Space Station
-  stationColor = lerpColor(stationColor, stationOriginalColor, 0.1);
+  // Planet
+  fill(160, 10, 185);
+  ellipse(width * 0.5, height * 1.1, width * 2.2, height * 0.5);
   
-  fill(stationColor);
-  rect(centrePos.x - stationSize.x * 0.5, centrePos.y - stationSize.y * 0.2, stationSize.x * 0.3, stationSize.y * 0.6); // Left
-  rect(centrePos.x + stationSize.x * 0.3, centrePos.y - stationSize.y * 0.5, stationSize.x * 0.2, stationSize.y); // Right
+  // Player Ship
+  fill(255, 195, 40);
+  square(constrain(mouseX - 10, 0, width - 20), height * 0.8, 20);
+  
+  // Space Station
+  fill(color(150, 150, 150));
+  rect(stationPos.x - stationSize.x * 0.5, stationPos.y - stationSize.y * 0.2, stationSize.x * 0.3, stationSize.y * 0.6); // Left
+  rect(stationPos.x + stationSize.x * 0.3, stationPos.y - stationSize.y * 0.5, stationSize.x * 0.2, stationSize.y); // Right
   fill(255);
-  rect(centrePos.x + stationSize.x * 0.35, centrePos.y - stationSize.y * 0.4, stationSize.x * 0.1, stationSize.y * 0.8); // Right Light
-  fill(stationColor);
-  rect(centrePos.x, centrePos.y - stationSize.y * 0.2, stationSize.x * 0.1, stationSize.y * 0.2); // Middle Top
+  rect(stationPos.x + stationSize.x * 0.35, stationPos.y - stationSize.y * 0.4, stationSize.x * 0.1, stationSize.y * 0.8); // Right Light
+  fill(color(150, 150, 150));
+  rect(stationPos.x, stationPos.y - stationSize.y * 0.2, stationSize.x * 0.1, stationSize.y * 0.2); // Middle Top
   fill(250, 210, 0);
-  rect(centrePos.x + stationSize.x * 0.025, centrePos.y - stationSize.y * 0.15, stationSize.x * 0.05, stationSize.y * 0.1); // Laser Origin
-  fill(stationColor);
-  rect(centrePos.x - stationSize.x * 0.45, centrePos.y - stationSize.y * 0.5, stationSize.x * 0.05, stationSize.y * 0.4); // Left antenna
+  rect(stationPos.x + stationSize.x * 0.025, stationPos.y - stationSize.y * 0.15, stationSize.x * 0.05, stationSize.y * 0.1); // Laser Origin
+  fill(color(150, 150, 150));
+  rect(stationPos.x - stationSize.x * 0.45, stationPos.y - stationSize.y * 0.5, stationSize.x * 0.05, stationSize.y * 0.4); // Left antenna
   
   if (millis() > lastLightTime + 1000){
     lightOn = !lightOn;
@@ -318,15 +574,15 @@ void drawBackgroundObjects() {
     fill(100, 100, 100); 
   }
   
-  rect(centrePos.x - stationSize.x * 0.45, centrePos.y - stationSize.y * 0.5, stationSize.x * 0.05, stationSize.y * 0.1); // Left antenna Light
-  fill(stationColor);
-  rect(centrePos.x - stationSize.x * 0.35, centrePos.y - stationSize.y * 0.3, stationSize.x * 0.05, stationSize.y * 0.15); // Right antenna
-  rect(centrePos.x - stationSize.x * 0.2, centrePos.y, stationSize.x * 0.5, stationSize.y * 0.25); // Middle Bottom
+  rect(stationPos.x - stationSize.x * 0.45, stationPos.y - stationSize.y * 0.5, stationSize.x * 0.05, stationSize.y * 0.1); // Left antenna Light
+  fill(color(150, 150, 150));
+  rect(stationPos.x - stationSize.x * 0.35, stationPos.y - stationSize.y * 0.3, stationSize.x * 0.05, stationSize.y * 0.15); // Right antenna
+  rect(stationPos.x - stationSize.x * 0.2, stationPos.y, stationSize.x * 0.5, stationSize.y * 0.25); // Middle Bottom
   
   for (int i = 0; i < 3; i++) { // Left Lights
-    float posY = centrePos.y + stationSize.y * (0.25 - i * 0.2);
+    float posY = stationPos.y + stationSize.y * (0.25 - i * 0.2);
     for (int k = 0; k < 3; k++) {
-      float posX = centrePos.x - stationSize.x * (0.275 + k * 0.1);
+      float posX = stationPos.x - stationSize.x * (0.275 + k * 0.1);
       fill(255);
       rect(posX, posY, stationSize.x * 0.05, stationSize.y * 0.1);
     }
@@ -334,119 +590,11 @@ void drawBackgroundObjects() {
 
   // Moon
   fill(220, 220, 220);
-  circle(moonPos.x, moonPos.y, 200);
+  circle(moonPos.x, moonPos.y, moonSize);
   for (int i = 0; i < craterCount; i++) {
     fill(170, 170, 170); 
     circle(craterPositions[i].x, craterPositions[i].y, craterSizes[i]);  
   }
-  
-  // Left Ship
-  fill(140, 130, 130);
-  rect(lShipPos.x - lShipSize.x * 0.45, lShipPos.y, lShipSize.x * 0.2, lShipSize.y * 0.3); // Back
-  fill(230, 255, 255);
-  rect(lShipPos.x - lShipSize.x * 0.45, lShipPos.y - lShipSize.y * 0.25, lShipSize.x * 0.15, lShipSize.y * 0.2); // Back Top
-  rect(lShipPos.x - lShipSize.x * 0.4, lShipPos.y - lShipSize.y * 0.5, lShipSize.x * 0.05, lShipSize.y * 0.25); // Back Middle Top
-  rect(lShipPos.x - lShipSize.x * 0.35, lShipPos.y - lShipSize.y * 0.5, lShipSize.x * 0.05, lShipSize.y * 0.1); // Right Top
-  triangle( // Back Top
-    lShipPos.x - lShipSize.x * 0.45, 
-    lShipPos.y - lShipSize.y * 0.25,
-    lShipPos.x - lShipSize.x * 0.4, 
-    lShipPos.y - lShipSize.y * 0.5,
-    lShipPos.x - lShipSize.x * 0.4, 
-    lShipPos.y - lShipSize.y * 0.25
-  );
-  triangle( // Back Top
-    lShipPos.x - lShipSize.x * 0.35, 
-    lShipPos.y - lShipSize.y * 0.25,
-    lShipPos.x - lShipSize.x * 0.35, 
-    lShipPos.y - lShipSize.y * 0.5,
-    lShipPos.x - lShipSize.x * 0.3, 
-    lShipPos.y - lShipSize.y * 0.25
-  );
-  triangle( // Top Half
-    lShipPos.x - lShipSize.x * 0.5, 
-    lShipPos.y - lShipSize.y * 0.2,
-    lShipPos.x - lShipSize.x * 0.4,
-    lShipPos.y + lShipSize.y * 0.1,
-    lShipPos.x + lShipSize.x * 0.5,
-    lShipPos.y + lShipSize.y * 0.1
-   );
-  triangle( // Bottom Half
-    lShipPos.x - lShipSize.x * 0.5, 
-    lShipPos.y + lShipSize.y * 0.5,
-    lShipPos.x - lShipSize.x * 0.4,
-    lShipPos.y + lShipSize.y * 0.2,
-    lShipPos.x + lShipSize.x * 0.5,
-    lShipPos.y + lShipSize.y * 0.2
-   );
-  fill(140, 130, 130);
-  triangle(
-    lShipPos.x - lShipSize.x * 0.38, 
-    lShipPos.y - lShipSize.y * 0.05,
-    lShipPos.x - lShipSize.x * 0.38, 
-    lShipPos.y - lShipSize.y * 0.3,
-    lShipPos.x - lShipSize.x * 0.12, 
-    lShipPos.y - lShipSize.y * 0.05
-  );
-
-  fill(140, 130, 130);
-  rect(lShipPos.x - lShipSize.x * 0.4, lShipPos.y + lShipSize.y * 0.1, lShipSize.x * 0.8, lShipSize.y * 0.1); // Middle
-
-  // Right Ship
-  fill(230, 255, 255);
-  rect(rShipPos.x - rShipSize.x * 0.4, rShipPos.y - rShipSize.y * 0.3, rShipSize.x * 0.12, rShipSize.y * 0.4); // Front
-  rect(rShipPos.x - rShipSize.x * 0.3, rShipPos.y - rShipSize.y * 0.34, rShipSize.x * 0.12, rShipSize.y * 0.65); // Front - 1
-  rect(rShipPos.x - rShipSize.x * 0.2, rShipPos.y - rShipSize.y * 0.425, rShipSize.x * 0.55, rShipSize.y * 0.85); // Middle
-  rect(rShipPos.x + rShipSize.x * 0.2, rShipPos.y - rShipSize.y * 0.5, rShipSize.x * 0.3, rShipSize.y * 0.2); // Top Back
-  rect(rShipPos.x + rShipSize.x * 0.2, rShipPos.y + rShipSize.y * 0.3, rShipSize.x * 0.3, rShipSize.y * 0.2); // Bottom Back
-  fill(140, 130, 130);
-  rect(rShipPos.x - rShipSize.x * 0.5, rShipPos.y - rShipSize.y * 0.25, rShipSize.x * 0.1, rShipSize.y * 0.05); // Top Antenna
-  rect(rShipPos.x - rShipSize.x * 0.48, rShipPos.y - rShipSize.y * 0.05, rShipSize.x * 0.08, rShipSize.y * 0.05); // Middle Antenna
-  rect(rShipPos.x - rShipSize.x * 0.45, rShipPos.y + rShipSize.y * 0.2, rShipSize.x * 0.15, rShipSize.y * 0.05); // Bottom Antenna
-  rect(rShipPos.x + rShipSize.x * 0.35, rShipPos.y - rShipSize.y * 0.25, rShipSize.x * 0.1, rShipSize.y * 0.2); // Top Thruster
-  rect(rShipPos.x + rShipSize.x * 0.35, rShipPos.y + rShipSize.y * 0.05, rShipSize.x * 0.1, rShipSize.y * 0.2); // Bottom Thruster
-  rect(rShipPos.x - rShipSize.x * 0.15, rShipPos.y - rShipSize.y * 0.3, rShipSize.x * 0.4, rShipSize.y * 0.2); // Top Middle
-  rect(rShipPos.x - rShipSize.x * 0.15, rShipPos.y + rShipSize.y * 0.1, rShipSize.x * 0.4, rShipSize.y * 0.2); // Bottom Middle
-  fill(230, 255, 255);
-  triangle( // Top Back
-    rShipPos.x + rShipSize.x * 0.35, 
-    rShipPos.y - rShipSize.y * 0.3,
-    rShipPos.x + rShipSize.x * 0.5, 
-    rShipPos.y - rShipSize.y * 0.3,  
-    rShipPos.x + rShipSize.x * 0.35, 
-    rShipPos.y - rShipSize.y * 0.1
-  );
-  triangle( // Bottom Back
-    rShipPos.x + rShipSize.x * 0.35, 
-    rShipPos.y + rShipSize.y * 0.3,
-    rShipPos.x + rShipSize.x * 0.5, 
-    rShipPos.y + rShipSize.y * 0.3,  
-    rShipPos.x + rShipSize.x * 0.35, 
-    rShipPos.y + rShipSize.y * 0.1
-  );
-  
-  // Laser effects
-  if ((int)random(101) <= 5) {
-    float lShipLinePosX = random(lShipPos.x - lShipSize.x * 0.5, lShipPos.x + lShipSize.x * 0.5);
-    float lShipLinePosY = random(lShipPos.y, lShipPos.y + lShipSize.y * 0.5);
-    float rShipLinePosX = random(rShipPos.x - rShipSize.x * 0.5, rShipPos.x + rShipSize.x * 0.5); 
-    float rShipLinePosY =random(rShipPos.y - rShipSize.y * 0.5, rShipPos.y + rShipSize.y * 0.5);
-    
-    stroke(0, 255, 0);
-    if (randomBool()) {
-      fill(255, 85, 0);
-      noStroke();
-      circle(lShipLinePosX, lShipLinePosY, 20);
-      stroke(0, 255, 0);
-    } else {
-      fill(255, 85, 0);
-      noStroke();
-      circle(rShipLinePosX, rShipLinePosY, 20);
-      stroke(255, 0, 0);
-    }
-    strokeWeight(3);
-    line(lShipLinePosX, lShipLinePosY, rShipLinePosX, rShipLinePosY);
-  }  
 }
 
 void drawLivesBar(PVector pos, PVector size, float iconDistance, int lives) {
@@ -454,10 +602,6 @@ void drawLivesBar(PVector pos, PVector size, float iconDistance, int lives) {
   float barCentre = barWidth * 0.5 - (size.x * 0.5);
   for (int i = 1; i <= lives; i++) { 
     fill(0, 255, 0);
-    rect(pos.x - size.x / 2 - barCentre + iconDistance * i, pos.y, size.x, size.y);
+    rect(pos.x - size.x * 0.5 - barCentre + iconDistance * i, pos.y, size.x, size.y);
   }
-}
-
-void target(float x, float y, int typeOfTarget) {
-  
 }
