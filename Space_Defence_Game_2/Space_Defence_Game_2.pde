@@ -561,7 +561,7 @@ void drawFarShips() {
   for(int i = 0; i < farShipPositions.length; i++) {
     PVector pos = farShipPositions[i];
     PVector size;
-    boolean drawShot = ((int)random(101) <= 1); // % chance for a ship to shot another when it is draw
+    boolean drawShot = ((int)random(101) <= 1); // % chance for a ship to "shoot" another when it is drawn
 
     if (i <= farShipCount / 2 - 1) { //Left Ships
       size = farShipSizes[0];
