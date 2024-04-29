@@ -2,6 +2,8 @@
 int infoAreaY = 80;
 int maxLives = 8;
 int targetCount = 5;
+int menuSquareCountX = 80;
+int menuSquareCountY = 60;
 
 // Crosshair
 PVector xHairSize = new PVector(3, 20);
@@ -84,6 +86,7 @@ int gameState = 0; // 0 == start screen, 1 = game screen, 2 = end screen
 int millisPassed;
 int lastMilli;
 PVector centrePos;
+int menuSquareSize;
 
 // Player
 int score;
@@ -126,6 +129,8 @@ PVector rightShipLaserPos;
 void setup() {
   noCursor();
   size(800, 600);
+  generateColors();
+  menuSquareSize = width / menuSquareCountX;
   centrePos = new PVector(width * 0.5, height * 0.5 + infoAreaY * 0.5);
   stationPos = new PVector(width * 0.65, height * 0.6);
   moonPos = new PVector(width * 0.5, height * 0.6);
@@ -243,6 +248,7 @@ void newRound() {
 
 void endRound() {
   gameState = 2;
+  //generateColors();
 }
 
 void updateLives(int _lives) {
@@ -254,6 +260,11 @@ void updateLives(int _lives) {
 
 void updateScore(int _score) {
   score += _score;
+}
+
+void generateColors() {
+  friendlyColor = color((int)random(256), (int)random(256), (int)random(256));
+  enemyColor = color((int)random(256), (int)random(256), (int)random(256));
 }
 
 void generateStars() {
@@ -482,37 +493,85 @@ void target(float x, float y, int typeOfTarget) {
   }
 }
 
+
+
 void drawStartScreen() {
-  fill(255, 200, 0);
+  drawGrid(friendlyColor);
+  fill(0);
+  rect(centrePos.x - width * 0.3, centrePos.y - height * 0.5, width * 0.6, height * 0.2); // Title Background
+  rect(centrePos.x - width * 0.4, centrePos.y - height * 0.25, width * 0.8, height * 0.1); // Paragraph 1
+  rect(centrePos.x - width * 0.4, centrePos.y - height * 0.1, width * 0.8, height * 0.1); // Paragraph 2
+  rect(centrePos.x - width * 0.1, centrePos.y + height * 0.05, width * 0.2, height * 0.05); // Good Luck  
+  rect(centrePos.x - width * 0.45, centrePos.y + height * 0.2, width * 0.2, height * 0.1); // Controls
+  rect(width * 0.7, height * 0.7, width * 0.2, height * 0.25); // Targets
+  fill(friendlyColor);
   textAlign(CENTER, CENTER);
   textSize(64);
   text("Space Defender 2", centrePos.x, centrePos.y - height * 0.4);
   textSize(20);
   text("Click on enemy ships to destroy them, dont let them reach the planet!\nFriendly ships reduce score if killed.", 
         centrePos.x, centrePos.y - height * 0.2);
-  text("Friendly ships that reach the planet add lives, Missed shots reduce lives.\nKeep good accuracy to get a higher score.\n\nGood Luck!", 
+  text("Friendly ships that reach the planet add lives, Missed shots reduce lives.\nKeep good accuracy to get a higher score.", 
         centrePos.x, centrePos.y - height * 0.05); 
+  text("Good Luck!", centrePos.x, centrePos.y + height * 0.075);
   textAlign(LEFT);
   text("[s] Start Game", width * 0.05, height * 0.8);
   text("[q] Quit", width * 0.05, height * 0.85);
+  text("Enemy: ",width * 0.71, height * 0.76);
+  text("Friendly: ",width * 0.71, height * 0.88);
+  target(width * 0.85, height * 0.76, 0);
+  target(width * 0.85, height * 0.88, 1);
 }
 
 void drawEndScreen() {
-  fill(255, 200, 0);  
-  textAlign(CENTER);
+  drawGrid(enemyColor);
+  fill(0);
+  rect(centrePos.x - width * 0.3, centrePos.y - height * 0.5, width * 0.6, height * 0.2); // Title Background
+  rect(centrePos.x - width * 0.1, centrePos.y - height * 0.25, width * 0.2, height * 0.1); // Score
+  rect(centrePos.x - width * 0.1, centrePos.y - height * 0.15, width * 0.2, height * 0.1); // Kills
+  rect(centrePos.x - width * 0.15, centrePos.y - height * 0.05, width * 0.3, height * 0.1); // Accuracy
+  rect(centrePos.x - width * 0.2, centrePos.y + height * 0.05, width * 0.4, height * 0.1); // Time
+  rect(centrePos.x - width * 0.15, centrePos.y + height * 0.15, width * 0.3, height * 0.1); // Final Score
+  rect(centrePos.x - width * 0.45, centrePos.y + height * 0.2, width * 0.2, height * 0.15); // Controls
+  fill(enemyColor);
+  textAlign(CENTER, CENTER);
   textSize(64);
   text("Game Over!", centrePos.x, centrePos.y - height * 0.4);
   textSize(40);
-  text("Score: " + score, centrePos.x, centrePos.y - height * 0.3);
-  text("Kills: " + kills, centrePos.x, centrePos.y - height * 0.2);
-  text("Accuracy: " + calcAccuracy() + "%", centrePos.x, centrePos.y - height * 0.1);
-  text("Time: " + formatTime(millisPassed), centrePos.x, centrePos.y);
-  text("Final Score: " + ceil(score - (score * ( 1 - (calcAccuracy() / 100.)))), centrePos.x, centrePos.y + height * 0.1); // Multiplies score by accuracy
+  text("Score: " + score, centrePos.x, centrePos.y - height * 0.2);
+  text("Kills: " + kills, centrePos.x, centrePos.y - height * 0.1);
+  text("Accuracy: " + calcAccuracy() + "%", centrePos.x, centrePos.y);
+  text("Time: " + formatTime(millisPassed), centrePos.x, centrePos.y + height * 0.1);
+  text("Final Score: " + ceil(score - (score * ( 1 - (calcAccuracy() / 100.)))), centrePos.x, centrePos.y + height * 0.2); // Multiplies score by accuracy
   textAlign(LEFT);
   textSize(20);
   text("[r] New Round", width * 0.05, height * 0.8);
   text("[m] Title Screen", width * 0.05, height * 0.85);
   text("[q] Quit", width * 0.05, height * 0.9);
+}
+
+// reference = name of the array
+// instance = the memory block created for the array
+// new keyword makes a new instance to be stored at the location of the reference
+// size is determined by the size of the data type * length
+// int = 32 bits int[4] = 128 bits
+// indexes represent how far to go along the instance block: address + index * bytes
+// int[4] = index 0 = data + 0 * 4, index 1 = data + 1 * 4
+
+void drawGrid(color oddColor) {
+  boolean oddSquare = false;
+  noStroke();
+  for(int i = 0; i <= menuSquareCountX; i++) {
+    for(int k = 0; k <= menuSquareCountY; k++) {
+      if(oddSquare) {
+        fill(0);
+      } else {
+        fill(oddColor);
+      }
+      square(i * menuSquareSize, k * menuSquareSize, menuSquareSize);
+      oddSquare = !oddSquare;
+    }
+  }
 }
 
 void drawInfoArea() {
@@ -593,46 +652,31 @@ void drawFarShips() {
       rect(pos.x - size.x * 0.4, pos.y - size.y * 0.5, size.x * 0.05, size.y * 0.25); // Back Middle Top
       rect(pos.x - size.x * 0.35, pos.y - size.y * 0.5, size.x * 0.05, size.y * 0.1); // Right Top
       triangle( // Back Top
-        pos.x - size.x * 0.45, 
-        pos.y - size.y * 0.25,
-        pos.x - size.x * 0.4, 
-        pos.y - size.y * 0.5,
-        pos.x - size.x * 0.4, 
-        pos.y - size.y * 0.25
+        pos.x - size.x * 0.45, pos.y - size.y * 0.25,
+        pos.x - size.x * 0.4, pos.y - size.y * 0.5,
+        pos.x - size.x * 0.4, pos.y - size.y * 0.25
       );
       fill(80);
       triangle( // Back Top
-        pos.x - size.x * 0.35, 
-        pos.y - size.y * 0.25,
-        pos.x - size.x * 0.35, 
-        pos.y - size.y * 0.5,
-        pos.x - size.x * 0.3, 
-        pos.y - size.y * 0.25
+        pos.x - size.x * 0.35, pos.y - size.y * 0.25,
+        pos.x - size.x * 0.35, pos.y - size.y * 0.5,
+        pos.x - size.x * 0.3, pos.y - size.y * 0.25
       );
       triangle( // Top Half
-        pos.x - size.x * 0.5, 
-        pos.y - size.y * 0.2,
-        pos.x - size.x * 0.4,
-        pos.y + size.y * 0.1,
-        pos.x + size.x * 0.5,
-        pos.y + size.y * 0.1
+        pos.x - size.x * 0.5, pos.y - size.y * 0.2,
+        pos.x - size.x * 0.4, pos.y + size.y * 0.1,
+        pos.x + size.x * 0.5, pos.y + size.y * 0.1
        );
       triangle( // Bottom Half
-        pos.x - size.x * 0.5, 
-        pos.y + size.y * 0.5,
-        pos.x - size.x * 0.4,
-        pos.y + size.y * 0.2,
-        pos.x + size.x * 0.5,
-        pos.y + size.y * 0.2
+        pos.x - size.x * 0.5, pos.y + size.y * 0.5,
+        pos.x - size.x * 0.4, pos.y + size.y * 0.2,
+        pos.x + size.x * 0.5, pos.y + size.y * 0.2
        );
       fill(enemyColor);
       triangle( // 
-        pos.x - size.x * 0.38, 
-        pos.y - size.y * 0.05,
-        pos.x - size.x * 0.38, 
-        pos.y - size.y * 0.3,
-        pos.x - size.x * 0.12, 
-        pos.y - size.y * 0.05
+        pos.x - size.x * 0.38, pos.y - size.y * 0.05,
+        pos.x - size.x * 0.38, pos.y - size.y * 0.3,
+        pos.x - size.x * 0.12, pos.y - size.y * 0.05
       );
       fill(140, 130, 130);
       rect(pos.x - size.x * 0.4, pos.y + size.y * 0.1, size.x * 0.8, size.y * 0.1); // Middle
@@ -664,20 +708,14 @@ void drawFarShips() {
       rect(pos.x - size.x * 0.15, pos.y - size.y * 0.3, size.x * 0.4, size.y * 0.2); // Top Middle
       rect(pos.x - size.x * 0.15, pos.y + size.y * 0.1, size.x * 0.4, size.y * 0.2); // Bottom Middle
       triangle( // Top Back
-        pos.x + size.x * 0.35, 
-        pos.y - size.y * 0.3,
-        pos.x + size.x * 0.5, 
-        pos.y - size.y * 0.3,  
-        pos.x + size.x * 0.35, 
-        pos.y - size.y * 0.1
+        pos.x + size.x * 0.35, pos.y - size.y * 0.3,
+        pos.x + size.x * 0.5, pos.y - size.y * 0.3,  
+        pos.x + size.x * 0.35, pos.y - size.y * 0.1
       );
       triangle( // Bottom Back
-        pos.x + size.x * 0.35, 
-        pos.y + size.y * 0.3,
-        pos.x + size.x * 0.5, 
-        pos.y + size.y * 0.3,  
-        pos.x + size.x * 0.35, 
-        pos.y + size.y * 0.1
+        pos.x + size.x * 0.35, pos.y + size.y * 0.3,
+        pos.x + size.x * 0.5, pos.y + size.y * 0.3,  
+        pos.x + size.x * 0.35, pos.y + size.y * 0.1
       );
       
       if (drawShot) {
