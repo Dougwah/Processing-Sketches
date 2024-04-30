@@ -12,7 +12,6 @@ color xHairColor = color(255);
 
 // Targets
 int[] targetKillScoreValues = {4, -1};
-int[] targetExpireScoreValues = {-2, 2}; // Point awards when targets die randomly or when touching the planet
 int[] targetDamageValues = {-1, 1}; // Friendlies add lives when they make it to the planet
 int targetMinLifeTime = 1;
 int targetMaxLifeTime = 6;
@@ -27,7 +26,7 @@ int friendlySpawnChance = 25;
 // ===== BACKGROUND OBJECT SETTINGS =====
 
 // Colors
-color friendlyColor = color(255, 195, 40);
+color friendlyColor = color(255, 195, 40); // Default colors if not using randomisation function
 color friendlyLaserColor = color(80, 255, 115);
 color enemyColor = color(180, 0, 0);
 color enemyLaserColor = color(255, 100, 80);
@@ -64,7 +63,7 @@ int craterCount = 15;
 int craterMaxSize = 20;
 int craterMinSize = 10;
 
-// PlyShip
+// PlayerShip
 PVector plyShipSize = new PVector(50, 60);
 
 // Station
@@ -129,7 +128,7 @@ PVector rightShipLaserPos;
 void setup() {
   noCursor();
   size(800, 600);
-  generateColors();
+  //generateColors();
   menuSquareSize = width / menuSquareCountX;
   centrePos = new PVector(width * 0.5, height * 0.5 + infoAreaY * 0.5);
   stationPos = new PVector(width * 0.65, height * 0.6);
@@ -263,8 +262,8 @@ void updateScore(int _score) {
 }
 
 void generateColors() {
-  friendlyColor = color((int)random(256), (int)random(256), (int)random(256));
-  enemyColor = color((int)random(256), (int)random(256), (int)random(256));
+  friendlyColor = color((int)random(60), (int)random(256), (int)random(256));
+  enemyColor = color((int)random(256), (int)random(60), (int)random(256));
 }
 
 void generateStars() {
@@ -493,8 +492,6 @@ void target(float x, float y, int typeOfTarget) {
   }
 }
 
-
-
 void drawStartScreen() {
   drawGrid(friendlyColor);
   fill(0);
@@ -527,11 +524,7 @@ void drawEndScreen() {
   drawGrid(enemyColor);
   fill(0);
   rect(centrePos.x - width * 0.3, centrePos.y - height * 0.5, width * 0.6, height * 0.2); // Title Background
-  rect(centrePos.x - width * 0.1, centrePos.y - height * 0.25, width * 0.2, height * 0.1); // Score
-  rect(centrePos.x - width * 0.1, centrePos.y - height * 0.15, width * 0.2, height * 0.1); // Kills
-  rect(centrePos.x - width * 0.15, centrePos.y - height * 0.05, width * 0.3, height * 0.1); // Accuracy
-  rect(centrePos.x - width * 0.2, centrePos.y + height * 0.05, width * 0.4, height * 0.1); // Time
-  rect(centrePos.x - width * 0.15, centrePos.y + height * 0.15, width * 0.3, height * 0.1); // Final Score
+  rect(centrePos.x - width * 0.2, centrePos.y - height * 0.25, width * 0.4, height * 0.5); // Stats
   rect(centrePos.x - width * 0.45, centrePos.y + height * 0.2, width * 0.2, height * 0.15); // Controls
   fill(enemyColor);
   textAlign(CENTER, CENTER);
@@ -549,14 +542,6 @@ void drawEndScreen() {
   text("[m] Title Screen", width * 0.05, height * 0.85);
   text("[q] Quit", width * 0.05, height * 0.9);
 }
-
-// reference = name of the array
-// instance = the memory block created for the array
-// new keyword makes a new instance to be stored at the location of the reference
-// size is determined by the size of the data type * length
-// int = 32 bits int[4] = 128 bits
-// indexes represent how far to go along the instance block: address + index * bytes
-// int[4] = index 0 = data + 0 * 4, index 1 = data + 1 * 4
 
 void drawGrid(color oddColor) {
   boolean oddSquare = false;
