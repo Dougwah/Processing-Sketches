@@ -1,7 +1,9 @@
 // ===== GAME SETTINGS ===== 
+
+// General
 int infoAreaY = 80;
 int maxLives = 8;
-int targetCount = 5;
+int targetCount = 5; // Change this for more enemies
 int menuSquareCountX = 80;
 int menuSquareCountY = 60;
 
@@ -22,11 +24,12 @@ PVector[] targetSizeValues = {
   new PVector(50, 70)
 };
 int friendlySpawnChance = 25;
+boolean enableEnemyLifeTimer = true;
 
 // ===== BACKGROUND OBJECT SETTINGS =====
 
 // Colors
-color friendlyColor = color(255, 195, 40); // Default colors if not using randomisation function
+color friendlyColor = color(255, 195, 40); // Default colors if not using random color function
 color friendlyLaserColor = color(80, 255, 115);
 color enemyColor = color(180, 0, 0);
 color enemyLaserColor = color(255, 100, 80);
@@ -34,12 +37,12 @@ color plyColor = color(255, 195, 40);
 color plyLaserColor = color(250, 210, 0);
 
 // Far Background Ships
-int farShipCount = 8;
+int farShipCount = 20; // Will attempt to spawn this many ships without overlaps, very rarely spawns more than 16
 PVector[] farShipSizes = {
   new PVector(100, 40), // 1 : 2.5 aspect ratio
   new PVector(100, 40)
 };
-PVector[][] farShipBounds = new PVector[farShipCount][farShipCount];
+PVector[][] farShipBounds = new PVector[2][2];
 
 // Close Background Ships
 PVector leftShipSize = new PVector(100, 60);
@@ -103,6 +106,7 @@ PVector[] targetVelocities = new PVector[targetCount];
 boolean[] targetStates = new boolean[targetCount];
 int[] targetSpawnTimes = new int[targetCount];
 int[] targetLifeTimes = new int[targetCount];
+float currentTargetMinSpeed;
 
 // Stars
 PVector[] starPositions = new PVector[starCount];
@@ -116,6 +120,7 @@ float[] craterSizes = new float[craterCount];
 
 // Far Background Ships
 PVector[] farShipPositions = new PVector[farShipCount];
+int generatedFarShipCount = 0;
 
 // Close Background Ships
 PVector leftShipPos;
@@ -126,9 +131,8 @@ PVector rightShipLaserPos;
 // ===== PROCESSING FUNCTIONS =====
 
 void setup() {
-  noCursor();
   size(800, 600);
-  //generateColors();
+  //generateColors(); // Made a cool effect but was generating ugly colors that made the game harder
   menuSquareSize = width / menuSquareCountX;
   centrePos = new PVector(width * 0.5, height * 0.5 + infoAreaY * 0.5);
   stationPos = new PVector(width * 0.65, height * 0.6);
@@ -167,6 +171,8 @@ void draw() {
     mousePos.y = max(mouseY, infoAreaY);
     // Ship doesnt appear centered to the mouse unless 0.5 is added to the x coord
     plyShipPos.x = constrain(mouseX + 0.5, plyShipSize.x * 0.5, width - plyShipSize.x * 0.5);
+    
+    currentTargetMinSpeed = min(currentTargetMinSpeed + 0.0001, targetMaxSpeed);
    
     drawStars();
     drawMoon();
@@ -193,7 +199,7 @@ void mousePressed() {
     boolean targetHit = false;
     for(int i = 0; i < targetCount; i++) {
       int type = targetTypes[i];
-      if (checkCollision(targetPositions[i], targetSizeValues[type], mousePos)) {
+      if (checkPointCollision(targetPositions[i], targetSizeValues[type], mousePos)) {
         targetHit = true;
         killTarget(i);
       }
@@ -232,6 +238,7 @@ void keyPressed() {
 // ===== GAME FUNCTIONS =====
 
 void newRound() {
+  noCursor();
   score = 0;
   kills = 0;
   lives = maxLives;
@@ -242,12 +249,16 @@ void newRound() {
   generateFarShips();
   generateMoonCraters();
   generateStars();
+  currentTargetMinSpeed = targetMinSpeed;
+  for(int i = 0; i < targetCount; i++) {
+    despawnTarget(i);
+  }
   gameState = 1;
 }
 
 void endRound() {
+  cursor();
   gameState = 2;
-  //generateColors();
 }
 
 void updateLives(int _lives) {
@@ -268,7 +279,7 @@ void generateColors() {
 
 void generateStars() {
   for (int i = 0; i < starCount; i++) {
-    starPositions[i] = new PVector((int)random(width), (int)random(infoAreaY, height));
+    starPositions[i] = new PVector((int)random(width), (int)random(infoAreaY, height)); // Converting to int to remove the decimal makes the stars look nicer
     starColors[i] = starColorList[floor(random(starColorList.length))];
     starSizes[i] = random(1, 3);
   }
@@ -284,29 +295,62 @@ void generateMoonCraters() {
   }
 }
 
-void generateFarShips() {
-  int lastY = (int)(farShipBounds[0][0].y + random(0, 60));  for(int i = 0; i < farShipCount / 2; i++) {
-    farShipPositions[i] = new PVector((int)random(farShipBounds[0][0].x, farShipBounds[0][1].x), lastY);
-    lastY += farShipSizes[0].y + (int)random(0, 20);
+void generateFarShips() { 
+  int attempts = 0;
+  int validPositions = 0;
+  int lastI = 0;
+
+  for(int i = 0; i < farShipCount && attempts < 1000; i++) { // Stops loop if a new spot cant be found after 1000 attempts
+    boolean isValid = true;
+    int shipType = validPositions % 2;
+    
+    PVector pos = new PVector(
+      (int)random(farShipBounds[shipType][0].x, farShipBounds[shipType][1].x), 
+      (int)random(farShipBounds[shipType][0].y, farShipBounds[shipType][1].y)
+    );
+
+    for(int k = 0; k < validPositions && isValid; k++) { // Check if the generated position overlaps with any previous positions
+      PVector pos2 = farShipPositions[k];
+      if(checkRectCollision(pos, farShipSizes[shipType], pos2, farShipSizes[shipType])) {
+        isValid = false;
+      }
+    }
+    
+    if(isValid) { // Add the position
+      farShipPositions[i] = pos;
+      validPositions++;
+      attempts = 0;
+      lastI = i;
+    } else { // Repeat the loop to find a new position
+      i = lastI;
+      attempts++;
+    }
   }
   
-  lastY = (int)(farShipBounds[1][0].y + random(0, 60));
-  for(int i = farShipCount / 2; i < farShipCount; i++) {
-    farShipPositions[i] = new PVector((int)random(farShipBounds[1][0].x, farShipBounds[1][1].x), lastY);
-    lastY += farShipSizes[1].y + (int)random(0, 20); 
-  }
+  generatedFarShipCount = validPositions;
 }
 
-// Ellipse overlap collision
-boolean checkCollision(PVector pos1, PVector size1, PVector pos2, PVector size2) {
+// Ellipse overlap collision, for ships reaching the planet
+boolean checkEllipseCollision(PVector pos1, PVector size1, PVector pos2, PVector size2) {
   if (abs(pos1.x - pos2.x) < abs((size1.x + size2.x) / 2) && abs(pos1.y - pos2.y) < abs((size1.y + size2.y) / 2)) {
     return true;
   }
   return false;
 }
 
-// Rectangular overlap with point
-boolean checkCollision(PVector pos, PVector size, PVector point) {
+// Rectangular overlap collision, for generating background ships
+boolean checkRectCollision(PVector pos1, PVector size1, PVector pos2, PVector size2) {
+  if (pos1.x + size1.x * 0.5 < pos2.x - size2.x * 0.5 || pos1.x - size1.x * 0.5 > pos2.x + size2.x * 0.5) {
+    return false; 
+  }
+  if (pos1.y + size1.y * 0.5 < pos2.y - size2.y * 0.5 || pos1.y - size1.y * 0.5 > pos2.y + size2.y * 0.5) {
+    return false; 
+  }
+  return true;
+}
+
+// Rectangular overlap with point, for shooting targets
+boolean checkPointCollision(PVector pos, PVector size, PVector point) {
   if (point.x < pos.x - size.x * 0.5 || point.x > pos.x + size.x * 0.5) {
     return false;
   }
@@ -347,11 +391,14 @@ void runTargets() {
       target(pos.x, pos.y, type);
       pos.add(targetVelocities[i]);
         
-      textSize(16);
-      fill(255);
-      text(formatSeconds(targetSpawnTimes[i] + targetLifeTimes[i] - millis()), pos.x, pos.y + targetSizeValues[type].y * 0.6);
-      
-      if (checkCollision(pos, targetSizeValues[type], planetPos, planetSize)) {
+      // Ideally this text would go in the target function but the signature we are required to use limits me from passing the ships index to the function
+      if (enableEnemyLifeTimer) {
+        textSize(16);
+        fill(255);
+        text(formatSeconds(targetSpawnTimes[i] + targetLifeTimes[i] - millis()), pos.x, pos.y + targetSizeValues[type].y * 0.6);
+      }
+
+      if (checkEllipseCollision(pos, targetSizeValues[type], planetPos, planetSize)) {
         despawnTarget(i);
         updateLives(targetDamageValues[type]);
       }
@@ -374,6 +421,7 @@ void runTargets() {
 void spawnTarget(int index) {
   PVector pos = new PVector();
   
+  // Makes friendlies less common than enemies to make the game harder
   int type = 0;
   if ((int)random(101) <= friendlySpawnChance) {
     type = 1;
@@ -398,7 +446,8 @@ void spawnTarget(int index) {
   
   targetTypes[index] = type;
   targetPositions[index] = pos;
-  targetVelocities[index] = PVector.sub(planetPos, pos).normalize().setMag(random(targetMinSpeed, targetMaxSpeed));
+  PVector planetTargetPos = new PVector(planetPos.x + random(-width * 0.4, width * 0.4), planetPos.y);
+  targetVelocities[index] = PVector.sub(planetTargetPos, pos).normalize().setMag(random(currentTargetMinSpeed, targetMaxSpeed));
   targetSpawnTimes[index] = millis();
   targetLifeTimes[index] = (int)(random(targetMinLifeTime, targetMaxLifeTime) * 1000);
   targetStates[index] = true;
@@ -418,6 +467,9 @@ void killTarget(int index) {
 }
 
 // ===== DRAW FUNCTIONS =====
+
+// Having math operations for each size value allows for the game to scale if the enemies change size, probably decreases performance
+// These values were mostly figured out with trial and error
 
 void target(float x, float y, int typeOfTarget) {
   PVector size = targetSizeValues[typeOfTarget];
@@ -554,6 +606,8 @@ void drawGrid(color oddColor) {
         fill(oddColor);
       }
       square(i * menuSquareSize, k * menuSquareSize, menuSquareSize);
+      fill(0);
+      square(i * menuSquareSize - menuSquareSize * 0.375, k * menuSquareSize - menuSquareSize * 0.375, menuSquareSize * 0.75);
       oddSquare = !oddSquare;
     }
   }
@@ -577,7 +631,7 @@ void drawInfoArea() {
 
 void drawLivesBar(PVector pos, PVector size, float iconDistance, int lives) {
   float barWidth = size.x + iconDistance * (lives + 1);
-  float barCentre = barWidth * 0.5 - (size.x * 0.5);
+  float barCentre = (barWidth - size.x) * 0.5;
   for (int i = 1; i <= lives; i++) { 
     fill(0, 255, 0);
     rect(pos.x - size.x * 0.5 - barCentre + iconDistance * i, pos.y, size.x, size.y);
@@ -587,7 +641,7 @@ void drawLivesBar(PVector pos, PVector size, float iconDistance, int lives) {
 void drawCrosshair() {
   for(int i = 0; i < targetCount; i++) {
     int type = targetTypes[i];
-    if (checkCollision(targetPositions[i], targetSizeValues[type], mousePos)) {
+    if (checkPointCollision(targetPositions[i], targetSizeValues[type], mousePos)) {
       if (type == 0) {
         xHairColor = color(255, 0, 0);
       } else {
@@ -623,13 +677,20 @@ void drawShot(PVector startPos, PVector endPos, color col) {
 }
 
 void drawFarShips() {
-  for(int i = 0; i < farShipPositions.length; i++) {
+  for(int i = 0; i < generatedFarShipCount; i++) {
+    
     PVector pos = farShipPositions[i];
     PVector size;
-    boolean drawShot = ((int)random(101) <= 1); // % chance for a ship to "shoot" another when it is drawn
+    color laserColor;
+    boolean drawShot = ((int)random(101) <= 1); // % chance for a ship to shoot another when it is drawn
+    int tIndex;
 
-    if (i <= farShipCount / 2 - 1) { //Left Ships
+    if (i % 2 == 0) { // Enemy Ship
+    
       size = farShipSizes[0];
+      tIndex = (int)random(1, (generatedFarShipCount + 2) / 2) * 2 - 1; // Picks a random odd number representing an enemies index
+      laserColor = enemyLaserColor;
+      
       fill(140, 130, 130);
       rect(pos.x - size.x * 0.45, pos.y, size.x * 0.2, size.y * 0.3); // Back Middle
       fill(80);
@@ -666,17 +727,12 @@ void drawFarShips() {
       fill(140, 130, 130);
       rect(pos.x - size.x * 0.4, pos.y + size.y * 0.1, size.x * 0.8, size.y * 0.1); // Middle
       
-      if (drawShot) {
-        int index = (int)random(farShipCount * 0.5, farShipCount);
-        PVector tPos = farShipPositions[index];
-        PVector tSize = farShipSizes[0];
-        PVector startPos = new PVector(random(pos.x - size.x * 0.5, pos.x + size.x * 0.5), random(pos.y - size.y * 0.5, pos.y + size.y * 0.5));
-        PVector endPos = new PVector(random(tPos.x - tSize.x * 0.5, tPos.x + tSize.x * 0.5), random(tPos.y - tSize.y * 0.5, tPos.y + tSize.y * 0.5));
-        drawShot(startPos, endPos, enemyLaserColor);
-      }
-      
-    } else { // Right Ships
+    } else { // FriendlyShip
+    
       size = farShipSizes[1];
+      tIndex = (int)random((generatedFarShipCount + 1) / 2) * 2; // Picks a random even number representing an enemies index
+      laserColor = friendlyLaserColor;
+
       fill(80);
       rect(pos.x - size.x * 0.4, pos.y - size.y * 0.3, size.x * 0.12, size.y * 0.4); // Front
       rect(pos.x - size.x * 0.3, pos.y - size.y * 0.34, size.x * 0.12, size.y * 0.65); // Front - 1
@@ -702,19 +758,20 @@ void drawFarShips() {
         pos.x + size.x * 0.5, pos.y + size.y * 0.3,  
         pos.x + size.x * 0.35, pos.y + size.y * 0.1
       );
-      
-      if (drawShot) {
-        int index = (int)random(farShipCount * 0.5);
-        PVector tPos = farShipPositions[index];
-        PVector tSize = farShipSizes[1];
-        PVector startPos = new PVector(random(pos.x - size.x * 0.5, pos.x + size.x * 0.5), random(pos.y - size.y * 0.5, pos.y + size.y * 0.5));
-        PVector endPos = new PVector(random(tPos.x - tSize.x * 0.5, tPos.x + tSize.x * 0.5), random(tPos.y - tSize.y * 0.5, tPos.y + tSize.y * 0.5));
-        drawShot(startPos, endPos, friendlyLaserColor);
-      }
     } 
+
+    if (drawShot && generatedFarShipCount > 1) {
+      PVector tPos = farShipPositions[tIndex];
+      PVector tSize = farShipSizes[0];
+      PVector startPos = new PVector(random(pos.x - size.x * 0.5, pos.x + size.x * 0.5), random(pos.y - size.y * 0.5, pos.y + size.y * 0.5));
+      PVector endPos = new PVector(random(tPos.x - tSize.x * 0.5, tPos.x + tSize.x * 0.5), random(tPos.y - tSize.y * 0.5, tPos.y + tSize.y * 0.5));
+      drawShot(startPos, endPos, laserColor);
+    }
+    
   }
 }
-
+  
+ 
 void drawCloseShips() {
   // Left Ship
   fill(80);
