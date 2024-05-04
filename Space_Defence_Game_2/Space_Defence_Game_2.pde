@@ -23,7 +23,7 @@ PVector[] targetSizeValues = {
   new PVector(40, 60),
   new PVector(50, 70)
 };
-int friendlySpawnChance = 25;
+int friendlySpawnChance = 25; // Percentage chance for a friendly to spawn in place of an enemy, values lower than 0.1 evaluate to 0;
 boolean enableEnemyLifeTimer = true;
 
 // ===== BACKGROUND OBJECT SETTINGS =====
@@ -38,6 +38,7 @@ color plyLaserColor = color(250, 210, 0);
 
 // Far Background Ships
 int farShipCount = 20; // Will attempt to spawn this many ships without overlaps, very rarely spawns more than 16
+float farShipShootChance = 0.5; // Percentage chance for each ship to shoot another when it is drawn, values lower than 0.1 evaluate to 0;
 PVector[] farShipSizes = {
   new PVector(100, 40), // 1 : 2.5 aspect ratio
   new PVector(100, 40)
@@ -298,7 +299,6 @@ void generateMoonCraters() {
 void generateFarShips() { 
   int attempts = 0;
   int validPositions = 0;
-  int lastI = 0;
 
   for(int i = 0; i < farShipCount && attempts < 1000; i++) { // Stops loop if a new spot cant be found after 1000 attempts
     boolean isValid = true;
@@ -320,9 +320,8 @@ void generateFarShips() {
       farShipPositions[i] = pos;
       validPositions++;
       attempts = 0;
-      lastI = i;
     } else { // Repeat the loop to find a new position
-      i = lastI;
+      i--;
       attempts++;
     }
   }
@@ -422,10 +421,8 @@ void spawnTarget(int index) {
   PVector pos = new PVector();
   
   // Makes friendlies less common than enemies to make the game harder
-  int type = 0;
-  if ((int)random(101) <= friendlySpawnChance) {
-    type = 1;
-  }
+  // Picking up to 1000 and multiplying the chance by 10 allows for decimal chances to 1 place
+  int type = int(((int)random(1, 1001) <= friendlySpawnChance * 10));
   
   PVector size = targetSizeValues[type];
   
@@ -682,13 +679,13 @@ void drawFarShips() {
     PVector pos = farShipPositions[i];
     PVector size;
     color laserColor;
-    boolean drawShot = ((int)random(101) <= 1); // % chance for a ship to shoot another when it is drawn
+    boolean drawShot = (int)random(1, 1001) <= farShipShootChance * 10;
     int tIndex;
 
     if (i % 2 == 0) { // Enemy Ship
     
       size = farShipSizes[0];
-      tIndex = (int)random(1, (generatedFarShipCount + 2) / 2) * 2 - 1; // Picks a random odd number representing an enemies index
+      tIndex = (int)random(1, (generatedFarShipCount + 2) / 2) * 2 - 1; // Picks a random odd number within the bounds of the array representing an enemies index
       laserColor = enemyLaserColor;
       
       fill(140, 130, 130);
@@ -730,7 +727,7 @@ void drawFarShips() {
     } else { // FriendlyShip
     
       size = farShipSizes[1];
-      tIndex = (int)random((generatedFarShipCount + 1) / 2) * 2; // Picks a random even number representing an enemies index
+      tIndex = (int)random((generatedFarShipCount + 1) / 2) * 2; // Picks a random even number within the bounds of the array representing an enemies index
       laserColor = friendlyLaserColor;
 
       fill(80);
