@@ -1,6 +1,6 @@
 // ===== GAME SETTINGS =====
-int gridCountX = 15;
-int gridCountY = 15;
+int gridCountX = 20;
+int gridCountY = 20;
 
 //int gridSquaresPerMine = 10;
 //int mineCount = gridCountX * gridCountY / gridSquaresPerMine;
@@ -10,7 +10,7 @@ int[] gridSizes = {8, 9, 10};
 int[] mineCounts = {10, 10, 10};
 
 color[] numberColors = {
-  color(150, 150, 150),
+  color(190),
   color(0, 0, 253),
   color(1, 126, 0),
   color(254, 0, 0),
@@ -177,10 +177,8 @@ int getAdjacentMines(int x, int y) {
 void drawGrid() {
   for(int i = 0; i < gridCountX; i++) {
     for(int k = 0; k < gridCountY; k++) {   
-      
-
       if(gridStates[i][k]) {
-        fill(150, 150, 150);
+        fill(190);
         rect(i * gridSize.x, k * gridSize.y, gridSize.x, gridSize.y);
         textAlign(CENTER, CENTER);
         textSize(gridSize.x / 2);
@@ -188,7 +186,7 @@ void drawGrid() {
         fill(numberColors[mines]);
         text(mines, i * gridSize.x + gridSize.x * 0.5, k * gridSize.y + gridSize.y * 0.5);
       } else { 
-        fill(120, 120, 120);
+        fill(220);
         rect(i * gridSize.x, k * gridSize.y, gridSize.x, gridSize.y);
         
         if(getFlagState(i, k)) {
@@ -196,9 +194,7 @@ void drawGrid() {
           rect(i * gridSize.x + gridSize.x * 0.25, k * gridSize.y + gridSize.y * 0.25, gridSize.x * 0.5, gridSize.y * 0.5);
         }
       }
-      
 
-      
       if(gameState == 0 && checkMine(i, k)) {
         fill(0);
         ellipse(i * gridSize.x + gridSize.x * 0.5, k * gridSize.y + gridSize.y * 0.5, gridSize.x * 0.8, gridSize.y * 0.8);
