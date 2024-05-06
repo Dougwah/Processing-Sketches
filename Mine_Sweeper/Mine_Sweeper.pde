@@ -1,10 +1,11 @@
 // ===== GAME SETTINGS =====
 int gridCountX = 20;
 int gridCountY = 20;
+boolean testMode = true;
 
 //int gridSquaresPerMine = 10;
 //int mineCount = gridCountX * gridCountY / gridSquaresPerMine;
-int mineCount = 40;
+int mineCount = 100;
 
 int[] gridSizes = {8, 9, 10};
 int[] mineCounts = {10, 10, 10};
@@ -29,6 +30,12 @@ PVector gridSize;
 boolean[][] gridStates;
 boolean[][] minePositions;
 boolean[][] flagPositions;
+int[] clickedMine;
+
+boolean leftDown = false;
+boolean rightDown = false;
+int mX;
+int mY;
 
 // ===== PROCESSING FUNCTIONS =====
 
@@ -39,56 +46,164 @@ void setup() {
 }
 
 void draw() {
-  drawGrid();
+  runGame();
+}
+
+void keyPressed() {
+  if(key == 'q') {
+    if(rightDown) {
+      performAction(1);
+    } else {
+      performAction(0); 
+    }
+    leftDown = true;
+  }
+  
+  if(key == 'e') {
+    if(leftDown) {
+      performAction(1);  
+    } else {
+      performAction(2);
+      rightDown = true;
+    }
+  }
+}
+
+void keyReleased() {
+  if(key == 'q') {
+    leftDown = false;
+  }
+  
+  if(key == 'e') {
+    rightDown = false;
+  }
 }
 
 void mousePressed() {
-  int x = (int)(mouseX / gridSize.x);
-  int y = (int)(mouseY / gridSize.y);
   if(mouseButton == LEFT) {
-    if(firstClick) {
-      firstClick = false;
-      generateMines(x, y);
+    if(rightDown) {
+      performAction(1);
+    } else {
+      performAction(0);
     }
-    
-    if(gameState == 1 && checkMine(x, y)) {
-      endGame();
-      return;
-    }
-    
-    if(gameState == 0) {
-      newGame();
-      return;
-    }
-    
-    setSquareState(x, y);
-    if(getAdjacentMines(x, y) == 0) {
-      revealAdjacentSquares(x, y);
-    }
+    leftDown = true;
   } else {
-    setFlagState(x, y);
+    if(leftDown) {
+      performAction(1);  
+    } else {
+      performAction(2);
+      rightDown = true;
+    }
+  }
+}
+
+void mouseReleased() {
+  if(mouseButton == RIGHT) {
+    rightDown = false;  
+  }
+  if(mouseButton == LEFT) {
+    leftDown = false;  
   }
 }
 
 // ===== GAME FUNCTIONS =====
 
+void performAction(int action) {
+  mX = (int)(mouseX / gridSize.x);
+  mY = (int)(mouseY / gridSize.y);
+  if(action == 0) {
+    if(firstClick) {
+      firstClick = false;
+      generateMines(mX, mY);
+    }
+    
+    if(gameState == 1 && checkMine(mX, mY)) {
+      clickedMine = new int[] {mX, mY};
+      loseGame();
+      return;
+    }
+    
+    if(gameState == 0 || gameState == 2) {
+      newGame();
+      return;
+    }
+    
+    if(!getFlagState(mX, mY)) {
+      setSquareState(mX, mY);
+    }
+    
+    if(getAdjacentMines(mX, mY) == 0) {
+      revealAdjacentSquares(mX, mY);
+    }
+  }
+  
+  if(action == 1) {
+    if(getSquareState(mX, mY)) {
+      revealNonFlaggedSquares(mX, mY);
+    }
+  }
+  
+  if(action == 2 && !getSquareState(mX, mY)) {
+    setFlagState(mX, mY);
+  }
+}
+
+void runGame() {
+  if(checkComplete() && gameState == 1) {
+    winGame();  
+  }
+  drawGrid();  
+}
+
 void newGame() {
   gameState = 1;
+  clickedMine = new int[] {-1, -1};
   gridStates = new boolean[gridCountX][gridCountY];
   minePositions = new boolean[gridCountX][gridCountY];
   flagPositions = new boolean[gridCountX][gridCountY];
   firstClick = true;
 }
 
-void endGame() {
+void loseGame() {
   revealAllSquares();
-  gameState = 0;  
+  gameState = 0;
+}
+
+void winGame() {
+  gameState = 2;
 }
 
 void revealAllSquares() {
   for(int i = 0; i < gridCountX; i++) {
     for(int k = 0; k < gridCountY; k++) {
       setSquareState(i, k);  
+    }
+  }
+}
+
+void revealNonFlaggedSquares(int x, int y) {
+  if(getAdjacentFlags(x, y) != getAdjacentMines(x, y)) {
+    return;  
+  }
+  for(int i = x - 1; i <= x + 1; i++) {
+    if(i >= gridCountX || i < 0) {
+      continue;  
+    }
+    for(int k = y - 1; k <= y + 1; k++) {       
+      if(k >= gridCountY || k < 0) {
+        continue;  
+      }
+      if(!getSquareState(i, k) && !getFlagState(i, k)) {
+        if(checkMine(i, k)) {
+          clickedMine = new int[] {i, k};
+          loseGame();
+        }
+        if(getAdjacentMines(i, k) == 0)  {
+          revealAdjacentSquares(i, k); 
+        } else {
+          setSquareState(i, k);  
+        }
+      }
     }
   }
 }
@@ -127,10 +242,24 @@ boolean getSquareState(int x, int y) {
 
 void setSquareState(int x, int y) {
   gridStates[x][y] = true;
+  if(getFlagState(x, y)) {
+    setFlagState(x, y);
+  }
 }
 
 boolean checkMine(int x, int y) {
   return minePositions[x][y];  
+}
+
+boolean checkComplete() {
+  for(int i = 0; i < gridCountX;i ++) {
+    for(int k = 0; k < gridCountY; k++) {
+      if(!getSquareState(i , k) && !checkMine(i, k)) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 // mine cannot be generated at the provided x and y
@@ -172,33 +301,88 @@ int getAdjacentMines(int x, int y) {
   return result;
 }
 
+int getAdjacentFlags(int x, int y) {
+  int result = 0;
+  for(int i = x - 1; i <= x + 1; i++) {
+    if(i >= gridCountX || i < 0) {
+      continue;  
+    }
+    for(int k = y - 1; k <= y + 1; k++) { 
+      if(k >= gridCountY || k < 0 || x == i && k == y) {
+        continue;  
+      }
+      if(getFlagState(i, k)) {
+        result++;
+      }
+    }
+  }
+  return result;  
+}
+
 // ===== DRAW FUNCTIONS =====
+
+void drawMine(int x, int y) {
+  if(x == clickedMine[0] && y == clickedMine[1]) {
+    fill(255, 0, 0);
+  } else {
+    fill(0);  
+  }
+  ellipse(x * gridSize.x + gridSize.x * 0.5, y * gridSize.y + gridSize.y * 0.5, gridSize.x * 0.8, gridSize.y * 0.8);  
+}
+
+void drawFlag(int x, int y) {
+  fill(255, 0, 0);
+  rect(x * gridSize.x + gridSize.x * 0.25, y * gridSize.y + gridSize.y * 0.25, gridSize.x * 0.5, gridSize.y * 0.5);
+}
+
+void drawSquare(int x, int y, color c) {
+  fill(c);
+  rect(x * gridSize.x, y * gridSize.y, gridSize.x, gridSize.y);
+}
 
 void drawGrid() {
   for(int i = 0; i < gridCountX; i++) {
-    for(int k = 0; k < gridCountY; k++) {   
+    for(int k = 0; k < gridCountY; k++) {         
+           
       if(gridStates[i][k]) {
-        fill(190);
-        rect(i * gridSize.x, k * gridSize.y, gridSize.x, gridSize.y);
+        drawSquare(i, k, color(190));
         textAlign(CENTER, CENTER);
         textSize(gridSize.x / 2);
         int mines = getAdjacentMines(i, k);
         fill(numberColors[mines]);
         text(mines, i * gridSize.x + gridSize.x * 0.5, k * gridSize.y + gridSize.y * 0.5);
-      } else { 
-        fill(220);
-        rect(i * gridSize.x, k * gridSize.y, gridSize.x, gridSize.y);
-        
-        if(getFlagState(i, k)) {
-          fill(255, 0, 0);
-          rect(i * gridSize.x + gridSize.x * 0.25, k * gridSize.y + gridSize.y * 0.25, gridSize.x * 0.5, gridSize.y * 0.5);
+      } else {
+        drawSquare(i, k, color(220));
+      }
+      
+      if((rightDown || leftDown) && getSquareState(mX, mY)) {
+        if(i - mX >= -1 && i - mX <= 1 && k - mY <= 1 && k - mY >= -1 && !getSquareState(i, k)) {
+          drawSquare(i, k, color(240));
         }
+      }
+      
+      if(testMode & checkMine(i, k)) {
+        drawMine(i, k);
       }
 
       if(gameState == 0 && checkMine(i, k)) {
-        fill(0);
-        ellipse(i * gridSize.x + gridSize.x * 0.5, k * gridSize.y + gridSize.y * 0.5, gridSize.x * 0.8, gridSize.y * 0.8);
+        drawMine(i, k);
+        textAlign(CENTER, CENTER);
+        textSize(40);
+        fill(255);
+        text("You Lost!", width / 2, height / 2);
+      }
+      
+      if(getFlagState(i, k)) {
+        drawFlag(i, k);
       }
     }
-  }  
+  }
+  
+  if(gameState == 2) {
+    textAlign(CENTER, CENTER);
+    textSize(40);
+    fill(255);
+    text("You Won!", width / 2, height / 2);
+  }
 }
