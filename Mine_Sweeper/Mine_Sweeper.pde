@@ -1,16 +1,16 @@
 // ===== GAME SETTINGS =====
-int gridCountX = 20;
-int gridCountY = 20;
+int gridCountX = 50;
+int gridCountY = 50;
 int squareSize = 40;
 PVector gridOffset;
-boolean testMode = true;
+boolean testMode = false;
 
-//int gridSquaresPerMine = 10;
-//int mineCount = gridCountX * gridCountY / gridSquaresPerMine;
-int mineCount = 100;
+int[] gridSizesX = {8, 9, 10, 13, 13, 14, 14, 15, 15, 16, 16};
+int[] gridSizesY = {8, 9, 10, 15, 16, 15, 16, 15, 16, 16, 30};
+int[] mineCounts = {10, 10, 10, 10, 40, 40, 40, 40, 40, 40 , 100};
 
-int[] gridSizes = {8, 9, 10};
-int[] mineCounts = {10, 10, 10};
+int difficulty = 9;
+int mineCount;
 
 color[] numberColors = {
   color(190),
@@ -46,7 +46,19 @@ int mY;
 // ===== PROCESSING FUNCTIONS =====
 
 void setup() {
-  size(1800, 1000);
+  size(1000, 1000);
+  
+  gridCountX = gridSizesX[difficulty];
+  gridCountY = gridSizesY[difficulty];
+  mineCount = mineCounts[difficulty];
+  
+  
+  if(squareSize * gridCountX > width) {
+      squareSize = width / gridCountX;
+  }
+  if(squareSize * gridCountY > height) {
+      squareSize = height / gridCountY;
+  }
   gridOffset = new PVector((width - gridCountX * squareSize) / 2, (height - gridCountY * squareSize) / 2);
   gridSize = new PVector(width - gridOffset.x * 2, width - gridOffset.y * 2);
   println(gridSize.x, gridSize.y, gridOffset.x, gridOffset.y);
@@ -58,11 +70,7 @@ void draw() {
 }
 
 void keyPressed() {
-  mX = (int)((mouseX - gridOffset.x) / squareSize);
-  mY = (int)((mouseY - gridOffset.y) / squareSize);
-  if(mX < 0 || mX > gridCountX - 1 || mY < 0 || mY > gridCountY - 1) {
-    return;  
-  }
+  if(!setMousePos()) { return; }
   if(key == 'q') {
     if(rightDown) {
       quickReveal();
@@ -93,8 +101,7 @@ void keyReleased() {
 }
 
 void mousePressed() {
-  mX = (int)(mouseX / gridSize.x);
-  mY = (int)(mouseY / gridSize.y);
+  if(!setMousePos()) { return; }
   if(mouseButton == LEFT) {
     leftDown = true;
     if(rightDown) {
@@ -128,8 +135,15 @@ void mouseReleased() {
 
 // PLAYER ACTIONS
 
-void setMousePos() {
-  
+boolean setMousePos() {
+  int x = (int)((mouseX - gridOffset.x) / squareSize);
+  int y = (int)((mouseY - gridOffset.y) / squareSize);
+  if(x < 0 || x > gridCountX - 1 || y < 0 || y > gridCountY - 1) {
+    return false;  
+  }
+  mX = x;
+  mY = y;
+  return true;
 }
 
 void attemptReveal() {
@@ -360,7 +374,7 @@ void drawMine(int x, int y) {
   } else {
     fill(0);  
   }
-  ellipse(x * gridSize.x + gridSize.x * 0.5, y * gridSize.y + gridSize.y * 0.5, gridSize.x * 0.8, gridSize.y * 0.8);  
+  circle(gridOffset.x + x * squareSize + squareSize * 0.5, gridOffset.y + y * squareSize + squareSize * 0.5, squareSize * 0.8);  
 }
 
 void drawFlag(int x, int y) {
@@ -368,9 +382,18 @@ void drawFlag(int x, int y) {
   square(gridOffset.x + x * squareSize + squareSize * 0.25, gridOffset.y + y * squareSize + squareSize * 0.25, squareSize * 0.5);
 }
 
-void drawSquare(int x, int y, color c) {
+void drawSquare(int x, int y, color c, int state) {
   fill(c);
   square(gridOffset.x + x * squareSize, gridOffset.y + y * squareSize, squareSize);
+  textAlign(CENTER, CENTER);
+  textSize(squareSize * 0.8);
+  if(state == 1) {
+    int mines = getAdjacentMines(x, y);
+    if(mines > 0) {
+      fill(numberColors[mines]);
+      text(mines, gridOffset.x + x * squareSize + squareSize * 0.5, gridOffset.y + y * squareSize + squareSize * 0.5);
+    }
+  }
 }
 
 void drawGrid() {
@@ -378,19 +401,14 @@ void drawGrid() {
     for(int k = 0; k < gridCountY; k++) {         
            
       if(gridStates[i][k]) {
-        drawSquare(i, k, color(190));
-        textAlign(CENTER, CENTER);
-        textSize(gridSize.x / 2);
-        int mines = getAdjacentMines(i, k);
-        fill(numberColors[mines]);
-        text(mines, i * gridSize.x + gridSize.x * 0.5, k * gridSize.y + gridSize.y * 0.5);
+        drawSquare(i, k, color(190), 1);
       } else {
-        drawSquare(i, k, color(220));
+        drawSquare(i, k, color(220), 0);
       }
 
       if((rightDown || leftDown) && getSquareState(mX, mY)) {
         if(i - mX >= -1 && i - mX <= 1 && k - mY <= 1 && k - mY >= -1 && !getSquareState(i, k)) {
-          drawSquare(i, k, color(240));
+          drawSquare(i, k, color(240), 0);
         }
       }
       
