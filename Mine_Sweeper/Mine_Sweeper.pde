@@ -1,6 +1,8 @@
 // ===== GAME SETTINGS =====
 int gridCountX = 20;
 int gridCountY = 20;
+int squareSize = 40;
+PVector gridOffset;
 boolean testMode = true;
 
 //int gridSquaresPerMine = 10;
@@ -44,8 +46,10 @@ int mY;
 // ===== PROCESSING FUNCTIONS =====
 
 void setup() {
-  size(1000, 1000);
-  gridSize = new PVector(width / gridCountX, height / gridCountY);
+  size(1800, 1000);
+  gridOffset = new PVector((width - gridCountX * squareSize) / 2, (height - gridCountY * squareSize) / 2);
+  gridSize = new PVector(width - gridOffset.x * 2, width - gridOffset.y * 2);
+  println(gridSize.x, gridSize.y, gridOffset.x, gridOffset.y);
   newGame();
 }
 
@@ -54,8 +58,11 @@ void draw() {
 }
 
 void keyPressed() {
-  mX = (int)(mouseX / gridSize.x);
-  mY = (int)(mouseY / gridSize.y);
+  mX = (int)((mouseX - gridOffset.x) / squareSize);
+  mY = (int)((mouseY - gridOffset.y) / squareSize);
+  if(mX < 0 || mX > gridCountX - 1 || mY < 0 || mY > gridCountY - 1) {
+    return;  
+  }
   if(key == 'q') {
     if(rightDown) {
       quickReveal();
@@ -120,6 +127,10 @@ void mouseReleased() {
 // ===== GAME FUNCTIONS =====
 
 // PLAYER ACTIONS
+
+void setMousePos() {
+  
+}
 
 void attemptReveal() {
   if(firstClick) {
@@ -291,7 +302,7 @@ void generateMines(int originX, int originY) {
     int y = (int)random(gridCountY);
     boolean valid = true;
     println(originX - x);
-    if(checkMine(x, y) || abs(originX - x) == 1) {
+    if(checkMine(x, y) || x > originX - 2 && x < originX + 2 && y > originY - 2 && y < originY + 2) {
       valid = false;  
     }
     
@@ -354,12 +365,12 @@ void drawMine(int x, int y) {
 
 void drawFlag(int x, int y) {
   fill(255, 0, 0);
-  rect(x * gridSize.x + gridSize.x * 0.25, y * gridSize.y + gridSize.y * 0.25, gridSize.x * 0.5, gridSize.y * 0.5);
+  square(gridOffset.x + x * squareSize + squareSize * 0.25, gridOffset.y + y * squareSize + squareSize * 0.25, squareSize * 0.5);
 }
 
 void drawSquare(int x, int y, color c) {
   fill(c);
-  rect(x * gridSize.x, y * gridSize.y, gridSize.x, gridSize.y);
+  square(gridOffset.x + x * squareSize, gridOffset.y + y * squareSize, squareSize);
 }
 
 void drawGrid() {
