@@ -1,6 +1,16 @@
+// Add start menu
+  // Allow selection of grid sizes and bomb count using arrow keys
+  // Display bomb density
+// Allow returning to menu when game ends
+// Add pause menu
+  // Pauses timer
+  // Prevents clicks
+  // Allows returning to menu
+
 // ===== GAME SETTINGS =====
-int gridCountX = 50;
-int gridCountY = 50;
+int gridCountX;
+int gridCountY;
+int infoAreaY = 100;
 int squareSize = 40;
 PVector gridOffset;
 boolean testMode = false;
@@ -32,9 +42,11 @@ PVector gridSize;
 boolean[][] gridStates;
 boolean[][] minePositions;
 boolean[][] flagPositions;
+int flagsPlaced;
 int[] clickedMine;
 int timePassed;
 int lastMilli;
+boolean paused;
 
 boolean leftDown = false;
 int leftDownTime = 0;
@@ -47,33 +59,38 @@ int mY;
 
 void setup() {
   size(1000, 1000);
-  
+
   gridCountX = gridSizesX[difficulty];
   gridCountY = gridSizesY[difficulty];
   mineCount = mineCounts[difficulty];
   
-  
   if(squareSize * gridCountX > width) {
       squareSize = width / gridCountX;
   }
-  if(squareSize * gridCountY > height) {
-      squareSize = height / gridCountY;
+  if(squareSize * gridCountY > height - infoAreaY) {
+      squareSize = height - infoAreaY / gridCountY;
   }
-  gridOffset = new PVector((width - gridCountX * squareSize) / 2, (height - gridCountY * squareSize) / 2);
+  
+  gridOffset = new PVector((width - gridCountX * squareSize) / 2, (height + infoAreaY - gridCountY * squareSize) / 2);
   gridSize = new PVector(width - gridOffset.x * 2, width - gridOffset.y * 2);
-  println(gridSize.x, gridSize.y, gridOffset.x, gridOffset.y);
   newGame();
 }
 
 void draw() {
+  background(0);  
   runGame();
 }
 
 void keyPressed() {
-  if(!setMousePos()) { return; }
+  if(key == ' ') {
+    pauseGame();
+  }
+
+  if(!setMousePos() || paused) { return; }
+  
   if(key == 'q') {
     if(rightDown) {
-      quickReveal();
+      attemptQuickReveal();
     } else {
       attemptReveal();
     }
@@ -82,7 +99,7 @@ void keyPressed() {
   
   if(key == 'e') {
     if(leftDown) {
-      quickReveal();  
+      attemptQuickReveal();  
     } else {
       placeFlag();
       rightDown = true;
@@ -101,18 +118,17 @@ void keyReleased() {
 }
 
 void mousePressed() {
-  if(!setMousePos()) { return; }
+  if(!setMousePos() || paused) { return; }
   if(mouseButton == LEFT) {
     leftDown = true;
     if(rightDown) {
-      quickReveal();
+      attemptQuickReveal();
     } else {
       attemptReveal();
     }
-    println(leftDown);
   } else {
     if(leftDown) {
-      quickReveal();  
+      attemptQuickReveal();  
     } else {
       placeFlag();
       rightDown = true;
@@ -138,7 +154,7 @@ void mouseReleased() {
 boolean setMousePos() {
   int x = (int)((mouseX - gridOffset.x) / squareSize);
   int y = (int)((mouseY - gridOffset.y) / squareSize);
-  if(x < 0 || x > gridCountX - 1 || y < 0 || y > gridCountY - 1) {
+  if(mouseX < gridOffset.x || mouseX > gridOffset.x + gridSize.x || mouseY < gridOffset.y || mouseY > gridOffset.y + gridSize.y + infoAreaY) {
     return false;  
   }
   mX = x;
@@ -179,7 +195,7 @@ void placeFlag() {
   }
 }
 
-void quickReveal() {
+void attemptQuickReveal() {
   if(getSquareState(mX, mY)) {
     revealNonFlaggedSquares(mX, mY);
   }
@@ -188,25 +204,40 @@ void quickReveal() {
 // ROUNDS
 
 void runGame() {
+  if(paused) { 
+    drawPauseScreen();
+    return; 
+  }
+  
   if(checkComplete() && gameState == 1) {
     winGame();
   }
-  drawGrid();  
+  drawGrid();
+  drawInfoArea();
   
   timePassed += millis() - lastMilli;
-  lastMilli = millis();
-  
+  lastMilli = millis(); 
+  println(timePassed);
+}
+
+void pauseGame() {
+  paused = !paused;  
+  if (!paused) {
+    timePassed -= millis() - lastMilli;  
+  }
 }
 
 void newGame() {
   gameState = 1;
   clickedMine = new int[] {-1, -1};
+  flagsPlaced = 0;
   gridStates = new boolean[gridCountX][gridCountY];
   minePositions = new boolean[gridCountX][gridCountY];
   flagPositions = new boolean[gridCountX][gridCountY];
   firstClick = true;
+  paused = false;
   timePassed = 0;
-  lastMilli = 0;
+  lastMilli = millis();
 }
 
 void loseGame() {
@@ -276,6 +307,11 @@ void revealAdjacentSquares(int x, int y) {
 
 void setFlagState(int x, int y) {
   flagPositions[x][y] = !flagPositions[x][y];
+  if(getFlagState(x, y)) {
+    flagsPlaced++;  
+  } else {
+    flagsPlaced--;
+  }
 }
 
 boolean getFlagState(int x, int y) {
@@ -315,7 +351,6 @@ void generateMines(int originX, int originY) {
     int x = (int)random(gridCountX);
     int y = (int)random(gridCountY);
     boolean valid = true;
-    println(originX - x);
     if(checkMine(x, y) || x > originX - 2 && x < originX + 2 && y > originY - 2 && y < originY + 2) {
       valid = false;  
     }
@@ -364,6 +399,13 @@ int getAdjacentFlags(int x, int y) {
     }
   }
   return result;  
+}
+
+// ===== HELPER FUNCTIONS =====
+
+String formatMillis(int millis) {
+  int seconds = millis / 1000;
+  return nf(seconds / 60, 2, 0) + " : " + nf((seconds % 60), 2, 0) + " : " + nf((millis) % 1000, 3, 0);  
 }
 
 // ===== DRAW FUNCTIONS =====
@@ -421,7 +463,7 @@ void drawGrid() {
         textAlign(CENTER, CENTER);
         textSize(40);
         fill(255);
-        text("You Lost!", width / 2, height / 2);
+        text("You Lost!", width * 0.5, height * 0.5);
       }
       
       if(getFlagState(i, k)) {
@@ -434,6 +476,28 @@ void drawGrid() {
     textAlign(CENTER, CENTER);
     textSize(40);
     fill(255);
-    text("You Won!", width / 2, height / 2);
+    text("You Won!", width * 0.5, height * 0.5);
   }
+}
+
+void drawInfoArea() {
+  fill(80);
+  rect(0, 0, width, infoAreaY);
+  fill(255);
+  text(formatMillis(timePassed), width * 0.5, infoAreaY - infoAreaY * 0.5);
+  text(mineCount - flagsPlaced, width * 0.2, infoAreaY - infoAreaY * 0.5);
+  textAlign(LEFT, CENTER);
+  textSize(20);
+  text("[SPACE] - Pause\n[Q] - Quit", width * 0.8, infoAreaY - infoAreaY * 0.5);
+  fill(255, 0, 0);
+  square(width * 0.15 + squareSize * 0.25, infoAreaY - infoAreaY * 0.49 - squareSize * 0.25, squareSize * 0.5);
+}
+
+void drawPauseScreen() {
+  fill(0);
+  rect(0, 0, width, height);  
+  fill(255);
+  textAlign(CENTER, CENTER);
+  textSize(40);
+  text("Game Paused\n[SPACE] - Resume", width * 0.5, height * 0.5);
 }
