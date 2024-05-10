@@ -1,21 +1,9 @@
-// Add start menu
-  // Allow selection of grid sizes and bomb count using arrow keys
-  // Display bomb density
-// Allow returning to menu when game ends
-// Add pause menu
-  // Allows returning to menu
-
 // ===== GAME SETTINGS =====
+
 int infoAreaY = 100;
-int squareSize = 40;
+int maxSquareSize = 40;
 PVector gridOffset;
 boolean testMode = false;
-
-//int[] gridSizesX = {8, 9, 10, 13, 13, 14, 14, 15, 15, 16, 16};
-//int[] gridSizesY = {8, 9, 10, 15, 16, 15, 16, 15, 16, 16, 30};
-//int[] optionValues[2]s = {10, 10, 10, 10, 40, 40, 40, 40, 40, 40 , 100};
-
-//int difficulty = 1;
 
 int INPROGRESS = 1;
 int WON = 2;
@@ -38,6 +26,7 @@ color[] numberColors = {
 
 boolean firstClick;
 int gameState = MENU;
+int squareSize;
 PVector gridSize;
 boolean[][] gridStates;
 boolean[][] minePositions;
@@ -49,9 +38,7 @@ int lastMilli;
 boolean paused;
 
 boolean leftDown = false;
-int leftDownTime = 0;
 boolean rightDown = false;
-int rightDownTime = 0;
 int mX;
 int mY;
 
@@ -61,9 +48,14 @@ String[] optionNames = {"Grid Size X", "Grid Size Y", "Mine Count"};
 int[] optionValues = {20, 20, 80};
 int selectedItem = 0;
 
+int GRIDSIZEX = 0;
+int GRIDSIZEY = 1;
+int MINECOUNT = 2;
+
 // ===== PROCESSING FUNCTIONS =====
 
 void setup() {
+  noStroke();
   size(1000, 1000);
 }
 
@@ -73,42 +65,15 @@ void draw() {
 }
 
 void keyPressed() {
-  if(gameState != MENU) {
-    if(key == 'r') {
-      newGame();  
-    }
-    
-    if(key == 'm') {
-      gameState = MENU;  
-    }
+  if(key == 'q') {
+    exit();  
   }
   
-  if(gameState == INPROGRESS) {
-    if(key == ' ') {
-      pauseGame();
-    }
-    
+  if(gameState == INPROGRESS && key == ' ') {
+    pauseGame();
+  }
   
-    //if(!setMousePos() || paused) { return; }
-    
-    //if(key == 'q') {
-    //  if(rightDown) {
-    //    attemptQuickReveal();
-    //  } else {
-    //    attemptReveal();
-    //  }
-    //  leftDown = true;
-    //}
-    
-    //if(key == 'e') {
-    //  if(leftDown) {
-    //    attemptQuickReveal();  
-    //  } else {
-    //    placeFlag();
-    //    rightDown = true;
-    //  }
-    //}
-  } else {
+  if(gameState == MENU) {
     if(keyCode == DOWN) {
       selectItem(1);
     }
@@ -128,16 +93,14 @@ void keyPressed() {
     if(key == ' ') {
       newGame();  
     }
-  }
-}
-
-void keyReleased() {
-  if(key == 'q') {
-    leftDown = false;
-  }
-  
-  if(key == 'e') {
-    rightDown = false;
+  } else {
+    if(key == 'r') {
+      newGame();  
+    }
+    
+    if(key == 'm') {
+      gameState = MENU;  
+    }
   }
 }
 
@@ -154,7 +117,7 @@ void mousePressed() {
     if(leftDown) {
       attemptQuickReveal();  
     } else {
-      placeFlag();
+      attemptFlag();
       rightDown = true;
     }
   }
@@ -163,38 +126,25 @@ void mousePressed() {
 void mouseReleased() {
   if(mouseButton == RIGHT) {
     rightDown = false;
-    rightDownTime = 0;
   }
   if(mouseButton == LEFT) {
     leftDown = false;
-    leftDownTime = 0;
   }
 }
 
 // ===== GAME FUNCTIONS =====
 
 // MENU
+
 void selectItem(int x) {
   selectedItem = constrain(selectedItem += x, 0, optionNames.length - 1);
 }
 
 void changeValue(int x) {
-  optionValues[selectedItem] += x;  
+  optionValues[selectedItem] = max(optionValues[selectedItem] + x, 1);
 }
 
 // PLAYER ACTIONS
-
-boolean setMousePos() {
-  if(gameState == MENU) { return false; }
-  int x = (int)((mouseX - gridOffset.x) / squareSize);
-  int y = (int)((mouseY - gridOffset.y) / squareSize);
-  if(mouseX < gridOffset.x || mouseX > gridOffset.x + gridSize.x || mouseY < gridOffset.y || mouseY > gridOffset.y + gridSize.y + infoAreaY) {
-    return false;  
-  }
-  mX = x;
-  mY = y;
-  return true;
-}
 
 void attemptReveal() {
   if(firstClick) {
@@ -202,7 +152,7 @@ void attemptReveal() {
     generateMines(mX, mY);
   }
     
-  if(checkMine(mX, mY)) {
+  if(getMineState(mX, mY)) {
     clickedMine = new int[] {mX, mY};
     loseGame();
     return;
@@ -218,7 +168,7 @@ void attemptReveal() {
   }
 }
 
-void placeFlag() {
+void attemptFlag() {
   if(!getSquareState(mX, mY)) {
     setFlagState(mX, mY);
   }
@@ -246,37 +196,41 @@ void runGame() {
     drawGameScreen();
     drawInfoArea();
     
-    timePassed += millis() - lastMilli;
-    lastMilli = millis(); 
+    if(gameState == INPROGRESS) {
+      timePassed += millis() - lastMilli;
+      lastMilli = millis(); 
+    }
+
   } else {
     drawMenu();  
   }
 }
 
 void pauseGame() {
-  paused = !paused;  
+  paused = !paused;
   if (!paused) {
     timePassed -= millis() - lastMilli;  
   }
 }
 
 void newGame() {  
-  if(squareSize * optionValues[0] > width) {
-      squareSize = width / optionValues[0];
+  squareSize = maxSquareSize;
+  if(squareSize * optionValues[GRIDSIZEX] > width) {
+      squareSize = width / optionValues[GRIDSIZEX];
   }
-  if(squareSize * optionValues[1] > height - infoAreaY) {
-      squareSize = (height - infoAreaY) / optionValues[1];
+  if(squareSize * optionValues[GRIDSIZEY] > height - infoAreaY) {
+      squareSize = (height - infoAreaY) / optionValues[GRIDSIZEY];
   }
   
-  gridOffset = new PVector((width - optionValues[0] * squareSize) / 2, (height + infoAreaY - optionValues[1] * squareSize) / 2);
+  gridOffset = new PVector((width - optionValues[GRIDSIZEX] * squareSize) / 2, (height + infoAreaY - optionValues[GRIDSIZEY] * squareSize) / 2);
   gridSize = new PVector(width - gridOffset.x * 2, width - gridOffset.y * 2);
   
   gameState = INPROGRESS;
   clickedMine = new int[] {-1, -1};
   flagsPlaced = 0;
-  gridStates = new boolean[optionValues[0]][optionValues[1]];
-  minePositions = new boolean[optionValues[0]][optionValues[1]];
-  flagPositions = new boolean[optionValues[0]][optionValues[1]];
+  gridStates = new boolean[optionValues[GRIDSIZEX]][optionValues[GRIDSIZEY]];
+  minePositions = new boolean[optionValues[GRIDSIZEX]][optionValues[GRIDSIZEY]];
+  flagPositions = new boolean[optionValues[GRIDSIZEX]][optionValues[GRIDSIZEY]];
   firstClick = true;
   paused = false;
   timePassed = 0;
@@ -292,30 +246,80 @@ void winGame() {
   gameState = WON;
 }
 
+// GETTING AND SETTING GRID VALUES
+
+// Flags
+
+boolean getFlagState(int x, int y) {
+  return flagPositions[x][y];
+}
+
+int getAdjacentFlags(int x, int y) {
+  int result = 0;
+  for(int i = x - 1; i <= x + 1; i++) {
+    if(i >= optionValues[GRIDSIZEX] || i < 0) {
+      continue;  
+    }
+    for(int k = y - 1; k <= y + 1; k++) { 
+      if(k >= optionValues[GRIDSIZEY] || k < 0 || x == i && k == y) {
+        continue;  
+      }
+      if(getFlagState(i, k)) {
+        result++;
+      }
+    }
+  }
+  return result;  
+}
+
+void setFlagState(int x, int y) {
+  flagPositions[x][y] = !flagPositions[x][y];
+  if(getFlagState(x, y)) {
+    flagsPlaced++;  
+  } else {
+    flagsPlaced--;
+  }
+}
+
+// Squares
+
+boolean getSquareState(int x, int y) {
+  return gridStates[x][y];  
+}
+
+boolean checkComplete() {
+  for(int i = 0; i < optionValues[GRIDSIZEX];i ++) {
+    for(int k = 0; k < optionValues[GRIDSIZEY]; k++) {
+      if(!getSquareState(i, k) && !getMineState(i, k)) {
+        return false;
+      }
+    }
+  }
+  return true && gameState == INPROGRESS;
+}
+
 void revealAllSquares() {
-  for(int i = 0; i < optionValues[0]; i++) {
-    for(int k = 0; k < optionValues[1]; k++) {
+  for(int i = 0; i < optionValues[GRIDSIZEX]; i++) {
+    for(int k = 0; k < optionValues[GRIDSIZEY]; k++) {
       setSquareState(i, k);  
     }
   }
 }
-
-// GETTING AND SETTING SQUARES
 
 void revealNonFlaggedSquares(int x, int y) {
   if(getAdjacentFlags(x, y) != getAdjacentMines(x, y)) {
     return;  
   }
   for(int i = x - 1; i <= x + 1; i++) {
-    if(i >= optionValues[0] || i < 0) {
+    if(i >= optionValues[GRIDSIZEX] || i < 0) {
       continue;  
     }
     for(int k = y - 1; k <= y + 1; k++) {       
-      if(k >= optionValues[1] || k < 0) {
+      if(k >= optionValues[GRIDSIZEY] || k < 0) {
         continue;  
       }
       if(!getSquareState(i, k) && !getFlagState(i, k)) {
-        if(checkMine(i, k)) {
+        if(getMineState(i, k)) {
           clickedMine = new int[] {i, k};
           loseGame();
         }
@@ -331,14 +335,14 @@ void revealNonFlaggedSquares(int x, int y) {
 
 void revealAdjacentSquares(int x, int y) {
   for(int i = x - 1; i <= x + 1; i++) {
-    if(i >= optionValues[0] || i < 0) {
+    if(i >= optionValues[GRIDSIZEX] || i < 0) {
       continue;  
     }
     for(int k = y - 1; k <= y + 1; k++) { 
-      if(k >= optionValues[1] || k < 0) {
+      if(k >= optionValues[GRIDSIZEY] || k < 0) {
         continue;  
       }
-      if(!checkMine(i, k) && !getSquareState(i, k)) {
+      if(!getMineState(i, k) && !getSquareState(i, k)) {
         setSquareState(i, k);
         if(getAdjacentMines(i, k) == 0) {
           revealAdjacentSquares(i, k);
@@ -348,24 +352,6 @@ void revealAdjacentSquares(int x, int y) {
   }
 }
 
-void setFlagState(int x, int y) {
-  flagPositions[x][y] = !flagPositions[x][y];
-  if(getFlagState(x, y)) {
-    flagsPlaced++;  
-  } else {
-    flagsPlaced--;
-  }
-}
-
-boolean getFlagState(int x, int y) {
-  return flagPositions[x][y];
-}
-
-
-boolean getSquareState(int x, int y) {
-  return gridStates[x][y];  
-}
-
 void setSquareState(int x, int y) {
   gridStates[x][y] = true;
   if(getFlagState(x, y)) {
@@ -373,31 +359,39 @@ void setSquareState(int x, int y) {
   }
 }
 
-boolean checkMine(int x, int y) {
+// Mines
+
+boolean getMineState(int x, int y) {
   return minePositions[x][y];  
 }
 
-boolean checkComplete() {
-  for(int i = 0; i < optionValues[0];i ++) {
-    for(int k = 0; k < optionValues[1]; k++) {
-      if(!getSquareState(i , k) && !checkMine(i, k)) {
-        return false;
+int getAdjacentMines(int x, int y) {
+  int result = 0;
+  for(int i = x - 1; i <= x + 1; i++) {
+    if(i >= optionValues[GRIDSIZEX] || i < 0) {
+      continue;  
+    }
+    for(int k = y - 1; k <= y + 1; k++) { 
+      if(k >= optionValues[GRIDSIZEY] || k < 0 || x == i && k == y) {
+        continue;  
+      }
+      if(getMineState(i, k)) {
+        result++;
       }
     }
   }
-  return true && gameState == INPROGRESS;
+  return result;
 }
 
 void generateMines(int originX, int originY) {
   int attempts = 0;
-  for(int i = 1; i <= optionValues[2] && attempts < 1000; i++) {
-    int x = (int)random(optionValues[0]);
-    int y = (int)random(optionValues[1]);
+  for(int i = 1; i <= optionValues[MINECOUNT] && attempts < 1000; i++) {
+    int x = (int)random(optionValues[GRIDSIZEX]);
+    int y = (int)random(optionValues[GRIDSIZEY]);
     boolean valid = true;
-    if(checkMine(x, y) || x > originX - 2 && x < originX + 2 && y > originY - 2 && y < originY + 2) {
+    if(getMineState(x, y) || x > originX - 2 && x < originX + 2 && y > originY - 2 && y < originY + 2) {
       valid = false;  
     }
-    
     if(valid) {
       minePositions[x][y] = true;
       attempts = 0;
@@ -408,47 +402,23 @@ void generateMines(int originX, int originY) {
   }
 }
 
-int getAdjacentMines(int x, int y) {
-  int result = 0;
-  for(int i = x - 1; i <= x + 1; i++) {
-    if(i >= optionValues[0] || i < 0) {
-      continue;  
-    }
-    for(int k = y - 1; k <= y + 1; k++) { 
-      if(k >= optionValues[1] || k < 0 || x == i && k == y) {
-        continue;  
-      }
-      if(checkMine(i, k)) {
-        result++;
-      }
-    }
-  }
-  return result;
-}
-
-int getAdjacentFlags(int x, int y) {
-  int result = 0;
-  for(int i = x - 1; i <= x + 1; i++) {
-    if(i >= optionValues[0] || i < 0) {
-      continue;  
-    }
-    for(int k = y - 1; k <= y + 1; k++) { 
-      if(k >= optionValues[1] || k < 0 || x == i && k == y) {
-        continue;  
-      }
-      if(getFlagState(i, k)) {
-        result++;
-      }
-    }
-  }
-  return result;  
-}
-
 // ===== HELPER FUNCTIONS =====
 
 String formatMillis(int millis) {
   int seconds = millis / 1000;
   return nf(seconds / 60, 2, 0) + " : " + nf((seconds % 60), 2, 0) + " : " + nf((millis) % 1000, 3, 0);  
+}
+
+boolean setMousePos() {
+  if(gameState == MENU) { return false; }
+  int x = (int)((mouseX - gridOffset.x) / squareSize);
+  int y = (int)((mouseY - gridOffset.y) / squareSize);
+  if(mouseX < gridOffset.x || mouseX > gridOffset.x + gridSize.x || mouseY < gridOffset.y || mouseY > gridOffset.y + gridSize.y + infoAreaY) {
+    return false;  
+  }
+  mX = x;
+  mY = y;
+  return true;
 }
 
 // ===== DRAW FUNCTIONS =====
@@ -459,17 +429,39 @@ void drawMine(int x, int y) {
   } else {
     fill(0);  
   }
-  circle(gridOffset.x + x * squareSize + squareSize * 0.5, gridOffset.y + y * squareSize + squareSize * 0.5, squareSize * 0.8);  
+  circle(gridOffset.x + x * squareSize + squareSize * 0.5, gridOffset.y + y * squareSize + squareSize * 0.5, squareSize * 0.6);  
 }
 
 void drawFlag(int x, int y) {
+  fill(0);
+  rect(gridOffset.x + x * squareSize + squareSize * 0.6, gridOffset.y + y * squareSize + squareSize * 0.3, squareSize * 0.05, squareSize * 0.4);
   fill(255, 0, 0);
-  square(gridOffset.x + x * squareSize + squareSize * 0.25, gridOffset.y + y * squareSize + squareSize * 0.25, squareSize * 0.5);
+  triangle(
+    gridOffset.x + x * squareSize + squareSize * 0.3, gridOffset.y + y * squareSize + squareSize * 0.5,
+    gridOffset.x + x * squareSize + squareSize * 0.6, gridOffset.y + y * squareSize + squareSize * 0.5,
+    gridOffset.x + x * squareSize + squareSize * 0.6, gridOffset.y + y * squareSize + squareSize * 0.3
+  );
 }
 
-void drawSquare(int x, int y, color c, int state) {
-  fill(c);
-  square(gridOffset.x + x * squareSize, gridOffset.y + y * squareSize, squareSize);
+void drawSquare(int x, int y, int c, int state) {
+  if(state == 1) {
+    fill(c);
+    square(gridOffset.x + x * squareSize, gridOffset.y + y * squareSize, squareSize); // Outer
+    fill(c + 65);
+    square(gridOffset.x + x * squareSize + squareSize * 0.05, gridOffset.y + y * squareSize + squareSize * 0.05, squareSize * 0.9); // Middle
+  } else {
+    fill(c - 115);
+    square(gridOffset.x + x * squareSize, gridOffset.y + y * squareSize, squareSize); // Bottom Right
+    fill(c);
+    triangle( // Top Left
+      gridOffset.x + x * squareSize, gridOffset.y + y * squareSize + squareSize,
+      gridOffset.x + x * squareSize, gridOffset.y + y * squareSize,
+      gridOffset.x + x * squareSize + squareSize, gridOffset.y + y * squareSize
+    );
+    fill(c - 50);
+    square(gridOffset.x + x * squareSize + squareSize * 0.1, gridOffset.y + y * squareSize + squareSize * 0.1, squareSize * 0.8); // Middle
+  }
+
   textAlign(CENTER, CENTER);
   textSize(squareSize * 0.8);
   if(state == 1) {
@@ -482,44 +474,41 @@ void drawSquare(int x, int y, color c, int state) {
 }
 
 void drawGameScreen() {
-  for(int i = 0; i < optionValues[0]; i++) {
-    for(int k = 0; k < optionValues[1]; k++) {         
-           
+  for(int i = 0; i < optionValues[GRIDSIZEX]; i++) {
+    for(int k = 0; k < optionValues[GRIDSIZEY]; k++) {         
       if(gridStates[i][k]) {
-        drawSquare(i, k, color(190), 1);
+        drawSquare(i, k, 115, 1);
       } else {
-        drawSquare(i, k, color(220), 0);
+        drawSquare(i, k, 230, 0);
       }
 
       if((rightDown || leftDown) && getSquareState(mX, mY)) {
         if(i - mX >= -1 && i - mX <= 1 && k - mY <= 1 && k - mY >= -1 && !getSquareState(i, k)) {
-          drawSquare(i, k, color(240), 0);
+          drawSquare(i, k, 255, 0);
         }
       }
-      
-      if(testMode & checkMine(i, k)) {
+
+      if(testMode & getMineState(i, k)) {
         drawMine(i, k);
       }
 
-      if(gameState != INPROGRESS && checkMine(i, k)) {
+      if(gameState != INPROGRESS && getMineState(i, k)) {
         drawMine(i, k);
         textAlign(CENTER, CENTER);
         textSize(40);
         fill(255);
       }
       
-      if(getFlagState(i, k)) {
+      if(gameState == INPROGRESS && getFlagState(i, k)) {
         drawFlag(i, k);
       }
     }
   }
     
   if(gameState != INPROGRESS) {
-    String text = "";
+    String text = "You Lost!";
     if(gameState == WON) {
       text = "You Won!";
-    } else {
-      text = "You Lost!";  
     }
     
     textAlign(CENTER, CENTER);
@@ -528,28 +517,47 @@ void drawGameScreen() {
     text(text, width * 0.5, (height + infoAreaY) * 0.5);
   }
 }
+String[] helpText = {"[Arrow Keys] - Adjust Settings", "[Space] - Start", "[Left Click] - Reveal Square", "[Right Click] - Place Flag", "[Click and Hold] - Highlight Adjacent Squares.", "[Left + Right Click] - Clear Adjacent Unflagged Squares"};
 
 void drawMenu() {
+  textSize(30);
+  textAlign(LEFT, CENTER);
+  for(int i = 0; i < helpText.length; i++) {
+    text(helpText[i], width * 0.02, height * (0.7 + 0.05 * i));  
+  }
+  
   textAlign(CENTER, CENTER);
-  textSize(40);
   for(int i = 0; i < optionNames.length; i++) {
     if(i == selectedItem) {
       fill(255, 255, 15);
     } else {
       fill(255);  
     }
-    text(optionNames[i] + ':' + optionValues[i], width * 0.5, height * (0.4 + 0.1 * i));  
+    text(optionNames[i] + ':' + optionValues[i], width * 0.5, height * (0.3 + 0.05 * i));  
   }
+  int totalSquares = optionValues[GRIDSIZEX] * optionValues[GRIDSIZEY];
+  fill(255);
+  text("Total Squares: " + totalSquares, width * 0.5, height * 0.5);
+  text("Mine Density: %" + nf((float)optionValues[MINECOUNT] / totalSquares * 100, 0, 1), width * 0.5, height * 0.55);
+  textSize(60);
+  text("Mine Sweeper", width * 0.5, height * 0.1);
+  
 }
 
 void drawInfoArea() {
-  fill(80);
+  fill(115);
   rect(0, 0, width, infoAreaY);
+  fill(230);
+  triangle(0, infoAreaY, 0, 0, infoAreaY, 0);
+  triangle(width * 0.99, infoAreaY * 0.08, width * 0.99, 0, width, 0);
+  rect(0, 0, width * 0.99, infoAreaY * 0.04);
+  fill(170);
+  rect(width * 0.005, infoAreaY * 0.04, width - width * 0.01, infoAreaY - infoAreaY * 0.08);
   fill(255);
   textSize(40);
   text(formatMillis(timePassed), width * 0.5, infoAreaY - infoAreaY * 0.5);
   textAlign(LEFT, CENTER);
-  text(optionValues[2] - flagsPlaced, width * 0.2, infoAreaY - infoAreaY * 0.5);
+  text(optionValues[MINECOUNT] - flagsPlaced, width * 0.2, infoAreaY - infoAreaY * 0.5);
   textSize(20);
   text("[SPACE] - Pause\n[Q] - Quit\n[R] - Restart\n[M] - Menu", width * 0.8, infoAreaY - infoAreaY * 0.5);
   fill(255, 0, 0);
