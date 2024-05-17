@@ -11,7 +11,7 @@ float plyRotationRate = 0.04;
 int plyMaxHealth = 5;
 // WEAPON VALUES
 int weaponDamage = 1;
-int weaponFireRate = 50;
+int weaponFireRate = 2;
 PVector bulletSize = new PVector(10, 30);
 float bulletSpeed = 0.1;
 int bulletMaxBounces = 1;
