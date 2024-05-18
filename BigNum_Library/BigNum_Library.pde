@@ -1,6 +1,16 @@
-boolean showPassedTests = true;
+boolean showPassedTests = false;
 void setup() {
   // === CONSTRUCTOR TESTS ===
+  
+  BigNum y = new BigNum(5.54, 5);
+  //println(y.fTrim0());
+  //println(y.fSmall());
+  //println(y.fRound());
+  //println(y.toStr());
+  //println(y.toFloat());
+  println(y.fSuffix());
+
+  
   
   BigNum emptyConstructorTest = new BigNum();
   String emptyConstructorResult = "1.0E0";

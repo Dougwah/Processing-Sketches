@@ -355,54 +355,30 @@ class BigNum {
   }
   
   // === FORMATTING ===
-  // return in scientific notation with trimmed .0
-  // return in suffix notation with trimmed 0, rounded to 2 places
-  // return in regular number notation with trimmed .0
-  // return in scientific notation with trimme .0 rouned to 2 places
   
-  String fRound() {
+  String fRound() { // Scientific notation rounded to n decimal places
     BigNum x = getRound(displayPrecision);
-    
-    String strFloat = String.valueOf(x.b);
-    
-    if(strFloat.charAt(strFloat.length() - 1) == '0') {
-      strFloat = String.valueOf((int)x.b);  
-    }
-
-    return strFloat + "e" + String.valueOf(x.e);
+    return trimFloat(x.b) + "e" + String.valueOf(x.e);
   }
   
-  String fTrim0() {
-     return ""; 
+  String fTrim() { // Unrounded scientific notation with trailing .0 trimmed
+     return trimFloat(b) + 'e' + e;
   }
   
-  String fSmall() {
+  String fSmall() { // A regular float rounded to n places with trailing .0 trimmed
     BigNum x = getRound(displayPrecision);
-    String strFloat = String.valueOf(x.toFloat());
-    
-    if(strFloat.charAt(strFloat.length() - 1) == '0') {
-      strFloat = String.valueOf((int)x.toFloat());  
-    }
-
-    return strFloat;
+    return trimFloat(x.toFloat());
   }
   
-  String fSuffix() {
+  String fSuffix() { // Rounded to 2 decimal places with a suffix, returns fSmall if less than 1000
     BigNum x = getRound(displayPrecision);
-    
     if(x.e < 3 || e > suffixes.length * 3) {
       return fSmall();
     }
-    
     x.b *= pow(10, e % 3);
-    String strB = String.valueOf(x.b);
-    
-    if(strB.charAt(strB.length() - 1) == '0') {
-      strB = String.valueOf((int)x.b);  
-    }
-    
-    return strB + suffixes[e / 3 - 1];
+    return trimFloat(x.b) + suffixes[e / 3 - 1];
   }
+  
 }
 
 // === HELPERS ===
@@ -413,6 +389,15 @@ float roundDecimal(float x, int y) {
   }
   int s = getSign(x);
   return round(getAbs(x) * pow(10, y)) / pow(10, y) * s;
+}
+
+String trimFloat(float x) {
+  String str = String.valueOf(x);
+  if(str.substring(str.length() - 2, str.length()).equals(".0")) {
+    str = str.substring(0, str.length() - 2);  
+  }
+  
+  return str;
 }
 
 int getExpo(float x) {
@@ -597,7 +582,7 @@ String[] suffixes = {
 
 ////Finding a decimal root y of x is equivalent to raising x to the power of y
 //float calcRoot(float x, float y) {
-//  return calcPow(x, y);  
+//  return calcPow(x, y);
 //}
 
 ////Number multiplied by itself y times
