@@ -12,7 +12,9 @@ class BigNum {
   }
 
   BigNum(float x) {
-    this(getBase(x), getExpo(x));  
+    e = getExpo(x);
+    b = roundDecimal(getBase(x), abs(e));
+    validate();
   }
   
   BigNum(String x) {
@@ -35,7 +37,7 @@ class BigNum {
     if (b >= 10 || b < 1) {
       int digits = getBDigits();
       e += digits;
-      b = roundDecimal(b * pow(10, -digits), precision);
+      b = roundDecimal(b * pow(10, -digits), precision + 1);
     }
   }
   
@@ -240,15 +242,6 @@ class BigNum {
     BigNum x = bCopy();
     x.setAdd(_b, _e);
     return x;
-    
-    //if (!checkPrecision(_e)) {
-    //  if(_e > e) {
-    //    return new BigNum(_b, _e);
-    //  }
-    //  return bCopy();
-    //}
-    
-    //return new BigNum(b + (_b * pow(10, -(e - _e))), e);
   }
   
   BigNum getAdd(float x) {
@@ -292,32 +285,34 @@ class BigNum {
   // == SQUARE ROOT ==
   
   BigNum getSqrt() {
-    return new BigNum(calcSqrt(b * pow(10, e % 2)), (e - e % 2) / 2);  
+    BigNum x = bCopy();
+    x.setSqrt();
+    return x;
   }
   
   void setSqrt() {
     b *= pow(10, e % 2);
     e = (e - e % 2) / 2;
-    b = calcSqrt(b);
+    b = sqrt(b);
     validate();
   }
   
   // == POWER ==
-  
-  void setPow(int p) {
-    BigNum x = new BigNum();
-    for(int i = 0; i < p; i++) {
-      x.setMult(this);  
-    }
-    bSet(x);
-  }
-  
+
   BigNum getPow(int p) {
     BigNum x = new BigNum();
-    for(int i = 0; i < p; i++) {
-      x.setMult(this);  
+    for(int i = 0; i < abs(p); i++) {
+      if(p > 0) {
+        x.setMult(this);
+      } else {
+        x.setDiv(this);
+      }
     }
     return x;
+  }
+  
+  void setPow(int p) {
+    bSet(getPow(p));
   }
   
   // === HELPERS ===
@@ -348,7 +343,11 @@ class BigNum {
   }
 
   float toFloat() {
-    return b * pow(10, e);
+    float x = b * pow(10, e);
+    if(abs(e) < precision - 1) {
+      x = roundDecimal(x, precision);
+    }
+    return x;
   }
 
   int toInt() {
@@ -356,36 +355,64 @@ class BigNum {
   }
   
   // === FORMATTING ===
+  // return in scientific notation with trimmed .0
+  // return in suffix notation with trimmed 0, rounded to 2 places
+  // return in regular number notation with trimmed .0
+  // return in scientific notation with trimme .0 rouned to 2 places
   
   String fRound() {
     BigNum x = getRound(displayPrecision);
-    return String.valueOf(x.b) + "e" + String.valueOf(x.e);
+    
+    String strFloat = String.valueOf(x.b);
+    
+    if(strFloat.charAt(strFloat.length() - 1) == '0') {
+      strFloat = String.valueOf((int)x.b);  
+    }
+
+    return strFloat + "e" + String.valueOf(x.e);
   }
   
-  String fPrefix() {
+  String fTrim0() {
+     return ""; 
+  }
+  
+  String fSmall() {
     BigNum x = getRound(displayPrecision);
-    return "";
+    String strFloat = String.valueOf(x.toFloat());
+    
+    if(strFloat.charAt(strFloat.length() - 1) == '0') {
+      strFloat = String.valueOf((int)x.toFloat());  
+    }
+
+    return strFloat;
   }
   
+  String fSuffix() {
+    BigNum x = getRound(displayPrecision);
+    
+    if(x.e < 3 || e > suffixes.length * 3) {
+      return fSmall();
+    }
+    
+    x.b *= pow(10, e % 3);
+    String strB = String.valueOf(x.b);
+    
+    if(strB.charAt(strB.length() - 1) == '0') {
+      strB = String.valueOf((int)x.b);  
+    }
+    
+    return strB + suffixes[e / 3 - 1];
+  }
 }
 
 // === HELPERS ===
 
-int getDecimals(float x) {
-  String y = String.valueOf(x);
-  return y.substring(y.indexOf('.') + 1).length();
-}
-
-float trimDecimal(float x, int y) {
-  if(getDecimals(x) > y) {
-    return Float.valueOf(String.valueOf(x).substring(0, y + 2));  
-  }
-  return x;
-}
-
 float roundDecimal(float x, int y) {
+  if(y > precision) {
+    return x;  
+  }
   int s = getSign(x);
-  return round(getAbs(x) * (pow(10, y))) / pow(10, y) * s;
+  return round(getAbs(x) * pow(10, y)) / pow(10, y) * s;
 }
 
 int getExpo(float x) {
@@ -427,60 +454,6 @@ float getAbs(float x) {
 
 double getAbs(double x) {
   return x * getSign(x);
-}
-
-float calcSqrt(float x) {
-  return calcRoot(x, 2);
-}
-
-// What number must be multiplied together y times to equal x
-float calcRoot(float x, int y) {
-  float high = x;
-  float low = 1;
-  float mid = 0;
-  
-  for(int i = 0; i < 100; i++) {
-    mid = (high + low) * 0.5;
-
-    if(calcPow(mid, y) > x) {
-      high = mid;  
-    } else {
-      low = mid;
-    }
-  }
-
-  return mid;
-}
-
-//Finding a decimal root y of x is equivalent to raising x to the power of y
-float calcRoot(float x, float y) {
-  return calcPow(x, y);  
-}
-
-//Number multiplied by itself y times
-float calcPow(float x, int y) {
-  float result = 1;
-  for(int i = 0; i < getAbs(y); i++) {
-    if(y > 0) {
-      result *= x;    
-    } else {
-      result /= x;
-    }
-  }
-  return result;
-}
-
-//Make the exponent a whole number by multiplying it by it 10 to the power of its figures
-//find the root of x to the exponent
-//return the root of x to the power of y * its exponent
-float calcPow(float base, float expo) {
-  
-  int digits = (int)calcPow(10, getDecimals(expo));
-  println(digits);
-  float root = calcRoot(base, digits);
- 
-  println(pow(pow(base, 1.0 / digits), (int)(expo * digits)));
-  return calcPow(root, (int)(expo * digits));  
 }
 
 String[] suffixes = {
@@ -596,3 +569,72 @@ String[] suffixes = {
   "NogNoGe", "UNogNoGe", "DNogNoGe", "TNogNoGe", "QdNogNoGe", "QnNogNoGe", "SxNogNoGe", "SpNogNoGe", "OcNogNoGe", "NoNogNoGe", // 1e3000
   "Mi"
 };
+
+// Attempting to mimic math library functions, Has precision errors
+
+//float calcSqrt(float x) {
+//  return calcRoot(x, 2);
+//}
+
+//// What number must be multiplied together y times to equal x
+//float calcRoot(float x, int y) {
+//  float high = x;
+//  float low = 1;
+//  float mid = 0;
+  
+//  for(int i = 0; i < 100; i++) {
+//    mid = (high + low) * 0.5;
+
+//    if(calcPow(mid, y) > x) {
+//      high = mid;  
+//    } else {
+//      low = mid;
+//    }
+//  }
+
+//  return mid;
+//}
+
+////Finding a decimal root y of x is equivalent to raising x to the power of y
+//float calcRoot(float x, float y) {
+//  return calcPow(x, y);  
+//}
+
+////Number multiplied by itself y times
+//float calcPow(float x, int y) {
+//  float result = 1;
+//  for(int i = 0; i < getAbs(y); i++) {
+//    if(y > 0) {
+//      result *= x;    
+//    } else {
+//      result /= x;
+//    }
+//  }
+//  return result;
+//}
+
+////Make the exponent a whole number by multiplying it by it 10 to the power of its figures
+////find the root of x to the exponent
+////return the root of x to the power of y * its exponent
+//float calcPow(float base, float expo) {
+  
+//  int digits = (int)calcPow(10, getDecimals(expo));
+//  println(digits);
+//  float root = calcRoot(base, digits);
+ 
+//  println(pow(pow(base, 1.0 / digits), (int)(expo * digits)));
+//  return calcPow(root, (int)(expo * digits));  
+//}
+
+//int getDecimals(float x) {
+//  String y = String.valueOf(x);
+//  return y.substring(y.indexOf('.') + 1).length();
+//}
+
+//float trimDecimal(float x, int y) {
+//  println(getDecimals(x));
+//  if(getDecimals(x) > y) {
+//    return Float.valueOf(String.valueOf(x).substring(0, y + 2));  
+//  }
+//  return x;
+//}
