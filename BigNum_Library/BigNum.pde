@@ -1,4 +1,5 @@
 int precision = 6; // Maxmimum amount of decimals stored in a float
+int displayPrecision = 2;
 
 class BigNum {
   float b;
@@ -21,13 +22,16 @@ class BigNum {
     );
   }
   
+  BigNum() {
+    this(1, 0);
+  }
+  
   void validate() {
     if (b == 0) {
       e = 0;
       return;
     }
 
-   
     if (b >= 10 || b < 1) {
       int digits = getBDigits();
       e += digits;
@@ -37,6 +41,11 @@ class BigNum {
   
   BigNum bCopy() {
     return new BigNum(b, e);  
+  }
+  
+  void bSet(BigNum x) {
+    b = x.b;
+    e = x.e;
   }
   
   // === COMPARISON ===
@@ -121,6 +130,13 @@ class BigNum {
   
   void setRound(int d) {
     b = roundDecimal(b, d);
+    validate();
+  }
+  
+  BigNum getRound(int d) {
+    BigNum x = bCopy();
+    x.setRound(d);
+    return x;
   }
   
   // == MULTIPLY ==
@@ -144,7 +160,9 @@ class BigNum {
   // = GET =
   
   BigNum getMult(float _b, int _e) {
-    return new BigNum(b * _b, e + _e);  
+    BigNum x = bCopy();
+    x.setMult(_b, _e);
+    return x;
   }
   
   BigNum getMult(float x) {
@@ -176,7 +194,9 @@ class BigNum {
   // = GET =
   
   BigNum getDiv(float _b, int _e) {
-    return new BigNum(b / _b, e - _e);  
+    BigNum x = bCopy();
+    x.setDiv(_b, _e);
+    return x; 
   }
   
   BigNum getDiv(float x) {
@@ -217,14 +237,18 @@ class BigNum {
   // = GET =
   
   BigNum getAdd(float _b, int _e) {
-    if (!checkPrecision(_e)) {
-      if(_e > e) {
-        return new BigNum(_b, _e);
-      }
-      return bCopy();
-    }
+    BigNum x = bCopy();
+    x.setAdd(_b, _e);
+    return x;
     
-    return new BigNum(b + (_b * pow(10, -(e - _e))), e);
+    //if (!checkPrecision(_e)) {
+    //  if(_e > e) {
+    //    return new BigNum(_b, _e);
+    //  }
+    //  return bCopy();
+    //}
+    
+    //return new BigNum(b + (_b * pow(10, -(e - _e))), e);
   }
   
   BigNum getAdd(float x) {
@@ -257,6 +281,14 @@ class BigNum {
     return getAdd(-_b, _e);  
   }
   
+  BigNum getSub(float x) {
+    return getSub(getBase(x), getExpo(x));  
+  }
+  
+  BigNum getSub(BigNum x) {
+    return getSub(x.b, x.e);
+  }
+  
   // == SQUARE ROOT ==
   
   BigNum getSqrt() {
@@ -268,6 +300,24 @@ class BigNum {
     e = (e - e % 2) / 2;
     b = calcSqrt(b);
     validate();
+  }
+  
+  // == POWER ==
+  
+  void setPow(int p) {
+    BigNum x = new BigNum();
+    for(int i = 0; i < p; i++) {
+      x.setMult(this);  
+    }
+    bSet(x);
+  }
+  
+  BigNum getPow(int p) {
+    BigNum x = new BigNum();
+    for(int i = 0; i < p; i++) {
+      x.setMult(this);  
+    }
+    return x;
   }
   
   // === HELPERS ===
@@ -304,6 +354,19 @@ class BigNum {
   int toInt() {
     return (int)toFloat();
   }
+  
+  // === FORMATTING ===
+  
+  String fRound() {
+    BigNum x = getRound(displayPrecision);
+    return String.valueOf(x.b) + "e" + String.valueOf(x.e);
+  }
+  
+  String fPrefix() {
+    BigNum x = getRound(displayPrecision);
+    return "";
+  }
+  
 }
 
 // === HELPERS ===
@@ -419,3 +482,117 @@ float calcPow(float base, float expo) {
   println(pow(pow(base, 1.0 / digits), (int)(expo * digits)));
   return calcPow(root, (int)(expo * digits));  
 }
+
+String[] suffixes = {
+  "K", "M", "B", "T", "Qd", "Qn", "Sx", "Sp", "Oc", "No", // 1e30
+
+  "De","UDe", "DDe", "TDe", "QdDe", "QnDe", "SxDe", "SpDe", "OcDe", "NoDe", // 1e60
+  "Vg", "UVg", "DVg", "TVg", "QdVg", "QnVg", "SxVg", "SpVg", "OcVg", "NoVg",
+  "Tg", "UTg", "DTg", "TTg", "QdTg", "QnTg", "SxTg", "SpTg", "OcTg", "NoTg",
+  "Qdg", "UQdg", "DQdg", "TQdg", "QdQdg", "QnQdg", "SxQdg", "SpQdg", "OcQdg", "NoQdg",
+  "Qng", "UQng", "DQng", "TQng", "QdQng", "QnQng", "SxQng", "SpQng", "OcQng", "NoQng",
+  "Sxg", "USxg", "DSxg", "TSxg", "QdSxg", "QnSxg", "SxSxg", "SpSxg", "OcSxg", "NoSxg",
+  "Spg", "USpg", "DSpg", "TSpg", "QdSpg", "QnSpg", "SxSpg", "SpSpg", "OcSpg", "NoSpg",
+  "Ocg", "UOcg", "DOcg", "TOcg", "QdOcg", "QnOcg", "SxOcg", "SpOcg", "OcOcg", "NoOcg",
+  "Nog", "UNog", "DNog", "TNog", "QdNog", "QnNog", "SxNog", "SpNog", "OcNog", "NoNog", // 1e300
+
+  "Ce", "UCe", "DCe", "TCe", "QdCe", "QnCe", "SxCe", "SpCe", "OcCe", "NoCe",
+  "DeCe", "UDeCe", "DDeCe","TDeCe", "QdDeCe", "QnDeCe", "SxDeCe", "SpDeCe", "OcDeCe", "NoDeCe",
+  "VgCe", "UVgCe", "DVgCe", "TVgCe", "QdVgCe", "QnVgCe", "SxVgCe", "SpVgCe", "OcVgCe", "NoVgCe",
+  "TgCe", "UTgCe", "DTgCe", "TTgCe", "QdTgCe", "QnTgCe", "SxTgCe", "SpTgCe", "OcTgCe", "NoTgCe",
+  "QdgCe", "UQdgCe", "DQdgCe", "TQdgCe", "QdQdgCe", "QnQdgCe", "SxQdgCe", "SpQdgCe", "OcQdgCe", "NoQdgCe",
+  "QngCe", "UQngCe", "DQngCe", "TQngCe", "QdQngCe", "QnQngCe", "SxQngCe", "SpQngCe", "OcQngCe", "NoQngCe",
+  "SxgCe", "USxgCe", "DSxgCe", "TSxgCe", "QdSxgCe", "QnSxgCe", "SxSxgCe", "SpSxgCe", "OcSxgCe", "NoSxgCe",  
+  "SpgCe", "USpgCe", "DSpgCe", "TSpgCe", "QdSpgCe", "QnSpgCe", "SxSpgCe", "SpSpgCe", "OcSpgCe", "NoSpgCe",
+  "OcgCe", "UOcgCe", "DOcgCe", "TOcgCe", "QdOcgCe", "QnOcgCe", "SxOcgCe", "SpOcgCe", "OcOcgCe", "NoOcgCe",
+  "NogCe", "UNogCe", "DNogCe", "TNogCe", "QdNogCe", "QnNogCe", "SxNogCe", "SpNogCe", "OcNogCe", "NoNogCe", // 1e600
+  
+  "DuCe", "UDuCe", "DDuCe", "TDuCe", "QdDuCe", "QnDuCe", "SxDuCe", "SpDuCe", "OcDuCe", "NoDuCe",
+  "DeDuCe", "UDeDuCe", "DDeDuCe", "TDeDuCe", "QdDeDuCe", "QnDeDuCe", "SxDeDuCe", "SpDeDuCe", "OcDeDuCe", "NoDeDuCe", 
+  "VgDuCe", "UVgDuCe", "DVgDuCe", "TVgDuCe", "QdVgDuCe", "QnVgDuCe", "SxVgDuCe", "SpVgDuCe", "OcVgDuCe", "NoVgDuCe",
+  "TgDuCe", "UTgDuCe", "DTgDuCe", "TTgDuCe", "QdTgDuCe", "QnTgDuCe", "SxTgDuCe", "SpTgDuCe", "OcTgDuCe", "NoTgDuCe",
+  "QdgDuCe", "UQdgDuCe", "DQdgDuCe", "TQdgDuCe", "QdQdgDuCe", "QnQdgDuCe", "SxQdgDuCe", "SpQdgDuCe", "OcQdgDuCe", "NoQdgDuCe",
+  "QngDuCe", "UQngDuCe", "DQngDuCe", "TQngDuCe", "QdQngDuCe", "QnQngDuCe", "SxQngDuCe", "SpQngDuCe", "OcQngDuCe", "NoQngDuCe",
+  "SxgDuCe", "USxgDuCe", "DSxgDuCe", "TSxgDuCe", "QdSxgDuCe", "QnSxgDuCe", "SxSxgDuCe", "SpSxgDuCe", "OcSxgDuCe", "NoSxgDuCe",  
+  "SpgDuCe", "USpgDuCe", "DSpgDuCe", "TSpgDuCe", "QdSpgDuCe", "QnSpgDuCe", "SxSpgDuCe", "SpSpgDuCe", "OcSpgDuCe", "NoSpgDuCe",
+  "OcgDuCe", "UOcgDuCe", "DOcgDuCe", "TOcgDuCe", "QdOcgDuCe", "QnOcgDuCe", "SxOcgDuCe", "SpOcgDuCe", "OcOcgDuCe", "NoOcgDuCe",
+  "NogDuCe", "UNogDuCe", "DNogDuCe", "TNogDuCe", "QdNogDuCe", "QnNogDuCe", "SxNogDuCe", "SpNogDuCe", "OcNogDuCe", "NoNogDuCe", // 1e900
+
+  "TuCe", "UTuCe", "DTuCe", "TTuCe", "QdTuCe", "QnTuCe", "SxTuCe", "SpTuCe", "OcTuCe", "NoTuCe",
+  "DeTuCe", "UDeTuCe", "DDeTuCe", "TDeTuCe", "QdDeTuCe", "QnDeTuCe", "SxDeTuCe", "SpDeTuCe", "OcDeTuCe", "NoDeTuCe",
+  "VgTuCe", "UVgTuCe", "DVgTuCe", "TVgTuCe", "QdVgTuCe", "QnVgTuCe", "SxVgTuCe", "SpVgTuCe", "OcVgTuCe", "NoVgTuCe",
+  "TgTuCe", "UTgTuCe", "DTgTuCe", "TTgTuCe", "QdTgTuCe", "QnTgTuCe", "SxTgTuCe", "SpTgTuCe", "OcTgTuCe", "NoTgTuCe",
+  "QdgTuCe", "UQdgTuCe", "DQdgTuCe", "TQdgTuCe", "QdQdgTuCe", "QnQdgTuCe", "SxQdgTuCe", "SpQdgTuCe", "OcQdgTuCe", "NoQdgTuCe",
+  "QngTuCe", "UQngTuCe", "DQngTuCe", "TQngTuCe", "QdQngTuCe", "QnQngTuCe", "SxQngTuCe", "SpQngTuCe", "OcQngTuCe", "NoQngTuCe",
+  "SxgTuCe", "USxgTuCe", "DSxgTuCe", "TSxgTuCe", "QdSxgTuCe", "QnSxgTuCe", "SxSxgTuCe", "SpSxgTuCe", "OcSxgTuCe", "NoSxgTuCe",  
+  "SpgTuCe", "USpgTuCe", "DSpgTuCe", "TSpgTuCe", "QdSpgTuCe", "QnSpgTuCe", "SxSpgTuCe", "SpSpgTuCe", "OcSpgTuCe", "NoSpgTuCe",
+  "OcgTuCe", "UOcgTuCe", "DOcgTuCe", "TOcgTuCe", "QdOcgTuCe", "QnOcgTuCe", "SxOcgTuCe", "SpOcgTuCe", "OcOcgTuCe", "NoOcgTuCe",
+  "NogTuCe", "UNogTuCe", "DNogTuCe", "TNogTuCe", "QdNogTuCe", "QnNogTuCe", "SxNogTuCe", "SpNogTuCe", "OcNogTuCe", "NoNogTuCe", // 1e1200
+  
+  "QdGe", "UQdGe", "DQdGe", "TQdGe", "QdQdGe", "QnQdGe", "SxQdGe", "SpQdGe", "OcQdGe", "NoQdGe",
+  "DeQdGe", "UDeQdGe", "DDeQdGe", "TDeQdGe", "QdDeQdGe", "QnDeQdGe", "SxDeQdGe", "SpDeQdGe", "OcDeQdGe", "NoDeQdGe",
+  "VgQdGe", "UVgQdGe", "DVgQdGe", "TVgQdGe", "QdVgQdGe", "QnVgQdGe", "SxVgQdGe", "SpVgQdGe", "OcVgQdGe", "NoVgQdGe",
+  "TgQdGe", "UTgQdGe", "DTgQdGe", "TTgQdGe", "QdTgQdGe", "QnTgQdGe", "SxTgQdGe", "SpTgQdGe", "OcTgQdGe", "NoTgQdGe",
+  "QdgQdGe", "UQdgQdGe", "DQdgQdGe", "TQdgQdGe", "QdQdgQdGe", "QnQdgQdGe", "SxQdgQdGe", "SpQdgQdGe", "OcQdgQdGe", "NoQdgQdGe",
+  "QngQdGe", "UQngQdGe", "DQngQdGe", "TQngQdGe", "QdQngQdGe", "QnQngQdGe", "SxQngQdGe", "SpQngQdGe", "OcQngQdGe", "NoQngQdGe",
+  "SxgQdGe", "USxgQdGe", "DSxgQdGe", "TSxgQdGe", "QdSxgQdGe", "QnSxgQdGe", "SxSxgQdGe", "SpSxgQdGe", "OcSxgQdGe", "NoSxgQdGe",  
+  "SpgQdGe", "USpgQdGe", "DSpgQdGe", "TSpgQdGe", "QdSpgQdGe", "QnSpgQdGe", "SxSpgQdGe", "SpSpgQdGe", "OcSpgQdGe", "NoSpgQdGe",
+  "OcgQdGe", "UOcgQdGe", "DOcgQdGe", "TOcgQdGe", "QdOcgQdGe", "QnOcgQdGe", "SxOcgQdGe", "SpOcgQdGe", "OcOcgQdGe", "NoOcgQdGe",
+  "NogQdGe", "UNogQdGe", "DNogQdGe", "TNogQdGe", "QdNogQdGe", "QnNogQdGe", "SxNogQdGe", "SpNogQdGe", "OcNogQdGe", "NoNogQdGe", // 1e1500
+  
+  "QnGe", "UQnGe", "DQnGe", "TQnGe", "QdQnGe", "QnQnGe", "SxQnGe", "SpQnGe", "OcQnGe", "NoQnGe",
+  "DeQnGe", "UDeQnGe", "DDeQnGe", "TDeQnGe", "QdDeQnGe", "QnDeQnGe", "SxDeQnGe", "SpDeQnGe", "OcDeQnGe", "NoDeQnGe",
+  "VgQnGe", "UVgQnGe", "DVgQnGe", "TVgQnGe", "QdVgQnGe", "QnVgQnGe", "SxVgQnGe", "SpVgQnGe", "OcVgQnGe", "NoVgQnGe",
+  "TgQnGe", "UTgQnGe", "DTgQnGe", "TTgQnGe", "QdTgQnGe", "QnTgQnGe", "SxTgQnGe", "SpTgQnGe", "OcTgQnGe", "NoTgQnGe",
+  "QdgQnGe", "UQdgQnGe", "DQdgQnGe", "TQdgQnGe", "QdQdgQnGe", "QnQdgQnGe", "SxQdgQnGe", "SpQdgQnGe", "OcQdgQnGe", "NoQdgQnGe",
+  "QngQnGe", "UQngQnGe", "DQngQnGe", "TQngQnGe", "QdQngQnGe", "QnQngQnGe", "SxQngQnGe", "SpQngQnGe", "OcQngQnGe", "NoQngQnGe",
+  "SxgQnGe", "USxgQnGe", "DSxgQnGe", "TSxgQnGe", "QdSxgQnGe", "QnSxgQnGe", "SxSxgQnGe", "SpSxgQnGe", "OcSxgQnGe", "NoSxgQnGe",  
+  "SpgQnGe", "USpgQnGe", "DSpgQnGe", "TSpgQnGe", "QdSpgQnGe", "QnSpgQnGe", "SxSpgQnGe", "SpSpgQnGe", "OcSpgQnGe", "NoSpgQnGe",
+  "OcgQnGe", "UOcgQnGe", "DOcgQnGe", "TOcgQnGe", "QdOcgQnGe", "QnOcgQnGe", "SxOcgQnGe", "SpOcgQnGe", "OcOcgQnGe", "NoOcgQnGe",
+  "NogQnGe", "UNogQnGe", "DNogQnGe", "TNogQnGe", "QdNogQnGe", "QnNogQnGe", "SxNogQnGe", "SpNogQnGe", "OcNogQnGe", "NoNogQnGe", // 1e1800
+  
+  "SxGe", "USxGe", "DSxGe", "TSxGe", "QdSxGe", "QnSxGe", "SxSxGe", "SpSxGe", "OcSxGe", "NoSxGe",
+  "DeSxGe", "UDeSxGe", "DDeSxGe", "TDeSxGe", "QdDeSxGe", "QnDeSxGe", "SxDeSxGe", "SpDeSxGe", "OcDeSxGe", "NoDeSxGe",
+  "VgSxGe", "UVgSxGe", "DVgSxGe", "TVgSxGe", "QdVgSxGe", "QnVgSxGe", "SxVgSxGe", "SpVgSxGe", "OcVgSxGe", "NoVgSxGe",
+  "TgSxGe", "UTgSxGe", "DTgSxGe", "TTgSxGe", "QdTgSxGe", "QnTgSxGe", "SxTgSxGe", "SpTgSxGe", "OcTgSxGe", "NoTgSxGe",
+  "QdgSxGe", "UQdgSxGe", "DQdgSxGe", "TQdgSxGe", "QdQdgSxGe", "QnQdgSxGe", "SxQdgSxGe", "SpQdgSxGe", "OcQdgSxGe", "NoQdgSxGe",
+  "QngSxGe", "UQngSxGe", "DQngSxGe", "TQngSxGe", "QdQngSxGe", "QnQngSxGe", "SxQngSxGe", "SpQngSxGe", "OcQngSxGe", "NoQngSxGe",
+  "SxgSxGe", "USxgSxGe", "DSxgSxGe", "TSxgSxGe", "QdSxgSxGe", "QnSxgSxGe", "SxSxgSxGe", "SpSxgSxGe", "OcSxgSxGe", "NoSxgSxGe",  
+  "SpgSxGe", "USpgSxGe", "DSpgSxGe", "TSpgSxGe", "QdSpgSxGe", "QnSpgSxGe", "SxSpgSxGe", "SpSpgSxGe", "OcSpgSxGe", "NoSpgSxGe",
+  "OcgSxGe", "UOcgSxGe", "DOcgSxGe", "TOcgSxGe", "QdOcgSxGe", "QnOcgSxGe", "SxOcgSxGe", "SpOcgSxGe", "OcOcgSxGe", "NoOcgSxGe",
+  "NogSxGe", "UNogSxGe", "DNogSxGe", "TNogSxGe", "QdNogSxGe", "QnNogSxGe", "SxNogSxGe", "SpNogSxGe", "OcNogSxGe", "NoNogSxGe", // 1e2100
+  
+  "SpGe", "USpGe", "DSpGe", "TSpGe", "QdSpGe", "QnSpGe", "SxSpGe", "SpSpGe", "OcSpGe", "NoSpGe",
+  "DeSpGe", "UDeSpGe", "DDeSpGe", "TDeSpGe", "QdDeSpGe", "QnDeSpGe", "SxDeSpGe", "SpDeSpGe", "OcDeSpGe", "NoDeSpGe",
+  "VgSpGe", "UVgSpGe", "DVgSpGe", "TVgSpGe", "QdVgSpGe", "QnVgSpGe", "SxVgSpGe", "SpVgSpGe", "OcVgSpGe", "NoVgSpGe",
+  "TgSpGe", "UTgSpGe", "DTgSpGe", "TTgSpGe", "QdTgSpGe", "QnTgSpGe", "SxTgSpGe", "SpTgSpGe", "OcTgSpGe", "NoTgSpGe",
+  "QdgSpGe", "UQdgSpGe", "DQdgSpGe", "TQdgSpGe", "QdQdgSpGe", "QnQdgSpGe", "SxQdgSpGe", "SpQdgSpGe", "OcQdgSpGe", "NoQdgSpGe",
+  "QngSpGe", "UQngSpGe", "DQngSpGe", "TQngSpGe", "QdQngSpGe", "QnQngSpGe", "SxQngSpGe", "SpQngSpGe", "OcQngSpGe", "NoQngSpGe",
+  "SxgSpGe", "USxgSpGe", "DSxgSpGe", "TSxgSpGe", "QdSxgSpGe", "QnSxgSpGe", "SxSxgSpGe", "SpSxgSpGe", "OcSxgSpGe", "NoSxgSpGe",  
+  "SpgSpGe", "USpgSpGe", "DSpgSpGe", "TSpgSpGe", "QdSpgSpGe", "QnSpgSpGe", "SxSpgSpGe", "SpSpgSpGe", "OcSpgSpGe", "NoSpgSpGe",
+  "OcgSpGe", "UOcgSpGe", "DOcgSpGe", "TOcgSpGe", "QdOcgSpGe", "QnOcgSpGe", "SxOcgSpGe", "SpOcgSpGe", "OcOcgSpGe", "NoOcgSpGe",
+  "NogSpGe", "UNogSpGe", "DNogSpGe", "TNogSpGe", "QdNogSpGe", "QnNogSpGe", "SxNogSpGe", "SpNogSpGe", "OcNogSpGe", "NoNogSpGe", // 1e2400
+  
+  "OcGe", "UOcGe", "DOcGe", "TOcGe", "QdOcGe", "QnOcGe", "SxOcGe", "SpOcGe", "OcOcGe", "NoOcGe",
+  "DeOcGe", "UDeOcGe", "DDeOcGe", "TDeOcGe", "QdDeOcGe", "QnDeOcGe", "SxDeOcGe", "SpDeOcGe", "OcDeOcGe", "NoDeOcGe",
+  "VgOcGe", "UVgOcGe", "DVgOcGe", "TVgOcGe", "QdVgOcGe", "QnVgOcGe", "SxVgOcGe", "SpVgOcGe", "OcVgOcGe", "NoVgOcGe",
+  "TgOcGe", "UTgOcGe", "DTgOcGe", "TTgOcGe", "QdTgOcGe", "QnTgOcGe", "SxTgOcGe", "SpTgOcGe", "OcTgOcGe", "NoTgOcGe",
+  "QdgOcGe", "UQdgOcGe", "DQdgOcGe", "TQdgOcGe", "QdQdgOcGe", "QnQdgOcGe", "SxQdgOcGe", "SpQdgOcGe", "OcQdgOcGe", "NoQdgOcGe",
+  "QngOcGe", "UQngOcGe", "DQngOcGe", "TQngOcGe", "QdQngOcGe", "QnQngOcGe", "SxQngOcGe", "SpQngOcGe", "OcQngOcGe", "NoQngOcGe",
+  "SxgOcGe", "USxgOcGe", "DSxgOcGe", "TSxgOcGe", "QdSxgOcGe", "QnSxgOcGe", "SxSxgOcGe", "SpSxgOcGe", "OcSxgOcGe", "NoSxgOcGe",  
+  "SpgOcGe", "USpgOcGe", "DSpgOcGe", "TSpgOcGe", "QdSpgOcGe", "QnSpgOcGe", "SxSpgOcGe", "SpSpgOcGe", "OcSpgOcGe", "NoSpgOcGe",
+  "OcgOcGe", "UOcgOcGe", "DOcgOcGe", "TOcgOcGe", "QdOcgOcGe", "QnOcgOcGe", "SxOcgOcGe", "SpOcgOcGe", "OcOcgOcGe", "NoOcgOcGe",
+  "NogOcGe", "UNogOcGe", "DNogOcGe", "TNogOcGe", "QdNogOcGe", "QnNogOcGe", "SxNogOcGe", "SpNogOcGe", "OcNogOcGe", "NoNogOcGe", // 1e2700
+
+  "NoGe", "UNoGe", "DNoGe", "TNoGe", "QdNoGe", "QnNoGe", "SxNoGe", "SpNoGe", "OcNoGe", "NoNoGe",
+  "DeNoGe", "UDeNoGe", "DDeNoGe", "TDeNoGe", "QdDeNoGe", "QnDeNoGe", "SxDeNoGe", "SpDeNoGe", "OcDeNoGe", "NoDeNoGe",
+  "VgNoGe", "UVgNoGe", "DVgNoGe", "TVgNoGe", "QdVgNoGe", "QnVgNoGe", "SxVgNoGe", "SpVgNoGe", "OcVgNoGe", "NoVgNoGe",
+  "TgNoGe", "UTgNoGe", "DTgNoGe", "TTgNoGe", "QdTgNoGe", "QnTgNoGe", "SxTgNoGe", "SpTgNoGe", "OcTgNoGe", "NoTgNoGe",
+  "QdgNoGe", "UQdgNoGe", "DQdgNoGe", "TQdgNoGe", "QdQdgNoGe", "QnQdgNoGe", "SxQdgNoGe", "SpQdgNoGe", "OcQdgNoGe", "NoQdgNoGe",
+  "QngNoGe", "UQngNoGe", "DQngNoGe", "TQngNoGe", "QdQngNoGe", "QnQngNoGe", "SxQngNoGe", "SpQngNoGe", "OcQngNoGe", "NoQngNoGe",
+  "SxgNoGe", "USxgNoGe", "DSxgNoGe", "TSxgNoGe", "QdSxgNoGe", "QnSxgNoGe", "SxSxgNoGe", "SpSxgNoGe", "OcSxgNoGe", "NoSxgNoGe",  
+  "SpgNoGe", "USpgNoGe", "DSpgNoGe", "TSpgNoGe", "QdSpgNoGe", "QnSpgNoGe", "SxSpgNoGe", "SpSpgNoGe", "OcSpgNoGe", "NoSpgNoGe",
+  "OcgNoGe", "UOcgNoGe", "DOcgNoGe", "TOcgNoGe", "QdOcgNoGe", "QnOcgNoGe", "SxOcgNoGe", "SpOcgNoGe", "OcOcgNoGe", "NoOcgNoGe",
+  "NogNoGe", "UNogNoGe", "DNogNoGe", "TNogNoGe", "QdNogNoGe", "QnNogNoGe", "SxNogNoGe", "SpNogNoGe", "OcNogNoGe", "NoNogNoGe", // 1e3000
+  "Mi"
+};

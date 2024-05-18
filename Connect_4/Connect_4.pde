@@ -33,7 +33,7 @@ void draw() {
 }
 
 void mousePressed() {
-  if(gameState == 1) {
+  if(gameState == 1 && mX < gridSizeX) {
     placeDisk();
   }
 }

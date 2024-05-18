@@ -105,7 +105,7 @@ void keyPressed() {
 }
 
 void mousePressed() {
-  if(!setMousePos() || paused) { return; }
+  if(!setMousePos() || paused || gameState != INPROGRESS) { return; }
   if(mouseButton == LEFT) {
     leftDown = true;
     if(rightDown) {
@@ -152,12 +152,6 @@ void attemptReveal() {
     generateMines(mX, mY);
   }
     
-  if(getMineState(mX, mY)) {
-    clickedMine = new int[] {mX, mY};
-    loseGame();
-    return;
-  }
-  
   if(!getFlagState(mX, mY) && !getSquareState(mX, mY)) {
     setSquareState(mX, mY);
     leftDown = false;
@@ -238,7 +232,6 @@ void newGame() {
 }
 
 void loseGame() {
-  revealAllSquares();
   gameState = LOST;
 }
 
@@ -298,14 +291,6 @@ boolean checkComplete() {
   return true && gameState == INPROGRESS;
 }
 
-void revealAllSquares() {
-  for(int i = 0; i < optionValues[GRIDSIZEX]; i++) {
-    for(int k = 0; k < optionValues[GRIDSIZEY]; k++) {
-      setSquareState(i, k);  
-    }
-  }
-}
-
 void revealNonFlaggedSquares(int x, int y) {
   if(getAdjacentFlags(x, y) != getAdjacentMines(x, y)) {
     return;  
@@ -319,10 +304,6 @@ void revealNonFlaggedSquares(int x, int y) {
         continue;  
       }
       if(!getSquareState(i, k) && !getFlagState(i, k)) {
-        if(getMineState(i, k)) {
-          clickedMine = new int[] {i, k};
-          loseGame();
-        }
         if(getAdjacentMines(i, k) == 0)  {
           revealAdjacentSquares(i, k); 
         } else {
@@ -354,6 +335,13 @@ void revealAdjacentSquares(int x, int y) {
 
 void setSquareState(int x, int y) {
   gridStates[x][y] = true;
+  
+  if(getMineState(x, y)) {
+    clickedMine = new int[] {x, y};
+    loseGame();
+    return;
+  }
+  
   if(getFlagState(x, y)) {
     setFlagState(x, y);
   }
@@ -433,7 +421,7 @@ void drawMine(int x, int y) {
 }
 
 void drawFlag(int x, int y) {
-  fill(0);
+  fill(255);
   rect(gridOffset.x + x * squareSize + squareSize * 0.6, gridOffset.y + y * squareSize + squareSize * 0.3, squareSize * 0.05, squareSize * 0.4);
   fill(255, 0, 0);
   triangle(
@@ -487,7 +475,7 @@ void drawGameScreen() {
           drawSquare(i, k, 255, 0);
         }
       }
-
+     
       if(testMode & getMineState(i, k)) {
         drawMine(i, k);
       }
@@ -499,7 +487,7 @@ void drawGameScreen() {
         fill(255);
       }
       
-      if(gameState == INPROGRESS && getFlagState(i, k)) {
+      if(getFlagState(i, k)) {
         drawFlag(i, k);
       }
     }
