@@ -1,4 +1,4 @@
-int precision = 6; // Maxmimum amount of decimals stored in a float
+int precision = 7; // Maxmimum amount of decimals stored in a float
 int displayPrecision = 2;
 
 class BigNum {
@@ -13,7 +13,7 @@ class BigNum {
 
   BigNum(float x) {
     e = getExpo(x);
-    b = roundDecimal(getBase(x), abs(e));
+    b = roundFloat(getBase(x), getAbs(e));
     validate();
   }
   
@@ -34,11 +34,13 @@ class BigNum {
       return;
     }
 
+    int digits = getBDigits();
+    
     if (b >= 10 || b < 1) {
-      int digits = getBDigits();
       e += digits;
-      b = roundDecimal(b * pow(10, -digits), precision + 1);
     }
+    
+    b = roundFloat(b * pow(10, -digits), precision);
   }
   
   BigNum bCopy() {
@@ -131,7 +133,7 @@ class BigNum {
   }
   
   void setRound(int d) {
-    b = roundDecimal(b, d);
+    b = roundFloat(b, d);
     validate();
   }
   
@@ -301,7 +303,7 @@ class BigNum {
 
   BigNum getPow(int p) {
     BigNum x = new BigNum();
-    for(int i = 0; i < abs(p); i++) {
+    for(int i = 0; i < getAbs(p); i++) {
       if(p > 0) {
         x.setMult(this);
       } else {
@@ -339,15 +341,11 @@ class BigNum {
   // === CASTING ===
 
   String toStr() {
-    return String.valueOf(b) + "E" + String.valueOf(e);
+    return b + "E" + e;
   }
 
   float toFloat() {
-    float x = b * pow(10, e);
-    if(abs(e) < precision - 1) {
-      x = roundDecimal(x, precision);
-    }
-    return x;
+    return Float.valueOf(toStr());
   }
 
   int toInt() {
@@ -358,7 +356,7 @@ class BigNum {
   
   String fRound() { // Scientific notation rounded to n decimal places
     BigNum x = getRound(displayPrecision);
-    return trimFloat(x.b) + "e" + String.valueOf(x.e);
+    return trimFloat(x.b) + "e" + x.e;
   }
   
   String fTrim() { // Unrounded scientific notation with trailing .0 trimmed
@@ -366,33 +364,38 @@ class BigNum {
   }
   
   String fSmall() { // A regular float rounded to n places with trailing .0 trimmed
-    BigNum x = getRound(displayPrecision);
-    return trimFloat(x.toFloat());
+     BigNum x = getRound(constrain(e + displayPrecision, displayPrecision, precision));
+     
+     if(e >= precision) {
+       return toStr();  
+     }
+     
+     return trimFloat(x.toFloat());
   }
   
   String fSuffix() { // Rounded to 2 decimal places with a suffix, returns fSmall if less than 1000
     BigNum x = getRound(displayPrecision);
-    if(x.e < 3 || e > suffixes.length * 3) {
+    if(x.e < 3 || x.e > suffixes.length * 3) {
       return fSmall();
     }
-    x.b *= pow(10, e % 3);
-    return trimFloat(x.b) + suffixes[e / 3 - 1];
+
+    return trimFloat(Float.valueOf(x.b + "E" + e % 3)) + suffixes[e / 3 - 1];
   }
   
 }
 
 // === HELPERS ===
 
-float roundDecimal(float x, int y) {
-  if(y > precision) {
-    return x;  
-  }
+float roundFloat(float x, int y) {
   int s = getSign(x);
+
   return round(getAbs(x) * pow(10, y)) / pow(10, y) * s;
 }
 
+// For removing trailing 0s
 String trimFloat(float x) {
   String str = String.valueOf(x);
+
   if(str.substring(str.length() - 2, str.length()).equals(".0")) {
     str = str.substring(0, str.length() - 2);  
   }
@@ -401,11 +404,26 @@ String trimFloat(float x) {
 }
 
 int getExpo(float x) {
-  int d = (int)Math.log10(getAbs(x));
-  if (getAbs(x) < 1) {
-    d--;
+  String str = "" + getAbs(x);
+  int decimalIndex = str.indexOf('.');
+  int eIndex = str.indexOf('E');
+
+  if(eIndex != -1) {
+    return Integer.valueOf(str.substring(eIndex + 1, str.length()));
   }
-  return d;
+
+  if(getAbs(x) >= 1) {
+    return str.substring(0, decimalIndex).length() - 1;
+  } else {
+    return -str.substring(decimalIndex + 1, str.length()).length();
+  }
+
+  //double e = Math.log10(getAbs(x));
+  //if (getAbs(x) < 1) {
+  //  e--;
+  //}
+  
+  //return (int)e;
 }
 
 float getBase(float x) {
