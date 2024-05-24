@@ -23,13 +23,56 @@ void setup() {
   
   BigNum[] checkEqualTestsTrue = {new BigNum(1, 0), new BigNum(2.5, 7), new BigNum(1.9999, 3), new BigNum(5, -5), new BigNum(-6.7, 1000)};
   boolean[] checkEqualResultsTrue = {true, true, true, true, true};
-  BigNum[] checkEqualTestsFalse = {new BigNum(1, 1), new BigNum(2.5, 8), new BigNum(1.9999, 5), new BigNum(5, -6), new BigNum(-6.7, 1001)};
+  BigNum[] checkEqualTestsFalse = {new BigNum(1, 1), new BigNum(2.5, 8), new BigNum(1.9999, 5), new BigNum(5.1, -5), new BigNum(-6.7, 1001)};
   boolean[] checkEqualResultsFalse = new boolean[checkEqualTestsFalse.length];
   for(int i = 0; i < checkEqualTestsTrue.length; i++) {
     checkEqual(checkEqualTestsTrue[i].equalTo(checkEqualTestsTrue[i]), checkEqualResultsTrue, i, "Bignums check equal - true"); 
     checkEqual(checkEqualTestsTrue[i].equalTo(checkEqualTestsFalse[i]), checkEqualResultsFalse, i, "Bignums check equal - false"); 
   }
- 
+  
+  BigNum[] checkGreaterThanTests1 = {new BigNum(1, 1), new BigNum(2.5, 7), new BigNum(1.9999, 3), new BigNum(5, -6), new BigNum(-6.7, 1002), new BigNum(9.999, 2)};
+  BigNum[] checkGreaterThanTests2 = {new BigNum(1, 0), new BigNum(2.4, 7), new BigNum(1.9999, 5), new BigNum(5.1, -5), new BigNum(-6.7, 1001), new BigNum(9.999, 2)};
+  boolean[] checkGreaterThanResultsTrue = {true, true, false, false, true, false};
+  for(int i = 0; i < checkGreaterThanTests1.length; i++) {
+    checkEqual(checkGreaterThanTests1[i].greaterThan(checkGreaterThanTests2[i]), checkGreaterThanResultsTrue, i, "Bignums greater than");
+  }
+  
+  BigNum[] checkLessThanTests1 = {new BigNum(1, 1), new BigNum(2.5, 7), new BigNum(1.9999, 3), new BigNum(5, -6), new BigNum(-6.7, 1002), new BigNum(9.999, 2)};
+  BigNum[] checkLessThanTests2 = {new BigNum(1, 0), new BigNum(2.4, 7), new BigNum(1.9999, 5), new BigNum(5.1, -5), new BigNum(-6.7, 1001), new BigNum(9.999, 2)};
+  boolean[] checkLessThanResults = {false, false, true, true, false, false};
+  for(int i = 0; i < checkLessThanTests1.length; i++) {
+    checkEqual(checkLessThanTests1[i].lessThan(checkLessThanTests2[i]), checkLessThanResults, i, "Bignums less than");
+  }
+  
+  BigNum[] checkGreaterThanEqualTests1 = {new BigNum(1, 1), new BigNum(2.5, 7), new BigNum(1.9999, 3), new BigNum(5, -6), new BigNum(-6.7, 1002), new BigNum(9.999, 2), new BigNum(1, 1000000)};
+  BigNum[] checkGreaterThanEqualTests2 = {new BigNum(1, 0), new BigNum(2.4, 7), new BigNum(1.9999, 5), new BigNum(5.1, -5), new BigNum(-6.7, 1001), new BigNum(9.999, 2), new BigNum(1, 1000000)};
+  boolean[] checkGreaterThanEqualResults = {true, true, false, false, true, true, true};
+  for(int i = 0; i < checkLessThanTests1.length; i++) {
+    checkEqual(checkGreaterThanEqualTests1[i].greaterThanEqual(checkGreaterThanEqualTests2[i]), checkGreaterThanEqualResults, i, "Bignums greater than equal to");
+  }
+  
+  BigNum[] checkLessThanEqualTests1 = {new BigNum(1, 1), new BigNum(2.5, 7), new BigNum(1.9999, 3), new BigNum(5, -6), new BigNum(-6.7, 1002), new BigNum(9.999, 2), new BigNum(1, 1000000)};
+  BigNum[] checkLessThanEqualTests2 = {new BigNum(1, 0), new BigNum(2.4, 7), new BigNum(1.9999, 5), new BigNum(5.1, -5), new BigNum(-6.7, 1001), new BigNum(9.999, 2), new BigNum(1, 1000000)};
+  boolean[] checkLessThanEqualResults = {false, false, true, true, false, true, true};
+  for(int i = 0; i < checkLessThanTests1.length; i++) {
+    checkEqual(checkLessThanEqualTests1[i].lessThanEqual(checkLessThanEqualTests2[i]), checkLessThanEqualResults, i, "Bignums greater than equal to");
+  }
+  
+  String[] setRoundResults = {"1e0", "1.25e5", "1.24e3", "1.99e8", "1.75e100", "2.36e-7", "1e11"};
+  BigNum[] setRoundTests = {new BigNum(1, 0), new BigNum(1.245, 5), new BigNum(1.243, 3), new BigNum(1.989, 8), new BigNum(1.75353, 100), new BigNum(2.356, -7), new BigNum(9.9999, 10)};
+  for(int i = 0; i < setRoundResults.length; i++) {
+    setRoundTests[i].setRound(2);
+    checkEqual(setRoundTests[i].fTrim(), setRoundResults, i, "Bignum round to 2 decimals");
+  }
+  
+  String[] addResults = {"2e0", "1.5e20", "6.123456e70", "9e99999999", "1e8", "-2e5", "5e-1", "1e8", "1e8", "1.0000001e7", "0e0", "5e-10", "-6e-10", "2.7555e2", "2.147493e9", "9.556555e10"};
+  String[] subResults = {"0e0", "0e0", "5.876544e70", "3e99999999", "5e8", "4e5", "0e0", "1e8", "-1e8", "9.999999e6", "2e1000", "5e-10", "6e-10", "3.555e1", "2.147473e9", "9.554555e10"};
+  BigNum[] addTests1 = {new BigNum(1, 0), new BigNum(7.5, 19), new BigNum(6, 70), new BigNum(6, 99999999), new BigNum(3, 8), new BigNum(1, 5), new BigNum(2.5, -1), new BigNum(1, 8), new BigNum(1, 0), new BigNum(1, 7), new BigNum(1, 1000), new BigNum(5, -10), new BigNum(5, -20), new BigNum(1.5555, 2), new BigNum(2.147483, 9), new BigNum(9.555555, 10)};
+  BigNum[] addTests2 = {new BigNum(1, 0), new BigNum(7.5, 19), new BigNum(1.23456, 69), new BigNum(3,99999999), new BigNum(-2, 8), new BigNum(-3, 5), new BigNum(2.5, -1), new BigNum(1, 0), new BigNum(1, 8), new BigNum(1, 0), new BigNum(-1, 1000), new BigNum(-5, -20), new BigNum(-6, -10), new BigNum(1.2, 2), new BigNum(1, 4), new BigNum(1, 7)};
+  for(int i = 0; i < addResults.length; i++) {
+    checkEqual(addTests1[i].getAdd(addTests2[i]).fTrim(), addResults, i, "Bignum add");
+    checkEqual(addTests1[i].getSub(addTests2[i]).fTrim(), subResults, i, "Bignum subtract");
+  }
 
   // === MISC FUNCTION TESTS ===
   
@@ -39,12 +82,48 @@ void setup() {
     checkEqual(validateTests[i].toStr(), validateResults, i, "Validate Number");  
   }
   
-  int[] getExpoResults = {0, 1, 2, 3, 4, 5, 6, 7, -7, -6, -5, -4, -3, -2, -2, -1};
-  float[] getExpoTests = {5, 76, 754, 9999, 64535, 123456, 8630782, 99999999, 0.0000006, 0.000001, 0.00005, 0.0007, 0.001, 0.02, 0.01, 0.8};
+  int[] getExpoResults = {0, 1, 2, 3, 4, 5, 6, 6, -7, -6, -5, -4, -3, -2, -2, -1, -2, -5};
+  float[] getExpoTests = {5, 76, 754, 9999, 64535, 123456, 8630782, 9999999, 0.0000006, 0.000001, 0.00005, 0.0007, 0.001, 0.02, 0.01, 0.8, 0.0236, -0.0000557};
   for(int i = 0; i < getExpoResults.length; i++) {
     checkEqual(getExpo(getExpoTests[i]), getExpoResults, i, "Get expo");
   }
-
+  
+  float[] getBaseResults = {5.0, 7.6, 7.54, 9.999, -6.4535, 1.23456, 8.630782, 1.0, 1.26, -5.1, 5.0, 7.0, 1.0, 2.0, 1.0, 8.0, 1.05, 2.36, -5.5};
+  float[] getBaseTests = {5, 76, 754, 9999, -64535, 123456, 8630782, 99999999, 0.0000126, -0.000051, 0.00005, 0.0007, 0.001, 0.02, 0.01, 0.8, 10.5, 0.0236, -0.000055};
+  for(int i = 0; i < getBaseResults.length; i++) {
+    checkEqual(getBase(getBaseTests[i]), getBaseResults, i, "Get base");
+  }
+  
+  float[] roundFloatResults0 = {0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 100.0, -999.0, -999.0, -1000, -1000, -1000, -16356.0};
+  float[] roundFloatTests0 = {0.1, 0.15, 0.156, 0.154, 0.9, 0.99, 0.999, 0.994, 0.001, 0.005, 100, -999, -999.4, -999.5, -999.99, -999.995, -16356.4437};
+  for(int i = 0; i < roundFloatResults0.length; i++) {
+    checkEqual(roundFloat(roundFloatTests0[i], 0), roundFloatResults0, i, "Round Float 0 places");  
+  }
+  
+  float[] roundFloatResults1 = {0.1, 0.2, 0.2, 0.2, 0.9, 1, 1.0, 1, 0.0, 0.0, 100.0, -999.0, -999.4, -999.5, -1000, -1000, -16356.4};
+  float[] roundFloatTests1 = {0.1, 0.15, 0.156, 0.154, 0.9, 0.99, 0.999, 0.994, 0.001, 0.005, 100, -999, -999.4, -999.5, -999.99, -999.995, -16356.4437};
+  for(int i = 0; i < roundFloatResults1.length; i++) {
+    checkEqual(roundFloat(roundFloatTests1[i], 1), roundFloatResults1, i, "Round Float 1 place");  
+  }
+  
+  float[] roundFloatResults2 = {0.1, 0.15, 0.16, 0.15, 0.9, 0.99, 1.0, 0.99, 0.0, 0.01, 100.0, -999.0, -999.4, -999.5, -999.99, -1000, -16356.44};
+  float[] roundFloatTests2 = {0.1, 0.15, 0.156, 0.154, 0.9, 0.99, 0.999, 0.994, 0.001, 0.005, 100, -999, -999.4, -999.5, -999.99, -999.995, -16356.4437};
+  for(int i = 0; i < roundFloatResults2.length; i++) {
+    checkEqual(roundFloat(roundFloatTests2[i], 2), roundFloatResults2, i, "Round Float 2 places");  
+  }
+    
+  float[] roundFloatResults3 = {0.1, 0.15, 0.156, 0.154, 0.9, 0.99, 0.999, 0.994, 0.001, 0.005, 100.0, -999.0, -999.4, -999.5, -999.99, -999.995, -1636.444, -1800.79, -1000.786};
+  float[] roundFloatTests3 = {0.1, 0.15, 0.156, 0.154, 0.9, 0.99, 0.999, 0.994, 0.001, 0.005, 100, -999, -999.4, -999.5, -999.99, -999.995, -1636.4435, -1800.7899, -1000.7855};
+  for(int i = 0; i < roundFloatResults3.length; i++) {
+    checkEqual(roundFloat(roundFloatTests3[i], 3), roundFloatResults3, i, "Round Float 3 places");  
+  }
+  
+  String[] trimFloatResults = {"1", "2", "8", "974", "164236", "-775", "0.1", "1251.265", "0.001"};
+  float[] trimFloatTests = {1.0, 2.0, 8.0, 974.0, 164236.0, -775, 0.1, 1251.265, 0.001};
+  for(int i = 0; i < trimFloatResults.length; i++) {
+    checkEqual(trimFloat(trimFloatTests[i]), trimFloatResults, i, "Trim Float");  
+  }
+  
   // === CONVERSION TESTS ===
   
   String[] toStrResults = {"1.0E0", "9.999999E1", "-2.0E1", "2.0E-1", "1.0E2147483647", "1.5E-1"};

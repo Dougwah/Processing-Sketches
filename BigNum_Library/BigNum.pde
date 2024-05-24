@@ -1,4 +1,4 @@
-int precision = 7; // Maxmimum amount of decimals stored in a float
+int precision = 7; // Maxmimum amount of decimals stored in a float - 1
 int displayPrecision = 2;
 
 class BigNum {
@@ -35,11 +35,12 @@ class BigNum {
     }
 
     int digits = getBDigits();
+
     
     if (b >= 10 || b < 1) {
       e += digits;
     }
-    
+        
     b = roundFloat(b * pow(10, -digits), precision);
   }
   
@@ -89,11 +90,11 @@ class BigNum {
   }
   
   boolean greaterThanEqual(float x) {
-    return greaterThan(getBase(x), getExpo(x));  
+    return greaterThanEqual(getBase(x), getExpo(x));  
   }
   
   boolean greaterThanEqual(BigNum x) {
-    return greaterThan(x.b, x.e); 
+    return greaterThanEqual(x.b, x.e); 
   }
   
   // == lESS THAN ==
@@ -363,7 +364,7 @@ class BigNum {
      return trimFloat(b) + 'e' + e;
   }
   
-  String fSmall() { // A regular float rounded to n places with trailing .0 trimmed
+  String fSmall() { // A regular float rounded to 2 decimal places with trailing .0 trimmed
      BigNum x = getRound(constrain(e + displayPrecision, displayPrecision, precision));
      
      if(e >= precision) {
@@ -388,47 +389,75 @@ class BigNum {
 
 float roundFloat(float x, int y) {
   int s = getSign(x);
-
   return round(getAbs(x) * pow(10, y)) / pow(10, y) * s;
 }
 
 // For removing trailing 0s
 String trimFloat(float x) {
   String str = String.valueOf(x);
-
   if(str.substring(str.length() - 2, str.length()).equals(".0")) {
     str = str.substring(0, str.length() - 2);  
   }
-  
   return str;
 }
 
 int getExpo(float x) {
-  String str = "" + getAbs(x);
-  int decimalIndex = str.indexOf('.');
-  int eIndex = str.indexOf('E');
+  String str = String.valueOf(getAbs(x));
+  int dIndex = str.indexOf('.');
+  int eIndex = str.indexOf('E'); // Floats with 5 or more significant digits get converted to scientific notation
 
-  if(eIndex != -1) {
-    return Integer.valueOf(str.substring(eIndex + 1, str.length()));
+  if(eIndex != -1) { 
+    // If in scientific notation return the character after 'E'
+    return Integer.valueOf(str.substring(eIndex + 1, str.length())); 
   }
-
-  if(getAbs(x) >= 1) {
-    return str.substring(0, decimalIndex).length() - 1;
-  } else {
-    return -str.substring(decimalIndex + 1, str.length()).length();
-  }
-
-  //double e = Math.log10(getAbs(x));
-  //if (getAbs(x) < 1) {
-  //  e--;
-  //}
   
-  //return (int)e;
+  if(getAbs(x) >= 1) { 
+    // If not a decimal number return the amount of characters between the first char and '.'
+    return str.substring(1, dIndex).length(); 
+  } else { 
+    int sigFigIndex = str.length(); 
+    for(int i = dIndex + 1; i < str.length(); i++) {
+      if(str.charAt(i) != '0') {
+        sigFigIndex = i;  
+        break;
+      }
+    }
+    // If a decimal number find the first number after '.' that isnt a 0 then get the length between '.' inclusive and the first sig fig exclusive
+    return -str.substring(dIndex, sigFigIndex).length();
+  }
+  
 }
 
 float getBase(float x) {
+  String str = String.valueOf(getAbs(x));
   int s = getSign(x);
-  return x = getAbs(x) / pow(10, getExpo(x)) * s;
+  int dIndex = str.indexOf('.');
+  int eIndex = str.indexOf('E');
+  
+  if(eIndex != -1) {
+    return Float.valueOf(str.substring(0, eIndex)) * s;  
+  }
+  
+  if(dIndex != -1) {
+    str = str.substring(0, dIndex) + str.substring(dIndex + 1);
+  }
+  
+  if(getAbs(x) >= 1) {
+    return Float.valueOf(str.substring(0, 1) + '.' + str.substring(1)) * s;
+  } else {
+    int sigFigIndex = 0;
+    for(int i = 0; i < str.length(); i++) {
+      if(str.charAt(i) != '0') {
+        sigFigIndex = i;
+        break;
+      }
+    }
+    return Float.valueOf(str.substring(sigFigIndex, sigFigIndex + 1) + '.' + str.substring(sigFigIndex + 1));
+  }
+ 
+  
+  //int s = getSign(x);
+  //return x = getAbs(x) / pow(10, getExpo(x)) * s;
 }
 
 int getSign(float x) {
