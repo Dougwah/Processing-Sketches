@@ -1,3 +1,16 @@
+/*
+== PURPOSE ==
+A library used to express and operate on numbers greater than the integer limit
+Separates numbers into their base and exponent and performs math operations on them idependently to avoid the integer limit
+Made for use in number based video games where precision past 2 decimal places is not required
+
+== LIMITATIONS ==
+Supports numbers up to 9.999999e2147483646 (eInteger.MAX_VALUE - 1)
+Numbers are only accurate to 7 decimal places due to bases being stored as floats
+Sub and Add functions are only accurate to 7 places, attempting to operate on numbers with a greater difference will return the biggest number unchanged
+The base is subject to floating point precision errors
+*/
+
 int precision = 7; // Maxmimum amount of decimals stored in a float - 1
 int displayPrecision = 2;
 
@@ -40,6 +53,11 @@ class BigNum {
     if (b >= 10 || b < 1) {
       e += digits;
     }
+    
+    if(!checkInRange(e)) {
+      bSet(0, 0);
+      return;
+    }
         
     b = roundFloat(b * pow(10, -digits), precision);
   }
@@ -48,9 +66,13 @@ class BigNum {
     return new BigNum(b, e);  
   }
   
+  void bSet(float x, int y) {
+    b = x;
+    e = y;
+  }
+  
   void bSet(BigNum x) {
-    b = x.b;
-    e = x.e;
+    bSet(x.b, x.e);
   }
   
   // === COMPARISON ===
@@ -468,12 +490,11 @@ int getSign(float x) {
   }
 }
 
-int getSign(double x) {
-  if (x < 0) {
-    return -1;
-  } else {
-    return 1;
+boolean checkInRange(int x) {
+  if(getAbs(x) == Integer.MAX_VALUE) {
+    return false;
   }
+  return true;
 }
 
 int getAbs(int x) {
@@ -482,10 +503,6 @@ int getAbs(int x) {
 
 float getAbs(float x) {
   return x * getSign(x);  
-}
-
-double getAbs(double x) {
-  return x * getSign(x);
 }
 
 String[] suffixes = {

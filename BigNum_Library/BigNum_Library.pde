@@ -6,9 +6,9 @@ void setup() {
   BigNum emptyConstructorTest = new BigNum();
   String emptyConstructorResult = "1.0E0";
   checkEqual(emptyConstructorTest.toStr(), emptyConstructorResult, "Empty Constructor");
-  
-  String[] constructorResults = {"1.0E0", "1.0E1", "2.5E2", "1.0E4", "1.2E4", "-1.0E1", "1.0E-1", "2.36E-2", "2.35E4", "2.1474836E9", "-2.0E1"};  
-  String[] stringConstructorTests = {"1e0", "1e1", "2.5e2", "100e2", "12e3", "-1e1", "1e-1", "2.36e-2", "235e2", "2.14748364e9", "-200e-1"};
+ 
+  String[] constructorResults = {"1.0E0", "1.0E1", "2.5E2", "1.0E4", "1.2E4", "-1.0E1", "1.0E-1", "2.36E-2", "2.35E4", "2.1474836E9", "-2.0E1", "0.0E0", "1.0E2147483646", "0.0E0", "9.999999E2147483646", "0.0E0"};  
+  String[] stringConstructorTests = {"1e0", "1e1", "2.5e2", "100e2", "12e3", "-1e1", "1e-1", "2.36e-2", "235e2", "2.14748364e9", "-200e-1", "0e1", "1e2147483646", "1e2147483647", "9.999999e2147483646", "9.9999999e2147483646"};
   for(int i = 0; i < stringConstructorTests.length; i++) {
     BigNum x = new BigNum(stringConstructorTests[i]);
     checkEqual(x.toStr(), constructorResults, i, "String Constructor");
@@ -74,6 +74,13 @@ void setup() {
     checkEqual(addTests1[i].getSub(addTests2[i]).fTrim(), subResults, i, "Bignum subtract");
   }
 
+  String[] multResults = {"0e0", "0e0", "3e5", "2.25e10", "4e100000100", "7.2e1", "8.1e642316431", "-2.1e751", "1e4", "1e-4", "7.1289e-8", "2e0", "3.34084e1", "-4.63e-3462347", "1e120000000", "2.5e1999980001", "3e2147483646", "0e0"};
+  BigNum[] multTests1 = {new BigNum(0, 0), new BigNum(1, 1000), new BigNum(1.5, 5), new BigNum(1.5, 5), new BigNum(2, 100000000), new BigNum(9, 0), new BigNum(9, 642316430), new BigNum(-7, 500), new BigNum(-1, 2), new BigNum(1, -2), new BigNum(2.67, -2), new BigNum(2, -10), new BigNum(5.78, -10000), new BigNum(9.26, -3462346), new BigNum(1, 60000000), new BigNum(5, 999990000), new BigNum(1, Integer.MAX_VALUE - 1), new BigNum(1, Integer.MAX_VALUE)};
+  BigNum[] multTests2 = {new BigNum(0, 0), new BigNum(0, 1000), new BigNum(2, 0), new BigNum(1.5, 5), new BigNum(2, 100), new BigNum(8, 0), new BigNum(9, 0), new BigNum(3, 250), new BigNum(-1, 2), new BigNum(1, -2), new BigNum(2.67, -6), new BigNum(1, 10), new BigNum(5.78, 10000), new BigNum(-5, -2), new BigNum(1, 60000000), new BigNum(5, 999990000), new BigNum(3, 0), new BigNum(3, 100)};
+  for(int i = 0; i < multResults.length; i++) {
+    checkEqual(multTests1[i].getMult(multTests2[i]).fTrim(), multResults, i, "Bignum Mult");
+  }
+ 
   // === MISC FUNCTION TESTS ===
   
   String[] validateResults = {"1.0E3", "1.25E4", "-3.5E8", "2.0E0", "1.0E-4", "1.0E3", "1.0E0", "5.0E9", "9.999999E20", "2.1474836E10"};
@@ -126,8 +133,8 @@ void setup() {
   
   // === CONVERSION TESTS ===
   
-  String[] toStrResults = {"1.0E0", "9.999999E1", "-2.0E1", "2.0E-1", "1.0E2147483647", "1.5E-1"};
-  BigNum[] toStrTests = {new BigNum(1, 0), new BigNum(9.999999, 1), new BigNum(-2, 1), new BigNum(2, -1), new BigNum(1, 2147483647), new BigNum(1.5, -1)};
+  String[] toStrResults = {"1.0E0", "9.999999E1", "-2.0E1", "2.0E-1", "0.0E0" , "1.0E2147483646", "1.5E-1"};
+  BigNum[] toStrTests = {new BigNum(1, 0), new BigNum(9.999999, 1), new BigNum(-2, 1), new BigNum(2, -1), new BigNum(1, 2147483647), new BigNum(1, 2147483646), new BigNum(1.5, -1)};
   for(int i = 0; i < toStrTests.length; i++) {
     checkEqual(toStrTests[i].toStr(), toStrResults, i, "Convert to string");
   }
@@ -195,6 +202,12 @@ void setup() {
   BigNum[] formatSmallNegativeExponentTests = { new BigNum(-1, -2), new BigNum(1, -1), new BigNum(1.654, -5), new BigNum(1.656, -5)};
   for(int i = 0; i < formatSmallNegativeExponentTests.length; i++) {
     checkEqual(formatSmallNegativeExponentTests[i].fSmall(), formatSmallNegativeExponentResults, i, "Format Small negative exponent");
+  }
+  
+  BigNum a = new BigNum(1, 0);
+  for(int i = 0; i < 100000; i++) {
+    a.setMult(1, 10);
+    println(a.fRound());
   }
 
 }
