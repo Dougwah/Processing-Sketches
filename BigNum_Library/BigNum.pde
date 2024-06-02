@@ -172,6 +172,12 @@ class BigNum {
   
   void setMult(float _b, int _e) {
     e += _e;
+    
+    if(!checkInRange(e)) {
+      bSet(0, 0);
+      return;
+    }
+    
     b *= _b;
     validate();
   }

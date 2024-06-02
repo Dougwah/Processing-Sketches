@@ -204,11 +204,18 @@ void setup() {
     checkEqual(formatSmallNegativeExponentTests[i].fSmall(), formatSmallNegativeExponentResults, i, "Format Small negative exponent");
   }
   
-  BigNum a = new BigNum(1, 0);
-  for(int i = 0; i < 100000; i++) {
-    a.setMult(1, 10);
-    println(a.fRound());
-  }
+  //BigNum a = new BigNum(1, 0);
+  //for(int i = 0; i < 100000; i++) {
+  //  a.setMult(2, i);
+  //  println(a.fRound());
+  //  if(a.e < 0) {
+  //    break;  
+  //  }
+  //}
+  
+  BigNum a = new BigNum(9.9999999, 2147483645);
+  a.setMult(2, 100000);
+  println(a.toStr());
 
 }
 
