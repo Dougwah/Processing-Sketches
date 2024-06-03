@@ -7,7 +7,7 @@ int[] sizes = new int[squareCount];
 void setup() {
   size(1000, 1000);
   
-  generateNonOverlappingSquares(0, 0, 1000, 1000, 6, 10, squareCount, 1000);
+  generateNonOverlappingSquares(0, 0, 1000, 1000, 6, 100, squareCount, 1000);
   
   println(factorial(5));
   println(sum(10));
@@ -20,13 +20,33 @@ void setup() {
   println(sumRange(1, 6));
   println(multiply(-100, 6));
   println(divide(200, 3));
+  
+  println(filterArray(new String[] {"aaab", "hfsh", "krbnmshn", "iypemsf"}, "s"));
+}
+
+String[] filterArray(String[] arr, String filter) {
+ String[] temp = new String[arr.length];
+ int count = 0;
+ for(int i = 0; i < arr.length; i++) {
+   if(arr[i].indexOf(filter) != -1) {
+     temp[count] = arr[i];
+     count++;
+   }
+ }
+ 
+ String[] result = new String[count];
+ for(int i = 0; i < count; i++) {
+   result[i] = temp[i];
+ }
+ 
+ return result;
 }
 
 int sum(int n) {
   if(n == 0) {
     return n;
   }
-  println(n);
+  
   return n + sum(n - 1);
 }
 
