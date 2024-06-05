@@ -2,6 +2,7 @@ void setup() {
   //println(add("49631058602853065830185206186591385964821306890681", "934593852935839589589458395835234589248295893578295673962769763976967395475"));
   println(add("723520", "996777643"));
   println(723520 + 996777643);
+  println(add("1", "99999"));
 }
 
 
@@ -26,16 +27,15 @@ String add(String a, String b) {
     if(fromIndex >= 0) {
       int fromDigit = Integer.valueOf(from.charAt(fromIndex)) - 48;
       result+= fromDigit;
-      println("toDigit: " + toDigit + " fromDigit: " + fromDigit + " result: " + result + " carry over: " + carryOver);
-      println(to);
-      println(to.substring(0, i) + " " + (result % 10) + " " + to.substring(i));
-
       fromIndex--;
     }
   
-          to = to.substring(0, i) + (result % 10) + to.substring(i + 1);
+    to = to.substring(0, i) + (result % 10) + to.substring(i + 1);
     carryOver = result / 10;
+  }
   
+  if(carryOver == 1) {
+    to = "1" + to;  
   }
   
   return to;

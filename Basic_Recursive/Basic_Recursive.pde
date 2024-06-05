@@ -22,25 +22,48 @@ void setup() {
   println(divide(200, 3));
   
   println(filterArray(new String[] {"aaab", "hfsh", "krbnmshn", "iypemsf"}, "s"));
+  println(filterArray2(new String[] {"aaab", "hfsh", "krbnmshn", "iypemsf"}, "s"));
 }
 
 String[] filterArray(String[] arr, String filter) {
- String[] temp = new String[arr.length];
- int count = 0;
- for(int i = 0; i < arr.length; i++) {
-   if(arr[i].indexOf(filter) != -1) {
-     temp[count] = arr[i];
-     count++;
-   }
- }
- 
- String[] result = new String[count];
- for(int i = 0; i < count; i++) {
-   result[i] = temp[i];
- }
- 
- return result;
+  String[] temp = new String[arr.length];
+  int count = 0; 
+  for(int i = 0; i < arr.length; i++) {
+    if(arr[i].indexOf(filter) != -1) {
+      temp[count] = arr[i];
+      count++;
+     }
+  }
+  
+  String[] result = new String[count];
+  for(int i = 0; i < count; i++) {
+    result[i] = temp[i];
+  }
+  
+  return result;
 }
+
+String[] filterArray2(String[] arr, String filter) {
+  int count = 0; 
+  for(int i = 0; i < arr.length; i++) {
+    if(arr[i].indexOf(filter) != -1) {
+      count++;
+     }
+  }
+  
+  count = 0;
+  String[] result = new String[count];
+  for(int i = 0; i < arr.length; i++) {
+    if(arr[i].indexOf(filter) != -1) {
+      result[count] = arr[i];
+      count++;
+    }
+  }
+  
+  return result;
+}
+ 
+
 
 int sum(int n) {
   if(n == 0) {
