@@ -1,11 +1,14 @@
 void setup() {
-  println(add("49631058602853065830185206186591385964821306890681", "934593852935839589589458395835234589248295893578295673962769763976967395475"));
+  //println(add("49631058602853065830185206186591385964821306890681", "934593852935839589589458395835234589248295893578295673962769763976967395475"));
+  println(add("723520", "996777643"));
+  println(723520 + 996777643);
 }
 
 
 String add(String a, String b) {
-  String to = a;
-  String from = b;
+  String to;
+  String from;
+  
   if(a.length() > b.length()) {
     to = a;
     from = b;
@@ -13,22 +16,27 @@ String add(String a, String b) {
     to = b;
     from = a;
   }
+  
   int carryOver = 0;
-  for(int i = to.length() - 1; i > 0; i--) {
-    println("i :" i + " 
+  int fromIndex = from.length() - 1;
+  for(int i = to.length() - 1; i >= 0; i--) {
     int toDigit = Integer.valueOf(to.charAt(i)) - 48;
-    int fromDigit = 1; //Integer.valueOf(from.charAt(i - from.length() - to.length())) - 48;
-    int result = toDigit + fromDigit + carryOver;
-    println("toDigit: " + toDigit + " fromDigit: " + fromDigit + " result: " + result + " carry over: " + carryOver);
-    println(to.substring(0, i) + " " + (result % 10) + " " + to.substring(i));
-    to = to.substring(0, i) + (result % 10) + to.substring(i + 1);
-         
-    if(result >= 10) {
-      carryOver = 1;
-    } else {
-      carryOver = 0;
-    }
+    int result = carryOver + toDigit;
     
+    if(fromIndex >= 0) {
+      int fromDigit = Integer.valueOf(from.charAt(fromIndex)) - 48;
+      result+= fromDigit;
+      println("toDigit: " + toDigit + " fromDigit: " + fromDigit + " result: " + result + " carry over: " + carryOver);
+      println(to);
+      println(to.substring(0, i) + " " + (result % 10) + " " + to.substring(i));
+
+      fromIndex--;
+    }
+  
+          to = to.substring(0, i) + (result % 10) + to.substring(i + 1);
+    carryOver = result / 10;
+  
   }
+  
   return to;
 }
